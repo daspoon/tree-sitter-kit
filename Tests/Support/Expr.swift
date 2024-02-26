@@ -4,8 +4,11 @@
 
 */
 
+import FunLangParser
+import TSKit
 
-indirect enum Expr : Equatable
+
+public indirect enum Expr : Equatable
   {
     case name(String)
     case numb(Int)
@@ -18,26 +21,26 @@ indirect enum Expr : Equatable
 
 // MARK: - parsing -
 
-import SwiftTreeSitter
-
-fileprivate let language = try! STSLanguage(fromPreBundle: .java)
-fileprivate let parser = STSParser(language: language)
-
 extension Expr
   {
+    public static func createParser() -> TSParser {
+      TSParser(tree_sitter_funlang())
+    }
+
     /// Initialize an expression from text.
-    init(_ text: String) throws
+    public init(_ text: String) throws
       {
-        guard let tree = parser.parse(string: text, oldTree: nil)
+        let parser = Self.createParser()
+        guard let tree = parser.parse(text)
           else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
         self = try Expr(tree.rootNode.child(at: 0), in: text)
       }
 
     /// Initialize an instance from the given 'expr' node of a syntax tree.
-    init(_ node: STSNode, in text: String) throws
+    public init(_ node: TSNode, in text: String) throws
       {
         // All expr nodes have a single child.
-        guard node.type == "expr", node.childCount == 1
+        guard node.type == "expr", node.count == 1
           else { throw Exception("unexpected node type: '\(node.type)' != 'expr'") }
         let child = node.child(at: 0)
 
@@ -50,7 +53,7 @@ extension Expr
               else { throw Exception("failed to parse int value") }
             self = .numb(value)
           case "prefix_op" :
-            let (opNode, argNode) = try child.asPair()
+            let (opNode, argNode) = try child.childrenAsPair()
             let argExpr = try Self(argNode, in: text)
             switch text[opNode.range(in: text)] {
               case "-" : self = .neg(argExpr)
@@ -58,7 +61,7 @@ extension Expr
                 throw Exception("unexpected prefix operator: '\(opName)'")
             }
           case "binary_op" :
-            let (lhsNode, opNode, rhsNode) = try child.asTriple()
+            let (lhsNode, opNode, rhsNode) = try child.childrenAsTriple()
             let lhsExpr = try Self(lhsNode, in: text)
             let rhsExpr = try Self(rhsNode, in: text)
             switch text[opNode.range(in: text)] {
@@ -69,7 +72,7 @@ extension Expr
                 throw Exception("unexpected binary operator: '\(opName)'")
             }
           case "paren" :
-            let (_, exprNode, _) = try child.asTriple(firstType: "(", thirdType: ")")
+            let (_, exprNode, _) = try child.childrenAsTriple(firstType: "(", thirdType: ")")
             self = try Self(exprNode, in: text)
           default :
             throw Exception("unhandled node type '\(child.type)' for text '\(text[child.range(in: text)])'")
@@ -82,7 +85,7 @@ extension Expr
 
 extension Expr
   {
-    func evaluate() throws -> Int {
+    public func evaluate() throws -> Int {
       switch self {
         case .numb(let v) :
           return v
@@ -106,4 +109,3 @@ extension Expr
       return result
     }
 }
-

@@ -1,15 +1,16 @@
-#if false
+/*
+
+  Created by David Spooner
+
+*/
 
 import XCTest
-import SwiftTreeSitter
+import TSKit
 
 
 class ExprTests : XCTestCase
   {
     func testParsing() throws {
-      let language = try STSLanguage(fromPreBundle: .funlang)
-      let parser = STSParser(language: language)
-
       let examples : [(text: String, expr: Expr)] = [
         ("a", .name("a")),
         ("1", .numb(1)),
@@ -39,5 +40,3 @@ class ExprTests : XCTestCase
       }
     }
   }
-
-#endif
