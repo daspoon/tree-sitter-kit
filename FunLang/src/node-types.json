@@ -56,10 +56,6 @@
           "named": true
         },
         {
-          "type": "expr",
-          "named": true
-        },
-        {
           "type": "name",
           "named": true
         },
@@ -68,14 +64,18 @@
           "named": true
         },
         {
-          "type": "unary_op",
+          "type": "paren",
+          "named": true
+        },
+        {
+          "type": "prefix_op",
           "named": true
         }
       ]
     }
   },
   {
-    "type": "start",
+    "type": "paren",
     "named": true,
     "fields": {},
     "children": {
@@ -90,7 +90,22 @@
     }
   },
   {
-    "type": "unary_op",
+    "type": "prefix_op",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expr",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "start",
     "named": true,
     "fields": {},
     "children": {

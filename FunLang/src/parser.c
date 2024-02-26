@@ -8,7 +8,7 @@
 #define LANGUAGE_VERSION 14
 #define STATE_COUNT 16
 #define LARGE_STATE_COUNT 7
-#define SYMBOL_COUNT 13
+#define SYMBOL_COUNT 14
 #define ALIAS_COUNT 0
 #define TOKEN_COUNT 9
 #define EXTERNAL_TOKEN_COUNT 0
@@ -27,8 +27,9 @@ enum {
   anon_sym_CARET = 8,
   sym_start = 9,
   sym_expr = 10,
-  sym_unary_op = 11,
-  sym_binary_op = 12,
+  sym_paren = 11,
+  sym_prefix_op = 12,
+  sym_binary_op = 13,
 };
 
 static const char * const ts_symbol_names[] = {
@@ -43,7 +44,8 @@ static const char * const ts_symbol_names[] = {
   [anon_sym_CARET] = "^",
   [sym_start] = "start",
   [sym_expr] = "expr",
-  [sym_unary_op] = "unary_op",
+  [sym_paren] = "paren",
+  [sym_prefix_op] = "prefix_op",
   [sym_binary_op] = "binary_op",
 };
 
@@ -59,7 +61,8 @@ static const TSSymbol ts_symbol_map[] = {
   [anon_sym_CARET] = anon_sym_CARET,
   [sym_start] = sym_start,
   [sym_expr] = sym_expr,
-  [sym_unary_op] = sym_unary_op,
+  [sym_paren] = sym_paren,
+  [sym_prefix_op] = sym_prefix_op,
   [sym_binary_op] = sym_binary_op,
 };
 
@@ -108,7 +111,11 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
     .visible = true,
     .named = true,
   },
-  [sym_unary_op] = {
+  [sym_paren] = {
+    .visible = true,
+    .named = true,
+  },
+  [sym_prefix_op] = {
     .visible = true,
     .named = true,
   },
@@ -256,7 +263,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   [1] = {
     [sym_start] = STATE(15),
     [sym_expr] = STATE(13),
-    [sym_unary_op] = STATE(7),
+    [sym_paren] = STATE(7),
+    [sym_prefix_op] = STATE(7),
     [sym_binary_op] = STATE(7),
     [sym_name] = ACTIONS(3),
     [sym_numb] = ACTIONS(3),
@@ -265,7 +273,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   },
   [2] = {
     [sym_expr] = STATE(14),
-    [sym_unary_op] = STATE(7),
+    [sym_paren] = STATE(7),
+    [sym_prefix_op] = STATE(7),
     [sym_binary_op] = STATE(7),
     [sym_name] = ACTIONS(3),
     [sym_numb] = ACTIONS(3),
@@ -274,7 +283,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   },
   [3] = {
     [sym_expr] = STATE(8),
-    [sym_unary_op] = STATE(7),
+    [sym_paren] = STATE(7),
+    [sym_prefix_op] = STATE(7),
     [sym_binary_op] = STATE(7),
     [sym_name] = ACTIONS(3),
     [sym_numb] = ACTIONS(3),
@@ -283,7 +293,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   },
   [4] = {
     [sym_expr] = STATE(10),
-    [sym_unary_op] = STATE(7),
+    [sym_paren] = STATE(7),
+    [sym_prefix_op] = STATE(7),
     [sym_binary_op] = STATE(7),
     [sym_name] = ACTIONS(3),
     [sym_numb] = ACTIONS(3),
@@ -292,7 +303,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   },
   [5] = {
     [sym_expr] = STATE(11),
-    [sym_unary_op] = STATE(7),
+    [sym_paren] = STATE(7),
+    [sym_prefix_op] = STATE(7),
     [sym_binary_op] = STATE(7),
     [sym_name] = ACTIONS(3),
     [sym_numb] = ACTIONS(3),
@@ -301,7 +313,8 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
   },
   [6] = {
     [sym_expr] = STATE(12),
-    [sym_unary_op] = STATE(7),
+    [sym_paren] = STATE(7),
+    [sym_prefix_op] = STATE(7),
     [sym_binary_op] = STATE(7),
     [sym_name] = ACTIONS(3),
     [sym_numb] = ACTIONS(3),
@@ -349,14 +362,15 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_RPAREN,
       anon_sym_PLUS,
       anon_sym_STAR,
-  [46] = 1,
-    ACTIONS(15), 5,
+  [46] = 2,
+    ACTIONS(19), 1,
+      anon_sym_CARET,
+    ACTIONS(15), 4,
       ts_builtin_sym_end,
       anon_sym_RPAREN,
       anon_sym_PLUS,
       anon_sym_STAR,
-      anon_sym_CARET,
-  [54] = 4,
+  [56] = 4,
     ACTIONS(17), 1,
       anon_sym_STAR,
     ACTIONS(19), 1,
@@ -365,7 +379,7 @@ static const uint16_t ts_small_parse_table[] = {
       ts_builtin_sym_end,
     ACTIONS(23), 1,
       anon_sym_PLUS,
-  [67] = 4,
+  [69] = 4,
     ACTIONS(17), 1,
       anon_sym_STAR,
     ACTIONS(19), 1,
@@ -374,7 +388,7 @@ static const uint16_t ts_small_parse_table[] = {
       anon_sym_PLUS,
     ACTIONS(25), 1,
       anon_sym_RPAREN,
-  [80] = 1,
+  [82] = 1,
     ACTIONS(27), 1,
       ts_builtin_sym_end,
 };
@@ -386,9 +400,9 @@ static const uint32_t ts_small_parse_table_map[] = {
   [SMALL_STATE(10)] = 24,
   [SMALL_STATE(11)] = 36,
   [SMALL_STATE(12)] = 46,
-  [SMALL_STATE(13)] = 54,
-  [SMALL_STATE(14)] = 67,
-  [SMALL_STATE(15)] = 80,
+  [SMALL_STATE(13)] = 56,
+  [SMALL_STATE(14)] = 69,
+  [SMALL_STATE(15)] = 82,
 };
 
 static const TSParseActionEntry ts_parse_actions[] = {
@@ -398,8 +412,8 @@ static const TSParseActionEntry ts_parse_actions[] = {
   [5] = {.entry = {.count = 1, .reusable = true}}, SHIFT(2),
   [7] = {.entry = {.count = 1, .reusable = true}}, SHIFT(3),
   [9] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_expr, 1),
-  [11] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_unary_op, 2),
-  [13] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_expr, 3),
+  [11] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_prefix_op, 2),
+  [13] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_paren, 3),
   [15] = {.entry = {.count = 1, .reusable = true}}, REDUCE(sym_binary_op, 3, .production_id = 1),
   [17] = {.entry = {.count = 1, .reusable = true}}, SHIFT(5),
   [19] = {.entry = {.count = 1, .reusable = true}}, SHIFT(6),

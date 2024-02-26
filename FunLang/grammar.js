@@ -14,7 +14,7 @@ module.exports = grammar({
         // Idenifiers
         name: $ => /[a-z]+/,
 
-        // Integers
+        // Numbers
         numb: $ => /\d+/,
 
         // Expressions
@@ -22,20 +22,23 @@ module.exports = grammar({
             $.name,
             $.numb,
             $.binary_op,
-            $.unary_op,
-            seq('(', $.expr, ')'),
+            $.prefix_op,
+            $.paren,
         ),
 
-        // Unary operators, with precedence.
-        unary_op: $ => choice(
+        // Make this a distinct node to aid in translation
+        paren: $ => seq('(', $.expr, ')'),
+
+        // Prefix unary operators, with precedence.
+        prefix_op: $ => choice(
             prec(4, seq('-', $.expr)),
         ),
 
-        // Binary operators, with precedence and associativity.
+        // Infix binary operators, with precedence and associativity.
         binary_op: $ => choice(
             prec.left(1, seq(field('lhs', $.expr), field('op', '+'), field('rhs', $.expr))),
             prec.left(2, seq(field('lhs', $.expr), field('op', '*'), field('rhs', $.expr))),
-            prec.left(3, seq(field('lhs', $.expr), field('op', '^'), field('rhs', $.expr))),
+            prec.right(3, seq(field('lhs', $.expr), field('op', '^'), field('rhs', $.expr))),
         ),
     }
 });
