@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "TreeSitterKit", targets: ["TreeSitterKit"]),
     ],
     dependencies: [
-        .package(path: "/Users/dave/Developer/External/tree-sitter"),
+        .package(url: "https://github.com/tree-sitter/tree-sitter", from: "0.21.0"),
     ],
     targets: [
         // The exported library providing a Swift interface for tree-sitter.
