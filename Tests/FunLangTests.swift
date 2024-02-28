@@ -8,7 +8,7 @@ import XCTest
 import TSKit
 
 
-class ExprTests : XCTestCase
+class FunLangTests : XCTestCase
   {
     func testParsing() throws {
       let examples : [(text: String, expr: Expr)] = [
