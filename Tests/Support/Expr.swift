@@ -4,8 +4,8 @@
 
 */
 
-import FunLangParser
-import TSKit
+import FunLang
+import TreeSitterKit
 
 
 public indirect enum Expr : Equatable

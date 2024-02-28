@@ -5,7 +5,7 @@
 */
 
 import XCTest
-import TSKit
+import TreeSitterKit
 
 
 class FunLangTests : XCTestCase

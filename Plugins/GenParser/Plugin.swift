@@ -8,12 +8,12 @@ import PackagePlugin
 import Foundation
 
 
-/// *GenParserCmd* invokes 'tree-sitter generate' to (re)produce the parser source code for a target representing a custom langage,
+/// *GenParser* invokes 'tree-sitter generate' to (re)produce the parser source code for a target representing a custom langage,
 /// and must be invoked with explicit argument --target <target-name>.  Ideally this would be an in-build tool, but SPM doesn't appear
 /// to support in-build tools for c-language targets.
 
 @main
-struct GenParserCmd : CommandPlugin
+struct GenParser : CommandPlugin
   {
     /// The location of tree-sitter CLI.
     let treeSitterPath = "/usr/local/bin/tree-sitter"

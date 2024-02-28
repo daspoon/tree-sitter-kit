@@ -3,22 +3,22 @@
 import PackageDescription
 
 let package = Package(
-    name: "TreeSitting",
+    name: "TreeSitterKit",
     products: [
-        .library(name: "TSKit", targets: ["TSKit"]),
+        .library(name: "TreeSitterKit", targets: ["TreeSitterKit"]),
     ],
     dependencies: [
         .package(path: "/Users/dave/Developer/External/tree-sitter"),
     ],
     targets: [
         // The exported library providing a Swift interface for tree-sitter.
-        .target(name: "TSKit",
+        .target(name: "TreeSitterKit",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
             ]
         ),
         // A command plugin to generate parsers for 'language' targets.
-        .plugin(name: "GenParserCmd",
+        .plugin(name: "GenParser",
             capability: .command(
               intent: .custom(verb: "generate-parser", description: "Invoke tree-sitter to generate parser source files from grammar.js"),
               permissions: [
@@ -26,7 +26,7 @@ let package = Package(
               ])
         ),
         // An language target for testing purposes.
-        .target(name: "FunLangParser",
+        .target(name: "FunLang",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
             ],
@@ -34,8 +34,8 @@ let package = Package(
             swiftSettings: [.interoperabilityMode(.C)]
         ),
         // Unit tests
-        .testTarget(name: "TSKitTests",
-            dependencies: ["TSKit", "FunLangParser"],
+        .testTarget(name: "TreeSitterKitTests",
+            dependencies: ["TreeSitterKit", "FunLang"],
             path: "Tests"
         ),
     ]
