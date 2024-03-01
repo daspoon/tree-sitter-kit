@@ -13,7 +13,7 @@ import Foundation
 /// to support in-build tools for c-language targets.
 
 @main
-struct GenParser : CommandPlugin
+struct TreeSitterGen : CommandPlugin
   {
     /// The location of tree-sitter CLI.
     let treeSitterPath = "/usr/local/bin/tree-sitter"

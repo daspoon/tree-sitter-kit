@@ -6,6 +6,7 @@ let package = Package(
     name: "TreeSitterKit",
     products: [
         .library(name: "TreeSitterKit", targets: ["TreeSitterKit"]),
+        .plugin(name: "TreeSitterGen", targets: ["TreeSitterGen"]),
     ],
     dependencies: [
         .package(url: "https://github.com/tree-sitter/tree-sitter", from: "0.21.0"),
@@ -18,7 +19,7 @@ let package = Package(
             ]
         ),
         // A command plugin to generate parsers for 'language' targets.
-        .plugin(name: "GenParser",
+        .plugin(name: "TreeSitterGen",
             capability: .command(
               intent: .custom(verb: "generate-parser", description: "Invoke tree-sitter to generate parser source files from grammar.js"),
               permissions: [
