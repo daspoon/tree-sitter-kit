@@ -23,17 +23,13 @@ public indirect enum Expr : Equatable
 
 extension Expr
   {
-    public static func createParser() -> TSParser {
-      TSParser(tree_sitter_funlang())
-    }
-
     /// Initialize an expression from text.
     public init(_ text: String) throws
       {
-        let parser = Self.createParser()
+        let parser = TSParser(tree_sitter_funlang())
         guard let tree = parser.parse(text)
           else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
-        self = try Expr(tree.rootNode.child(at: 0), in: text)
+        self = try Expr(tree.rootNode[0], in: text)
       }
 
     /// Initialize an instance from the given 'expr' node of a syntax tree.
@@ -42,40 +38,37 @@ extension Expr
         // All expr nodes have a single child.
         guard node.type == "expr", node.count == 1
           else { throw Exception("unexpected node type: '\(node.type)' != 'expr'") }
-        let child = node.child(at: 0)
+        let child = node[0]
 
         // The type of that child dictates its structure and its representation as an Expr.
-        switch child.type {
-          case "name" :
+        switch (child.type, child.count) {
+          case ("name", 0) :
             self = .name(child.stringValue(in: text))
-          case "numb" :
-            guard let value = Int(text[child.range(in: text)])
+          case ("numb", 0) :
+            guard let value = Int(child.stringValue(in: text))
               else { throw Exception("failed to parse int value") }
             self = .numb(value)
-          case "prefix_op" :
-            let (opNode, argNode) = try child.childrenAsPair()
-            let argExpr = try Self(argNode, in: text)
-            switch text[opNode.range(in: text)] {
+          case ("prefix_op", 2) :
+            let argExpr = try Self(child[1], in: text)
+            switch child[0].stringValue(in: text) {
               case "-" : self = .neg(argExpr)
               case let opName :
                 throw Exception("unexpected prefix operator: '\(opName)'")
             }
-          case "binary_op" :
-            let (lhsNode, opNode, rhsNode) = try child.childrenAsTriple()
-            let lhsExpr = try Self(lhsNode, in: text)
-            let rhsExpr = try Self(rhsNode, in: text)
-            switch text[opNode.range(in: text)] {
+          case ("binary_op", 3) :
+            let lhsExpr = try Self(child[0], in: text)
+            let rhsExpr = try Self(child[2], in: text)
+            switch child[1].stringValue(in: text) {
               case "+" : self = .add(lhsExpr, rhsExpr)
               case "*" : self = .mult(lhsExpr, rhsExpr)
               case "^" : self = .pow(lhsExpr, rhsExpr)
               case let opName :
                 throw Exception("unexpected binary operator: '\(opName)'")
             }
-          case "paren" :
-            let (_, exprNode, _) = try child.childrenAsTriple(firstType: "(", thirdType: ")")
-            self = try Self(exprNode, in: text)
+          case ("paren", 3) :
+            self = try Self(child[1], in: text)
           default :
-            throw Exception("unhandled node type '\(child.type)' for text '\(text[child.range(in: text)])'")
+            throw Exception("unexpected case (\(child.type), \(child.count)) in \(type(of: self)).\(#function)")
         }
       }
   }
