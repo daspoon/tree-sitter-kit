@@ -35,4 +35,38 @@ extension TSNode
     public subscript (_ index: Int) -> TSNode {
       ts_node_child(self, UInt32(index))
     }
+
+    /// Return the receiver's parent node, or *nil* if it has none.
+    public var parent : TSNode? {
+      let parent = ts_node_parent(self)
+      return ts_node_is_null(parent) ? nil : parent
+    }
+
+    /// Return the index of the given node within the receiver's subnodes, or *nil* if it doesn't exist.
+    public func index(of subnode: TSNode) -> Int? {
+      for i in 0 ..< count {
+        if self[i] == subnode {
+          return i
+        }
+      }
+      return nil
+    }
+
+    /// Return *true* if the receiver represents a syntax error.
+    public var isError : Bool {
+      ts_node_is_error(self)
+    }
+
+    /// Return *true* if the receiver or any of its descendants represents a syntax error.
+    public var hasError : Bool {
+      ts_node_has_error(self)
+    }
+  }
+
+
+extension TSNode : Equatable
+  {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+      ts_node_eq(lhs, rhs)
+    }
   }
