@@ -50,9 +50,21 @@ public struct TSCursor
       return node
     }
 
+
+    /// A convenience type for specifying a bracket symbol pairs.
+    public struct BracketPair {
+      public let leading : String
+      public let trailing : String
+      public init(leading l: String, trailing t: String) { leading = l; trailing = t }
+      public static var angle : Self { .init(leading: "<", trailing: ">") }
+      public static var curly : Self { .init(leading: "{", trailing: "}") }
+      public static var round : Self { .init(leading: "(", trailing: ")") }
+      public static var square : Self { .init(leading: "[", trailing: "]") }
+    }
+
     /// Scan a sequence of elements delimited by the given separator type and optionally enclosed by the given bracket types. The method (which takes the receiver and the index of the element to scan) must either advance the receiver's state and return *true* if an element is recognized, or leave the state intact and return *false* otherwise. Returns the number of scanned elements.
     @discardableResult
-    public mutating func scanElements(bracketedBy brackets: (leading: String, trailing: String)? = nil, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> Bool) throws -> Int {
+    public mutating func scanElements(bracketedBy brackets: BracketPair? = nil, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> Bool) throws -> Int {
       var count : Int = 0
       if let brackets {
         try scanNode(of: brackets.leading)
@@ -73,7 +85,7 @@ public struct TSCursor
     }
 
     /// Scan a sequence of elements delimited by the given separator type and optionally enclosed by the given bracket types. The method (which takes the receiver and the index of the element to scan) must either advance the receiver's state and return an element value, or leave the state intact and return *nil*. Returns the array of scanned elements.
-    public mutating func scanArray<T>(bracketedBy brackets: (leading: String, trailing: String)? = nil, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> T?) throws -> [T] {
+    public mutating func scanArray<T>(bracketedBy brackets: BracketPair? = nil, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> T?) throws -> [T] {
       var elements : [T] = []
       _ = try scanElements(bracketedBy: brackets, separatedBy: separator) { cursor, index in
         guard let element = try process(&cursor, index)
@@ -85,20 +97,20 @@ public struct TSCursor
     }
 
     /// Returns the result of invoking the preceding method if the current node represents a leading bracket, or *[]* otherwise.
-    public mutating func scanOptionalArray<T>(bracketedBy brackets: (leading: String, trailing: String), separatedBy separator: String, using process: (inout TSCursor, Int) throws -> T?) throws -> [T] {
+    public mutating func scanOptionalArray<T>(bracketedBy brackets: BracketPair, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> T?) throws -> [T] {
       guard node?.type == brackets.leading
         else { return [] }
       return try scanArray(bracketedBy: brackets, separatedBy: separator, using: process)
     }
 
     /// Scan a sequence of elements delimited by the given separator type and optionally enclosed by the given bracket types. The method (which takes the receiver and the index of the element to scan) must either advance the receiver's state and return a key/value pair, or leave the state intact and return *nil*. Returns the dictionary of scanned key/value pairs.
-    public mutating func scanDictionary<K, V>(bracketedBy brackets: (leading: String, trailing: String)?, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> (K, V)?) throws -> [K: V] {
+    public mutating func scanDictionary<K, V>(bracketedBy brackets: BracketPair?, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> (K, V)?) throws -> [K: V] {
       try Dictionary(try scanArray(bracketedBy: brackets, separatedBy: separator, using: process)) { _, _ in
         throw TSException("duplicate keys")
       }
     }
     /// Returns the result of invoking the preceding method if the current node represents a leading bracket, or *[:]* otherwise.
-    public mutating func scanOptionalDictionary<K, V>(bracketedBy brackets: (leading: String, trailing: String), separatedBy separator: String, using process: (inout TSCursor, Int) throws -> (K, V)?) throws -> [K: V] {
+    public mutating func scanOptionalDictionary<K, V>(bracketedBy brackets: BracketPair, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> (K, V)?) throws -> [K: V] {
       guard node?.type == brackets.leading
         else { return [:] }
       return try scanDictionary(bracketedBy: brackets, separatedBy: separator, using: process)
