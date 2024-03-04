@@ -44,8 +44,12 @@ public struct TSCursor
     /// Advance and return the current node if it is non-*nil* and has the given type, otherwise throw.
     @discardableResult
     public mutating func scanNode(of type: String? = nil) throws -> TSNode {
-      guard let node, type == nil || type == .some(node.type)
-        else { throw TSException("expecting a node of type '\(type ?? "<any>")'") }
+      guard let node
+        else { throw TSException("missing node\(type.map {" of type '\($0)'"} ?? "")") }
+      guard type == nil || type! == node.type
+        else { throw TSException("expecting '\(type!)' node; found \(node.type)") }
+      guard node.isError == false
+        else { throw TSException("encounered error node\(type.map {" of type '\($0)'"} ?? "")") }
       stack[stack.count-1].index += 1
       return node
     }
