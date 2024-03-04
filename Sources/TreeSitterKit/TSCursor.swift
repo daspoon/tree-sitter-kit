@@ -54,6 +54,10 @@ public struct TSCursor
       return node
     }
 
+    /// Scan and transform the current node.
+    public mutating func scanNode<T>(of type: String? = nil, transform: (TSNode) throws -> T) throws -> T {
+      try transform(try scanNode(of: type))
+    }
 
     /// A convenience type for specifying a bracket symbol pairs.
     public struct BracketPair {
@@ -98,6 +102,22 @@ public struct TSCursor
         return true
       }
       return elements
+    }
+
+    public mutating func scanKeyValuePairs<K, V>(bracketedBy brackets: BracketPair, separatedBy separator: String, using process: (inout TSCursor, Int) throws -> (K, V)?) throws -> ([K], [V]) where K: Hashable {
+      var pairs : ([K], [V]) = ([], [])
+      var keys : Set<K> = []
+      _ = try scanElements(bracketedBy: brackets, separatedBy: separator) { cursor, index in
+        guard let pair = try process(&cursor, index)
+          else { return false }
+        guard keys.contains(pair.0) == false
+          else { throw TSException("duplicate key: '\(pair.0)'") }
+        keys.insert(pair.0)
+        pairs.0.append(pair.0)
+        pairs.1.append(pair.1)
+        return true
+      }
+      return pairs
     }
 
     /// Returns the result of invoking the preceding method if the current node represents a leading bracket, or *[]* otherwise.

@@ -15,6 +15,12 @@ extension TSNode
       return String(cString: ts_node_type(self)!)
     }
 
+    public func hasType(_ type: String) -> Bool {
+      type.withCString { ptr in
+        strcmp(ptr, ts_node_type(self)) == 0
+      }
+    }
+
     /// Return the range represented by the receiver in the given text.
     public func range(in text: String) -> Range<String.Index> {
       let lb = text.index(text.startIndex, offsetBy: Int(ts_node_start_byte(self)))
@@ -60,6 +66,17 @@ extension TSNode
     /// Return *true* if the receiver or any of its descendants represents a syntax error.
     public var hasError : Bool {
       ts_node_has_error(self)
+    }
+  }
+
+
+extension TSNode : CustomStringConvertible
+  {
+    public var description : String {
+      guard let buffer = ts_node_string(self)
+        else { return "?" }
+      defer { free(buffer) }
+      return String(cString: buffer)
     }
   }
 
