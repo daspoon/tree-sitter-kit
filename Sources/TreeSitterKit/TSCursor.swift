@@ -157,3 +157,11 @@ public struct TSCursor
       }
     }
   }
+
+
+extension TSCursor : CustomStringConvertible
+  {
+    public var description : String {
+      "(stack: [\(stack.map({"(\($0.parent.type), \($0.index)<\($0.count))"}).joined(separator: ", "))], node: \(node?.type ?? "nil"))"
+    }
+  }
