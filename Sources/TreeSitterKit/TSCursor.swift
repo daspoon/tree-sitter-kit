@@ -147,11 +147,13 @@ public struct TSCursor
       stack.append(.init(parent: node))
     }
 
-    /// Ascend out of the current node, implicitly advancing to the next sibling of the current node's parent. Throw if the traversal has not met the current node's parent.
-    public mutating func exit() throws {
+    /// Ascend out of the current node, advancing to the next sibling of the current node's parent by default. Throw if the traversal has not met the current node's parent.
+    public mutating func exit(advance: Bool = true) throws {
       guard stack.count > 1
         else { throw TSException("invalid argument") }
       stack.removeLast()
-      stack[stack.count-1].index += 1
+      if advance {
+        stack[stack.count-1].index += 1
+      }
     }
   }
