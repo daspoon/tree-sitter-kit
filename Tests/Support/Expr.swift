@@ -28,7 +28,7 @@ extension Expr
       {
         let parser = TSParser(tree_sitter_funlang())
         guard let tree = parser.parse(text)
-          else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
+          else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
         self = try Expr(tree.rootNode[0], in: text)
       }
 
@@ -37,7 +37,7 @@ extension Expr
       {
         // All expr nodes have a single child.
         guard node.type == "expr", node.count == 1
-          else { throw Exception("unexpected node type: '\(node.type)' != 'expr'") }
+          else { throw TSException("unexpected node type: '\(node.type)' != 'expr'") }
         let child = node[0]
 
         // The type of that child dictates its structure and its representation as an Expr.
@@ -46,14 +46,14 @@ extension Expr
             self = .name(child.stringValue)
           case ("numb", 0) :
             guard let value = Int(child.stringValue)
-              else { throw Exception("failed to parse int value") }
+              else { throw TSException("failed to parse int value") }
             self = .numb(value)
           case ("prefix_op", 2) :
             let argExpr = try Self(child[1], in: text)
             switch child[0].stringValue {
               case "-" : self = .neg(argExpr)
               case let opName :
-                throw Exception("unexpected prefix operator: '\(String(describing: opName))'")
+                throw TSException("unexpected prefix operator: '\(String(describing: opName))'")
             }
           case ("binary_op", 3) :
             let lhsExpr = try Self(child[0], in: text)
@@ -63,12 +63,12 @@ extension Expr
               case "*" : self = .mult(lhsExpr, rhsExpr)
               case "^" : self = .pow(lhsExpr, rhsExpr)
               case let opName :
-                throw Exception("unexpected binary operator: '\(String(describing: opName))'")
+                throw TSException("unexpected binary operator: '\(String(describing: opName))'")
             }
           case ("paren", 3) :
             self = try Self(child[1], in: text)
           default :
-            throw Exception("unexpected case (\(child.type), \(child.count)) in \(type(of: self)).\(#function)")
+            throw TSException("unexpected case (\(child.type), \(child.count)) in \(type(of: self)).\(#function)")
         }
       }
   }
@@ -83,7 +83,7 @@ extension Expr
         case .numb(let v) :
           return v
         case .name(_) :
-          throw Exception("not implemented")
+          throw TSException("not implemented")
         case .add(let lhs, let rhs) :
           return (try lhs.evaluate()) + (try rhs.evaluate())
         case .mult(let lhs, let rhs) :

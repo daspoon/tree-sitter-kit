@@ -8,8 +8,8 @@
 /// A simple concrete type of *Error*.
 public struct TSException : Error
   {
-    let localizedDescription : String
+    public let localizedDescription : String
 
-    init(_ failureReason: String)
+    public init(_ failureReason: String)
       { localizedDescription = failureReason }
   }
