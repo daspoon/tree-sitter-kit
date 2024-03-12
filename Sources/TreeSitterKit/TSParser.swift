@@ -23,8 +23,8 @@ public class TSParser
     public func parse(_ text: String, existingTree: TSTree? = nil) -> TSTree? {
       // Note: can return nil iff parsing was cancelled
       let rawTree = text.withCString {
-        ts_parser_parse_string(ptr, existingTree?.ptr, $0, UInt32(text.utf8.count))
+        ts_parser_parse_string(ptr, existingTree?.opaqueTree, $0, UInt32(text.utf8.count))
       }
-      return rawTree.map { TSTree($0) }
+      return rawTree.map { TSTree(opaqueTree: $0, text: text) }
     }
   }

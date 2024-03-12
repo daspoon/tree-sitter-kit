@@ -24,16 +24,19 @@ extension TSNode
       }
     }
 
-    /// Return the range represented by the receiver in the given text.
-    public func range(in text: String) -> Range<String.Index> {
+    /// Return the substring of the parsed text which is represented by the receiver.
+    public var substringValue : Substring! {
+      guard let tree, let text = TSTree.getText(for: tree)
+        else { print("no text for tree \(tree)"); return nil }
       let lb = text.index(text.startIndex, offsetBy: Int(ts_node_start_byte(self)))
       let ub = text.index(text.startIndex, offsetBy: Int(ts_node_end_byte(self)))
-      return Range(uncheckedBounds: (lb, ub))
+      return text[Range(uncheckedBounds: (lb, ub))]
     }
 
-    /// Return the string represented by the receiver in the given text.
-    public func stringValue(in text: String) -> String
-      { String(text[range(in: text)]) }
+    /// Return the substring of the parsed text which is represented by the receiver.
+    public var stringValue : String! {
+      substringValue.map {String($0)}
+    }
 
     /// Return the number of child nodes.
     public var count : Int {
