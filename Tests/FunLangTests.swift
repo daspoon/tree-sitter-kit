@@ -10,6 +10,24 @@ import TreeSitterKit
 
 class FunLangTests : XCTestCase
   {
+    /// Use this to generate the text of Sources/FunLang/grammar.js
+    func testGenerateGrammar() throws {
+      print(Grammar.javascript(named: "FunLang", for: (Expr.self, Name.self, Int.self)))
+    }
+
+    /// Print the parse tree for various expressions.
+    func testParseTree() throws {
+      let examples : [String] = [
+        "a + b * c"
+      ]
+      for text in examples {
+        guard let tree = Expr.parser.parse(text)
+          else { XCTFail("parser failed to return a syntax tree for '\(text)'"); continue }
+        print("'\(text)' => \(tree.rootNode)")
+      }
+    }
+
+    /// Test the translation of various parse trees into *Expr* instances.
     func testParsing() throws {
       let examples : [(text: String, expr: Expr)] = [
         ("a", .name("a")),

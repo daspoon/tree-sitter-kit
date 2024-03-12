@@ -4,77 +4,62 @@
 
 */
 
-import FunLang
 import TreeSitterKit
+import FunLang
 
 
-public indirect enum Expr : Equatable
-  {
-    case name(String)
-    case numb(Int)
-    case add(Expr, Expr)
-    case mult(Expr, Expr)
-    case pow(Expr, Expr)
-    case neg(Expr)
+// A parsable type of arithmetic expressions; for testing purposes.
+
+indirect enum Expr : Equatable, ParsableAsChoice {
+  case name(Name)
+  case numb(Int)
+  case add(Expr, Expr)
+  case mult(Expr, Expr)
+  case pow(Expr, Expr)
+  case neg(Expr)
+
+  static var productionRuleChoices : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
+    return [
+      "Expr_name": (.rule(Name.self), { node in
+        .name(Name(node))
+      }),
+      "Expr_numb": (.rule(Int.self), { node in
+        .numb(Int(node))
+      }),
+      "Expr_add": (.prec(.left(3), .seq([.rule(Expr.self), .literal("+"), .rule(Expr.self)])), { node in
+        .add(Expr(node[0]), Expr(node[2]))
+      }),
+      "Expr_mul": (.prec(.left(4), .seq([.rule(Expr.self), .literal("*"), .rule(Expr.self)])), { node in
+        .mult(Expr(node[0]), Expr(node[2]))
+      }),
+      "Expr_pow": (.prec(.right(5), .seq([.rule(Expr.self), .literal("^"), .rule(Expr.self)])), { node in
+        .pow(Expr(node[0]), Expr(node[2]))
+      }),
+      "Expr_neg": (.prec(6, .seq([.literal("-"), .rule(Expr.self)])), { node in
+        .neg(Expr(node[1]))
+      }),
+      "Expr_paren": (.seq([.literal("("), .rule(Expr.self), .literal(")")]), { node in
+        Expr(node[1])
+      }),
+    ]
   }
+}
 
 
-// MARK: - parsing -
+// Define a convenience method to initialize an Expr instance from text.
 
-extension Expr
-  {
-    /// Initialize an expression from text.
-    public init(_ text: String) throws
-      {
-        let parser = TSParser(tree_sitter_funlang())
-        guard let tree = parser.parse(text)
-          else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
-        self = try Expr(tree.rootNode[0], in: text)
-      }
+extension Expr {
+  static let parser = TSParser(tree_sitter_FunLang())
 
-    /// Initialize an instance from the given 'expr' node of a syntax tree.
-    public init(_ node: TSNode, in text: String) throws
-      {
-        // All expr nodes have a single child.
-        guard node.type == "expr", node.count == 1
-          else { throw TSException("unexpected node type: '\(node.type)' != 'expr'") }
-        let child = node[0]
-
-        // The type of that child dictates its structure and its representation as an Expr.
-        switch (child.type, child.count) {
-          case ("name", 0) :
-            self = .name(child.stringValue)
-          case ("numb", 0) :
-            guard let value = Int(child.stringValue)
-              else { throw TSException("failed to parse int value") }
-            self = .numb(value)
-          case ("prefix_op", 2) :
-            let argExpr = try Self(child[1], in: text)
-            switch child[0].stringValue {
-              case "-" : self = .neg(argExpr)
-              case let opName :
-                throw TSException("unexpected prefix operator: '\(String(describing: opName))'")
-            }
-          case ("binary_op", 3) :
-            let lhsExpr = try Self(child[0], in: text)
-            let rhsExpr = try Self(child[2], in: text)
-            switch child[1].stringValue {
-              case "+" : self = .add(lhsExpr, rhsExpr)
-              case "*" : self = .mult(lhsExpr, rhsExpr)
-              case "^" : self = .pow(lhsExpr, rhsExpr)
-              case let opName :
-                throw TSException("unexpected binary operator: '\(String(describing: opName))'")
-            }
-          case ("paren", 3) :
-            self = try Self(child[1], in: text)
-          default :
-            throw TSException("unexpected case (\(child.type), \(child.count)) in \(type(of: self)).\(#function)")
-        }
-      }
+  init(_ text: String) throws {
+    guard let tree = Self.parser.parse(text)
+      else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
+    self.init(tree.rootNode)
   }
+}
 
 
-// MARK: - evaluation -
+// Define an evaluation method
 
 extension Expr
   {
