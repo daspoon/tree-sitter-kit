@@ -1,44 +1,25 @@
-
-// Define the grammar of 'funlang'.
-// Note that rules whose names begin with '_' do not appear in syntax trees.
-
 module.exports = grammar({
-    name: 'funlang',
+    name: 'FunLang',
     rules: {
-        // The first rule specifies the root node, and must be visible.
-        start: $ => $.expr,
-
-        // 'word' is a special rule which enables dismbiguating keywords from identifiers.
-        word: $ => $.name,
-
-        // Idenifiers
-        name: $ => /[a-z]+/,
-
-        // Numbers
-        numb: $ => /\d+/,
-
-        // Expressions
-        expr: $ => choice(
-            $.name,
-            $.numb,
-            $.binary_op,
-            $.prefix_op,
-            $.paren,
+        Expr: $ => choice(
+            $.Expr_neg,
+            $.Expr_add,
+            $.Expr_name,
+            $.Expr_numb,
+            $.Expr_mul,
+            $.Expr_pow,
+            $.Expr_paren
         ),
+        Expr_neg: $ => prec(6, seq('-', $.Expr)),
+        Expr_add: $ => prec.left(3, seq($.Expr, '+', $.Expr)),
+        Expr_name: $ => $.Name,
+        Expr_numb: $ => $.Int,
+        Expr_mul: $ => prec.left(4, seq($.Expr, '*', $.Expr)),
+        Expr_pow: $ => prec.right(5, seq($.Expr, '^', $.Expr)),
+        Expr_paren: $ => seq('(', $.Expr, ')'),
 
-        // Make this a distinct node to aid in translation
-        paren: $ => seq('(', $.expr, ')'),
+        Name: $ => /[a-z]+/,
 
-        // Prefix unary operators, with precedence.
-        prefix_op: $ => choice(
-            prec(4, seq('-', $.expr)),
-        ),
-
-        // Infix binary operators, with precedence and associativity.
-        binary_op: $ => choice(
-            prec.left(1, seq(field('lhs', $.expr), field('op', '+'), field('rhs', $.expr))),
-            prec.left(2, seq(field('lhs', $.expr), field('op', '*'), field('rhs', $.expr))),
-            prec.right(3, seq(field('lhs', $.expr), field('op', '^'), field('rhs', $.expr))),
-        ),
+        Int: $ => /[0-9]+/
     }
-});
+})
