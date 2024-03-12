@@ -12,28 +12,20 @@ public struct TSCursor
   {
     // Note: An initial implementation via TSTreeCursor did not behave as expected, so an explict stack was used instead...
 
+    private let tree : TSTree
     private var stack : [State]
     struct State {
       let parent : TSNode
       let count : Int
       var index : Int
-      init(parent p: TSNode, count n: Int, index i: Int) { parent = p; count = n; index = i }
-      init(parent p: TSNode, index i: Int = 0) { self.init(parent: p, count: p.count, index: i) }
+      init(parent p: TSNode) { parent = p; count = p.count; index = 0 }
       var node : TSNode? { index < count ? parent[index] : nil }
     }
 
     /// Initialize a new instance pointing to the *i*-th subnode of the given node; fails if either the given node has no subnodes or the given index is out of range.
-    public init(subnodesOf parent: TSNode, from i: Int = 0) throws {
-      let n = parent.count
-      guard (0 ..< n).contains(i) else { throw TSException("invalid arguments") }
-      stack = [.init(parent: parent, count: n, index: i)]
-    }
-
-    /// Initialize a new instance pointing to the given node.
-    public init(node: TSNode) throws {
-      guard let parent = node.parent, let index = parent.index(of: node)
-        else { throw TSException("invalid argument") }
-      try self.init(subnodesOf: parent, from: index)
+    public init(tree t: TSTree) {
+      tree = t
+      stack = [.init(parent: t.rootNode)]
     }
 
     /// The current node, or *nil* if there is none.
@@ -140,17 +132,17 @@ public struct TSCursor
       return try scanDictionary(bracketedBy: brackets, separatedBy: separator, using: process)
     }
 
-    /// Descend into the current node. Throw if the current node is *nil* or has no subnodes.
-    public mutating func enter() throws {
+    /// Descend into the current node and return the *type* of that node. Return *nil* if the current node is *nil* or has no subnodes.
+    public mutating func enter() -> String? {
       guard let node, node.count > 0
-        else { throw TSException("invalid argument") }
+        else { return nil }
       stack.append(.init(parent: node))
+      return node.type
     }
 
-    /// Ascend out of the current node, advancing to the next sibling of the current node's parent by default. Throw if the traversal has not met the current node's parent.
-    public mutating func exit(advance: Bool = true) throws {
-      guard stack.count > 1
-        else { throw TSException("invalid argument") }
+    /// Ascend out of the current node, optinoally advancing to the next sibling of the current node's parent (as the default behavior). Each invocation of this method must balance a prior invocation of *enter*.
+    public mutating func exit(advance: Bool = true) {
+      precondition(stack.count > 1)
       stack.removeLast()
       if advance {
         stack[stack.count-1].index += 1
