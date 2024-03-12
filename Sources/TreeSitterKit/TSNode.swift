@@ -7,6 +7,9 @@
 import TreeSitter
 
 
+public typealias TSNode = TreeSitter.TSNode
+
+
 extension TSNode
   {
     /// Return the receiver's type.
