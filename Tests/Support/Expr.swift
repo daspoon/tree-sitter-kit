@@ -8,15 +8,15 @@ import TreeSitterKit
 import FunLang
 
 
-// A parsable type of arithmetic expressions; for testing purposes.
+// A parsable type of arithmetic expressions.
 
 indirect enum Expr : Equatable, ParsableAsChoice {
   case name(Name)
   case numb(Int)
-  case add(Expr, Expr)
-  case mult(Expr, Expr)
-  case pow(Expr, Expr)
-  case neg(Expr)
+  case apply(Expr, Expr)
+  case lambda(Name, Expr)
+  case tuple([Expr])
+  case project(Expr, Int)
 
   static var productionRuleChoices : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
@@ -26,27 +26,48 @@ indirect enum Expr : Equatable, ParsableAsChoice {
       "Expr_numb": (.rule(Int.self), { node in
         .numb(Int(node))
       }),
-      "Expr_add": (.prec(.left(3), .seq([.rule(Expr.self), .literal("+"), .rule(Expr.self)])), { node in
-        .add(Expr(node[0]), Expr(node[2]))
+      "Expr_apply": (.prec(.apply, .seq([.rule(Expr.self), .rule(Expr.self)])), { node in
+        .apply(Expr(node[0]), Expr(node[1]))
       }),
-      "Expr_mul": (.prec(.left(4), .seq([.rule(Expr.self), .literal("*"), .rule(Expr.self)])), { node in
-        .mult(Expr(node[0]), Expr(node[2]))
+      "Expr_lambda": (.seq([.literal("!"), .rule(Name.self), .literal("."), .rule(Expr.self)]), { node in
+        .lambda(Name(node[1]), Expr(node[3]))
       }),
-      "Expr_pow": (.prec(.right(5), .seq([.rule(Expr.self), .literal("^"), .rule(Expr.self)])), { node in
-        .pow(Expr(node[0]), Expr(node[2]))
+      "Expr_tuple": (.rule([Expr].self), { node in
+        { exprs in exprs.count == 1 ? exprs[0] : .tuple(exprs) }([Expr](node[0]))
       }),
-      "Expr_neg": (.prec(6, .seq([.literal("-"), .rule(Expr.self)])), { node in
-        .neg(Expr(node[1]))
+      "Expr_project": (.prec(.proj, .seq([.rule(Expr.self), .literal("."), .rule(Int.self)])), { node in
+        .project(Expr(node[0]), Int(node[2]))
       }),
-      "Expr_paren": (.seq([.literal("("), .rule(Expr.self), .literal(")")]), { node in
-        Expr(node[1])
+      "Expr_add": (.prec(.add, .seq([.rule(Expr.self), .literal("+"), .rule(Expr.self)])), { node in
+        .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
+      }),
+      "Expr_mul": (.prec(.mult, .seq([.rule(Expr.self), .literal("*"), .rule(Expr.self)])), { node in
+        .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
+      }),
+      "Expr_pow": (.prec(.power, .seq([.rule(Expr.self), .literal("^"), .rule(Expr.self)])), { node in
+        .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
+      }),
+      "Expr_neg": (.prec(.neg, .seq([.literal("-"), .rule(Expr.self)])), { node in
+        .apply(.name(Name(node[0])), Expr(node[1]))
       }),
     ]
   }
 }
 
 
-// Define a convenience method to initialize an Expr instance from text.
+// Define operator precedence symbolically
+
+extension TSExpression.Prec {
+  static var apply : Self {  .left(1) }
+  static var add : Self   {  .left(2) }
+  static var mult : Self  {  .left(3) }
+  static var power : Self { .right(4) }
+  static var neg : Self   {  .none(5) }
+  static var proj : Self  {  .left(6) }
+}
+
+
+// Define a method to create an Expr from text.
 
 extension Expr {
   static let parser = TSParser(tree_sitter_FunLang())
@@ -54,36 +75,29 @@ extension Expr {
   init(_ text: String) throws {
     guard let tree = Self.parser.parse(text)
       else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
+    guard tree.rootNode.hasError == false
+      else { throw TSException("error in parse tree for '\(text)': \(tree.rootNode.description)") }
     self.init(tree.rootNode)
   }
 }
 
 
-// Define an evaluation method
+// Define some constructors to make tests more concise.
 
-extension Expr
-  {
-    public func evaluate() throws -> Int {
-      switch self {
-        case .numb(let v) :
-          return v
-        case .name(_) :
-          throw TSException("not implemented")
-        case .add(let lhs, let rhs) :
-          return (try lhs.evaluate()) + (try rhs.evaluate())
-        case .mult(let lhs, let rhs) :
-          return (try lhs.evaluate()) * (try rhs.evaluate())
-        case .pow(let lhs, let rhs) :
-          return Self.power(try lhs.evaluate(), try rhs.evaluate())
-        case .neg(let arg) :
-          return -(try arg.evaluate())
-      }
-    }
+extension Expr : ExpressibleByStringLiteral {
+  init(stringLiteral s: String)
+    { self = .name(.init(stringLiteral: s)) }
+}
 
-  private static func power(_ i: Int, _ j: Int) -> Int
-    {
-      var result = 1
-      for _ in 0 ..< j { result *= i }
-      return result
-    }
+extension Expr : ExpressibleByIntegerLiteral {
+  init(integerLiteral n: Int)
+    { self = .numb(n) }
+}
+
+extension Expr {
+  static func infix_op(_ op: String, _ lhs: Self, _ rhs: Self) -> Self
+    { .apply(.name(Name(stringLiteral: op)), .tuple([lhs, rhs])) }
+
+  static func prefix_op(_ op: String, _ arg: Self) -> Self
+    { .apply(.name(Name(stringLiteral: op)), arg) }
 }
