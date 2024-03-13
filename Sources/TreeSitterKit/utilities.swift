@@ -5,6 +5,18 @@
 */
 
 
+extension Array : Parsable where Element : Parsable {
+  public static var symbolName : String
+    { "ArrayOf\(Element.symbolName)" }
+
+  public static var productionRule : ProductionRule<Self>
+    { .single(.list(of: Element.self, bracketedBy: ("(", ")"), separatedBy: ",")) }
+
+  public init(_ node: TSNode)
+    { self = stride(from: 1, to: node.count, by: 2).map { i in Element(node[i]) } }
+}
+
+
 extension Int : Parsable {
   public static var productionRule : ProductionRule<Self>
     { .single(.pattern("[0-9]+")) }

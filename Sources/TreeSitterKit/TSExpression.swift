@@ -26,9 +26,14 @@ public indirect enum TSExpression {
   case choice([TSExpression])
   /// Specifies precedence, and optionally associativity, for a given expression.
   case prec(Prec, TSExpression)
+  /// A possibly empty sequence of a parsable type, bracketed and separated by the given (literal) strings.
+  case list(String, Any.Type, (lhs: String, rhs: String), String)
 
   public static func rule<T: Parsable>(_ type: T.Type) -> Self
     { .rule(T.symbolName, T.self) }
+
+  public static func list<T: Parsable>(of type: T.Type, bracketedBy brackets: (lhs: String, rhs: String), separatedBy separator: String) -> Self
+    { .list(T.symbolName, T.self, brackets, separator) }
 
   /// Return the receiver's javascript representation.
   public var javascript : String {
@@ -49,6 +54,8 @@ public indirect enum TSExpression {
         return "prec.left(\(n), \(expr.javascript))"
       case .prec(.right(let n), let expr) :
         return "prec.right(\(n), \(expr.javascript))"
+      case .list(let name, _, let brackets, let separator) :
+        return "seq('\(brackets.lhs)', optional(seq($.\(name), repeat(seq('\(separator)', $.\(name))))), '\(brackets.rhs)')"
     }
   }
 }
