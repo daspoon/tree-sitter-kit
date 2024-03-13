@@ -28,13 +28,27 @@ struct TreeSitterGen : CommandPlugin
       { parserCDir(in: directory).appending(["tree_sitter"]) }
     func parserHPath(in directory: Path) -> Path
       { parserHDir(in: directory).appending(["parser.h"]) }
+    func includeDir(in directory: Path) -> Path
+      { directory.appending(["include"]) }
+    func includeFile(in directory: Path) -> Path
+      { includeDir(in: directory).appending("exports.h") }
 
+    /// The content of the generated include file.
+    func includeText(with languageName: any StringProtocol) -> String {
+      """
+      #include <tree_sitter/api.h>
+      TSLanguage *tree_sitter_\(languageName)();
+      """
+    }
 
     func performCommand(context: PluginContext, arguments: [String]) throws
       {
         var args = ArgumentExtractor(arguments)
 
         let fileManager = FileManager.default
+
+        // Regex to extract the grammar name from the content of each grammar.js
+        let grammarNameRegex = try Regex("module\\.exports\\s*=\\s*grammar\\s*\\(\\s*{\\s*name\\s*:\\s*'([a-zA-Z_]+)'")
 
         // Iterate over the target names specified as options
         for target in try context.package.targets(named: args.extractOption(named: "target")) {
@@ -50,8 +64,15 @@ struct TreeSitterGen : CommandPlugin
           guard fileManager.fileExists(atPath: grammarPath)
             else { print("target \(target.name) does not contain '\(grammarFileName)'"); continue }
 
+          // Read grammar.js and extract the specified name
+          let grammarText = try String(contentsOfFile: grammarPath)
+          guard let match = grammarText.firstMatch(of: grammarNameRegex), let nameRange = match[1].range
+            else { throw Exception("failed to extract name from grammar file") }
+          // WTF: Regex behaves differently here than in a playground, returning the whole match rather than the capture text...
+          let grammarName = grammarText[nameRange]
+
           // Invoke 'tree-sitter generate' with the specified grammar and working directory.
-          print("processing \(grammarPath) in \(workingDir)")
+          print("processing '\(grammarName)' in \(workingDir)")
           let process = Process()
           process.executableURL = URL(fileURLWithPath: treeSitterPath)
           process.arguments = ["generate", grammarPath]
@@ -65,14 +86,12 @@ struct TreeSitterGen : CommandPlugin
           try fileManager.createDirectory(at: parserHDir(in: sourceDir), withIntermediateDirectories: true)
           try fileManager.moveItem(at: parserCPath(in: workingDir), to: parserCPath(in: sourceDir), overwriteExisting: true)
           try fileManager.moveItem(at: parserHPath(in: workingDir), to: parserHPath(in: sourceDir), overwriteExisting: true)
+
+          // Write the target include file defining the language.
+          guard let includeData = includeText(with: grammarName).data(using: .utf8)
+            else { throw Exception("failed to encode include file text as UTF8") }
+          try fileManager.createDirectory(at: includeDir(in: sourceDir), withIntermediateDirectories: true)
+          try fileManager.writeData(includeData, to: includeFile(in: sourceDir))
         }
-      }
-
-
-    /// Note that command plugins can't import modules other than Foundation.
-    struct Exception : Error
-      {
-        let failureReason : String
-        init(_ reason: String) { failureReason = reason }
       }
   }
