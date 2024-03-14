@@ -12,7 +12,7 @@ class FunLangTests : XCTestCase
   {
     /// Use this to generate the text of Sources/FunLang/grammar.js
     func testGenerateGrammar() throws {
-      print(Grammar.javascript(named: "FunLang", for: (Expr.self, Name.self, Int.self, [Expr].self)))
+      print(Grammar.javascript(named: "FunLang", for: (Expr.self, Name.self, Int.self, [Expr].self, [Name].self)))
     }
 
     /// Print the parse tree for various expressions.
@@ -46,21 +46,29 @@ class FunLangTests : XCTestCase
           .tuple(["a", "b"])),
         ("1 + a * 3 ^ -b",
           .infix_op("+", 1, .infix_op("*", "a", .infix_op("^", 3, .prefix_op("-", "b"))))),
-        ("f 1",
+        ("f()",
+          .apply("f", .tuple([]))),
+        ("f(1)",
           .apply("f", 1)),
-        ("f 1 2 3",
-          .apply(.apply(.apply("f", 1), 2), 3)),
-        ("f (g (h x))",
-          .apply("f", .apply("g", .apply("h", "x")))),
-        ("!x. x",
-          .lambda("x", "x")),
-        ("!x. x y",
-          .lambda("x", .apply("x", "y"))),
-        ("(!x.x + 1) 2",
-          .apply(.lambda("x", .infix_op("+", "x", 1)), 2)),
-        ("p.1 x",
+        ("f(1, 2, 3)",
+          .apply("f", .tuple([1, 2, 3]))),
+        ("f(g(x))",
+          .apply("f", .apply("g", "x"))),
+        ("!(). x",
+          .lambda([], "x")),
+        ("!(x). x",
+          .lambda(["x"], "x")),
+        ("!(x, y). x",
+          .lambda(["x", "y"], "x")),
+        ("!f(). 1",
+          .mu("f", [], 1)),
+        ("!f(x). f(x)",
+          .mu("f", ["x"], .apply("f", "x"))),
+        ("(!(x).x + 1)(2)",
+          .apply(.lambda(["x"], .infix_op("+", "x", 1)), 2)),
+        ("p.1(x)",
           .apply(.project("p", 1), "x")),
-        ("f p.1",
+        ("f(p.1)",
           .apply("f", .project("p", 1))),
         ("p.1 + p.2",
           .infix_op("+", .project("p", 1), .project("p", 2))),

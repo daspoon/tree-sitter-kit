@@ -14,7 +14,8 @@ indirect enum Expr : Equatable, ParsableAsChoice, ParsableAsArray {
   case name(Name)
   case numb(Int)
   case apply(Expr, Expr)
-  case lambda(Name, Expr)
+  case lambda([Name], Expr)
+  case mu(Name, [Name], Expr)
   case tuple([Expr])
   case project(Expr, Int)
 
@@ -26,47 +27,66 @@ indirect enum Expr : Equatable, ParsableAsChoice, ParsableAsArray {
       "Expr_numb": (.rule(Int.self), { node in
         .numb(Int(node))
       }),
-      "Expr_apply": (.prec(.apply, .seq([.rule(Expr.self), .rule(Expr.self)])), { node in
-        .apply(Expr(node[0]), Expr(node[1]))
+      "Expr_apply": (.prec(.apply, .seq([.rule(Expr.self), .rule([Expr].self)])), { node in
+        .apply(Expr(node[0]), .parenthesized(node[1]))
       }),
-      "Expr_lambda": (.seq([.literal("!"), .rule(Name.self), .literal("."), .rule(Expr.self)]), { node in
-        .lambda(Name(node[1]), Expr(node[3]))
+      "Expr_lambda": (.seq([.literal("!"), .rule([Name].self), .literal("."), .rule(Expr.self)]), { node in
+        .lambda([Name](node[1]), Expr(node[3]))
+      }),
+      "Expr_mu": (.seq([.literal("!"), .rule(Name.self), .rule([Name].self), .literal("."), .rule(Expr.self)]), { node in
+        .mu(Name(node[1]), [Name](node[2]), Expr(node[4]))
       }),
       "Expr_tuple": (.rule([Expr].self), { node in
-        { exprs in exprs.count == 1 ? exprs[0] : .tuple(exprs) }([Expr](node[0]))
+        .parenthesized(node[0])
       }),
-      "Expr_project": (.prec(.proj, .seq([.rule(Expr.self), .literal("."), .rule(Int.self)])), { node in
+      "Expr_project": (.infix(.proj, ".", lhs: Expr.self, rhs: Int.self), { node in
         .project(Expr(node[0]), Int(node[2]))
       }),
-      "Expr_add": (.prec(.add, .seq([.rule(Expr.self), .literal("+"), .rule(Expr.self)])), { node in
-        .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
-      }),
-      "Expr_mul": (.prec(.mult, .seq([.rule(Expr.self), .literal("*"), .rule(Expr.self)])), { node in
-        .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
-      }),
-      "Expr_pow": (.prec(.power, .seq([.rule(Expr.self), .literal("^"), .rule(Expr.self)])), { node in
-        .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
-      }),
-      "Expr_neg": (.prec(.neg, .seq([.literal("-"), .rule(Expr.self)])), { node in
-        .apply(.name(Name(node[0])), Expr(node[1]))
-      }),
+      "Expr_eql": (.infix(.eql, "==", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
+      "Expr_or" : (.infix(.or, "||", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
+      "Expr_and": (.infix(.and, "&&", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
+      "Expr_add": (.infix(.add, "+", "-", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
+      "Expr_mul": (.infix(.mult, "*", "/", "%", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
+      "Expr_pow": (.infix(.power, "^", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
+      "Expr_neg": (.prefix(.neg, "-", arg: Expr.self), { .prefix($0) }),
     ]
   }
+}
 
-  static let separatorLiteral : String = ","
-  static let bracketLiterals : (lhs: String, rhs: String) = ("(", ")")
+
+// Define methods to make grammar spec more concise
+
+extension Expr {
+  /// Given a node representing a bracketed sequence of exprs, return either the sole element or a tuple consisting of zero, two or more elements.
+  static func parenthesized(_ node: TSNode) -> Self {
+    let exprs = [Expr](node)
+    return exprs.count == 1 ? exprs[0] : .tuple(exprs)
+  }
+
+  /// Create an application expr from a node representing an infix operator.
+  static func infix(_ node: TSNode) -> Self {
+    .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
+  }
+
+  /// Create an application expr from a node representing an prefix operator.
+  static func prefix(_ node: TSNode) -> Self {
+    .apply(.name(Name(node[0])), Expr(node[1]))
+  }
 }
 
 
 // Define operator precedence symbolically
 
 extension TSExpression.Prec {
-  static var apply : Self {  .left(1) }
-  static var add : Self   {  .left(2) }
-  static var mult : Self  {  .left(3) }
-  static var power : Self { .right(4) }
-  static var neg : Self   {  .none(5) }
-  static var proj : Self  {  .left(6) }
+  static var eql : Self   {  .left(1) }
+  static var or  : Self   {  .left(2) }
+  static var and : Self   {  .left(3) }
+  static var add : Self   {  .left(4) }
+  static var mult : Self  {  .left(5) }
+  static var power : Self { .right(6) }
+  static var neg : Self   {  .none(7) }
+  static var proj : Self  {  .left(8) }
+  static var apply : Self {  .left(9) }
 }
 
 

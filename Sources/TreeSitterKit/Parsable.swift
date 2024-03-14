@@ -25,10 +25,17 @@ extension Parsable {
 
 /// A specialization of *Parsable* which allows parsing arrays of the conforming type.
 public protocol ParsableAsArray : Parsable {
-  /// The pair of literal strings which encloses array elements.
+  /// The pair of literal strings which encloses array elements. The default implementation returns *("(", ")")*.
   static var bracketLiterals : (lhs: String, rhs: String) { get }
-  /// The literal string which separates array elements.
+  /// The literal string which separates array elements. The default implementation returns *","*.
   static var separatorLiteral : String { get }
+}
+
+extension ParsableAsArray {
+  public static var bracketLiterals : (lhs: String, rhs: String)
+    { ("(", ")") }
+  public static var separatorLiteral : String
+    { "," }
 }
 
 
