@@ -13,7 +13,16 @@ extension Array : Parsable where Element : Parsable {
     { .single(.list(of: Element.self, bracketedBy: ("(", ")"), separatedBy: ",")) }
 
   public init(_ node: TSNode)
-    { self = stride(from: 1, to: node.count, by: 2).map { i in Element(node[i]) } }
+    {
+      let n = node.count
+      assert(n >= 2)
+      switch n {
+        case 2 : self = []
+        default :
+          assert(n % 2 == 1)
+          self = stride(from: 1, to: n, by: 2).map { i in Element(node[i]) }
+      }
+    }
 }
 
 
