@@ -25,6 +25,7 @@ public enum ProductionRule<T: Parsable>
           case .single(let expr) :
             return seq(label: T.symbolName, expression: expr)
           case .multiple(let choices) :
+            let choices = choices.sorted(by: {$0.key < $1.key})
             let lines = [choice(label: T.symbolName, indent: i, sublabels: choices.map {$0.key})]
               + choices.map({seq(label: $0.key, expression: $0.value.0)})
             return lines.joined(separator: ",\n")
