@@ -35,6 +35,12 @@ public indirect enum TSExpression {
   public static func list<T: ParsableAsArray>(of type: T.Type) -> Self
     { .list(T.symbolName, T.self, T.bracketLiterals, T.separatorLiteral) }
 
+  public static func infix<L: Parsable, R: Parsable>(_ prec: TSExpression.Prec, _ op: String..., lhs: L.Type, rhs: R.Type) -> Self
+    { .prec(prec, .seq([.rule(L.self), .choice(op.map {.literal($0)}), .rule(R.self)])) }
+
+  public static func prefix<T: Parsable>(_ prec: TSExpression.Prec, _ op: String..., arg: T.Type) -> Self
+    { .prec(prec, .seq([.choice(op.map {.literal($0)}), .rule(T.self)])) }
+
   /// Return the receiver's javascript representation.
   public var javascript : String {
     switch self {
