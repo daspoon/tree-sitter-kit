@@ -23,6 +23,15 @@ extension Parsable {
 }
 
 
+/// A specialization of *Parsable* which allows parsing arrays of the conforming type.
+public protocol ParsableAsArray : Parsable {
+  /// The pair of literal strings which encloses array elements.
+  static var bracketLiterals : (lhs: String, rhs: String) { get }
+  /// The literal string which separates array elements.
+  static var separatorLiteral : String { get }
+}
+
+
 /// *ParsableAsChoice* simplifies conformance to *Parsable* for types which require multiple production rules, such as enums.
 public protocol ParsableAsChoice : Parsable {
   /// A mapping of sub-rule names to pairs of syntax expressions and instance constructors.

@@ -5,12 +5,12 @@
 */
 
 
-extension Array : Parsable where Element : Parsable {
+extension Array : Parsable where Element : ParsableAsArray {
   public static var symbolName : String
     { "ArrayOf\(Element.symbolName)" }
 
   public static var productionRule : ProductionRule<Self>
-    { .single(.list(of: Element.self, bracketedBy: ("(", ")"), separatedBy: ",")) }
+    { .single(.list(of: Element.self)) }
 
   public init(_ node: TSNode)
     {

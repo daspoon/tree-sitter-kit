@@ -32,8 +32,8 @@ public indirect enum TSExpression {
   public static func rule<T: Parsable>(_ type: T.Type) -> Self
     { .rule(T.symbolName, T.self) }
 
-  public static func list<T: Parsable>(of type: T.Type, bracketedBy brackets: (lhs: String, rhs: String), separatedBy separator: String) -> Self
-    { .list(T.symbolName, T.self, brackets, separator) }
+  public static func list<T: ParsableAsArray>(of type: T.Type) -> Self
+    { .list(T.symbolName, T.self, T.bracketLiterals, T.separatorLiteral) }
 
   /// Return the receiver's javascript representation.
   public var javascript : String {
