@@ -20,7 +20,7 @@ struct MatchCase : Equatable {
 }
 
 
-extension MatchCase : ParsableAsArray {
+extension MatchCase : ParsableInSequence {
   static var productionRule : ProductionRule<Self>
     { .single(.seq([.rule(Name.self), .rule([Name].self), .literal("=>"), .rule(Expr.self)])) }
 

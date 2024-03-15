@@ -5,7 +5,7 @@
 */
 
 
-extension Array : Parsable where Element : ParsableAsArray {
+extension Array : Parsable where Element : ParsableInSequence {
   public static var symbolName : String
     { "ArrayOf\(Element.symbolName)" }
 

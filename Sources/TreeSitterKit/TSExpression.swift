@@ -33,7 +33,7 @@ public indirect enum TSExpression {
   public static func rule<T: Parsable>(_ type: T.Type) -> Self
     { .rule(ParsableTypeProxy(T.self)) }
 
-  public static func list<T: ParsableAsArray>(of type: T.Type) -> Self
+  public static func list<T: ParsableInSequence>(of type: T.Type) -> Self
     { .list(ParsableTypeProxy(T.self), T.bracketLiterals, T.separatorLiteral) }
 
   public static func infix<L: Parsable, R: Parsable>(_ prec: TSExpression.Prec, _ op: String..., lhs: L.Type, rhs: R.Type) -> Self

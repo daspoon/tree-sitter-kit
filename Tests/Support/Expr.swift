@@ -10,7 +10,7 @@ import FunLang
 
 // A parsable type of arithmetic expressions.
 
-indirect enum Expr : Equatable, ParsableAsChoice, ParsableAsArray {
+indirect enum Expr : Equatable, ParsableByMultipleChoice, ParsableInSequence {
   case name(Name)
   case numb(Int)
   case apply(Expr, Expr)
@@ -20,7 +20,7 @@ indirect enum Expr : Equatable, ParsableAsChoice, ParsableAsArray {
   case project(Expr, Int)
   case match(Expr, [MatchCase])
 
-  static var productionRuleChoices : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
+  static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
       "Expr_name": (.rule(Name.self), { node in
         .name(Name(node))

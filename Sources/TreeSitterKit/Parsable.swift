@@ -62,15 +62,15 @@ extension Parsable {
 }
 
 
-/// A specialization of *Parsable* which allows parsing arrays of the conforming type.
-public protocol ParsableAsArray : Parsable {
+/// A specialization of *Parsable* which allows parsing sequences of the conforming type.
+public protocol ParsableInSequence : Parsable {
   /// The pair of literal strings which encloses array elements. The default implementation returns *("(", ")")*.
   static var bracketLiterals : (lhs: String, rhs: String) { get }
   /// The literal string which separates array elements. The default implementation returns *","*.
   static var separatorLiteral : String { get }
 }
 
-extension ParsableAsArray {
+extension ParsableInSequence {
   public static var bracketLiterals : (lhs: String, rhs: String)
     { ("(", ")") }
   public static var separatorLiteral : String
@@ -78,23 +78,21 @@ extension ParsableAsArray {
 }
 
 
-/// *ParsableAsChoice* simplifies conformance to *Parsable* for types which require multiple production rules, such as enums.
-public protocol ParsableAsChoice : Parsable {
+/// *ParsableByMultipleChoice* simplifies conformance to *Parsable* for types which require multiple production rules, such as enums.
+public protocol ParsableByMultipleChoice : Parsable {
   /// A mapping of sub-rule names to pairs of syntax expressions and instance constructors.
-  static var productionRuleChoices : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] { get }
+  static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] { get }
 }
 
-extension ParsableAsChoice
-  {
-    public static var productionRule : ProductionRule<Self>
-      { .multiple(productionRuleChoices) }
+extension ParsableByMultipleChoice {
+  public static var productionRule : ProductionRule<Self>
+    { .multiple(productionsByChoiceName) }
 
-    public init(_ node: TSNode)
-      {
-        precondition(node.type == Self.symbolName && node.count == 1)
-        let child = node[0]
-        guard let choice = Self.productionRuleChoices[child.type]
-          else { fatalError() }
-        self = choice.constructor(child)
-      }
-  }
+  public init(_ node: TSNode) {
+      precondition(node.type == Self.symbolName && node.count == 1)
+      let child = node[0]
+      guard let choice = Self.productionsByChoiceName[child.type]
+        else { fatalError() }
+      self = choice.constructor(child)
+    }
+}
