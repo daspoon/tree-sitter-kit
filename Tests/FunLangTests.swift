@@ -12,7 +12,7 @@ class FunLangTests : XCTestCase
   {
     /// Use this to generate the text of Sources/FunLang/grammar.js
     func testGenerateGrammar() throws {
-      print(Grammar.javascript(named: "FunLang", for: (Expr.self, Name.self, Int.self, [Expr].self, [Name].self)))
+      print(Grammar.javascript(named: "FunLang", for: (Expr.self, Name.self, Int.self, [Expr].self, [Name].self, MatchCase.self, [MatchCase].self)))
     }
 
     /// Print the parse tree for various expressions.
@@ -72,6 +72,11 @@ class FunLangTests : XCTestCase
           .apply("f", .project("p", 1))),
         ("p.1 + p.2",
           .infix_op("+", .project("p", 1), .project("p", 2))),
+        ("match f(x) { nil() => 1, cons(h,t) => 2 }",
+          .match(.apply("f", "x"), [
+            .init(name: "nil", expr: 1),
+            .init(name: "cons", params: ["h", "t"], expr: 2),
+          ])),
       ]
       for eg in examples {
         let expr = try Expr(eg.text)

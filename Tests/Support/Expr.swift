@@ -18,6 +18,7 @@ indirect enum Expr : Equatable, ParsableAsChoice, ParsableAsArray {
   case mu(Name, [Name], Expr)
   case tuple([Expr])
   case project(Expr, Int)
+  case match(Expr, [MatchCase])
 
   static var productionRuleChoices : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
@@ -41,6 +42,9 @@ indirect enum Expr : Equatable, ParsableAsChoice, ParsableAsArray {
       }),
       "Expr_project": (.infix(.proj, ".", lhs: Expr.self, rhs: Int.self), { node in
         .project(Expr(node[0]), Int(node[2]))
+      }),
+      "Expr_match": (.seq([.literal("match"), .rule(Expr.self), .rule([MatchCase].self)]), { node in
+        .match(Expr(node[1]), [MatchCase](node[2]))
       }),
       "Expr_eql": (.infix(.eql, "==", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
       "Expr_or" : (.infix(.or, "||", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
