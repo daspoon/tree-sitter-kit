@@ -18,8 +18,47 @@ public protocol Parsable {
 }
 
 extension Parsable {
+  /// Default implementation.
   public static var symbolName : String
     { "\(Self.self)" }
+
+  /// Return the associated syntax expression.
+  public static var syntaxExpression : TSExpression {
+    switch productionRule {
+      case .single(let expr) : return expr
+      case .multiple(let cases) :
+        return .choice(cases.map { _, pair in pair.0 })
+    }
+  }
+
+  /// Return the set of representatives of *Parsable* types (excluding the receiver) which are reachable from the receiver's syntax expression.
+  public static var supportingTypeProxies : Set<ParsableTypeProxy> {
+    let root = ParsableTypeProxy(Self.self)
+    var visited : Set<ParsableTypeProxy> = []
+    var remaining : Set<ParsableTypeProxy> = [root]
+
+    while remaining.isEmpty == false {
+      let proxy = remaining.removeFirst()
+      visited.insert(proxy)
+      func walk(_ expr: TSExpression) {
+        switch expr {
+          case .rule(let proxy), .list(let proxy, _, _) :
+            guard visited.contains(proxy) == false else { break }
+            remaining.insert(proxy)
+          case .seq(let exprs), .choice(let exprs) :
+            exprs.forEach { walk($0) }
+          case .prec(_, let expr) :
+            walk(expr)
+          case .literal, .pattern :
+            break
+        }
+      }
+      walk(proxy.syntaxExpression)
+    }
+    visited.remove(root)
+
+    return visited
+  }
 }
 
 

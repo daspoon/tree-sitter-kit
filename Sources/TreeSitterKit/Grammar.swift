@@ -5,23 +5,26 @@
 */
 
 
-public struct Grammar {
+/// A *Grammar* generates the javascript source for a tree-sitter grammar with a specified name. The production rules are determined by the *Root* type and each *Parsable* type reachable through its *syntaxExpression*.
+public struct Grammar<Root: Parsable> {
+  /// The name assigned to the generated grammar.
+  public let name : String
 
-  /// Return the javascript representation of a tree-sitter grammar for the given sequence of *Parsable* data types. Note that the first type determines the start symbol.
-  public static func javascript<each T: Parsable>(named name: String, for types: (repeat (each T).Type)) -> String {
-    var components : [String] = []
-    repeat components.append(javascript(for: each types).indented(8))
+  public init(name n: String) {
+    name = n
+  }
+
+  /// Return the javascript representation of a tree-sitter grammar.
+  public var javascript : String {
+    // Form a list starting with Root and followed by all supporting types in order of ascending symbol name.
+    let proxies : [ParsableTypeProxy] = [.init(Root.self)] + Root.supportingTypeProxies.sorted(by: {$0.symbolName < $1.symbolName})
     return """
            module.exports = grammar({
                name: '\(name)',
                rules: {
-                   \(components.joined(separator: ",\n\n" + .space(8)))
+                   \(proxies.map({"\($0.productionRuleJavascript(indent: 4).indented(8))"}).joined(separator: ",\n\n" + .space(8)))
                }
            })
            """
-  }
-
-  public static func javascript<T: Parsable>(for t: T.Type) -> String {
-    t.productionRule.javascript(indent: 4)
   }
 }

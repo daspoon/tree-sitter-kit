@@ -34,16 +34,16 @@ module.exports = grammar({
         Expr_project: $ => prec.left(8, seq($.Expr, choice('.'), $.Int)),
         Expr_tuple: $ => $.ArrayOfExpr,
 
-        Name: $ => /[a-z]+/,
-
-        Int: $ => /[0-9]+/,
-
         ArrayOfExpr: $ => seq('(', optional(seq($.Expr, repeat(seq(',', $.Expr)))), ')'),
+
+        ArrayOfMatchCase: $ => seq('{', optional(seq($.MatchCase, repeat(seq(',', $.MatchCase)))), '}'),
 
         ArrayOfName: $ => seq('(', optional(seq($.Name, repeat(seq(',', $.Name)))), ')'),
 
+        Int: $ => /[0-9]+/,
+
         MatchCase: $ => seq($.Name, $.ArrayOfName, '=>', $.Expr),
 
-        ArrayOfMatchCase: $ => seq('{', optional(seq($.MatchCase, repeat(seq(',', $.MatchCase)))), '}')
+        Name: $ => /[a-z]+/
     }
 })
