@@ -14,8 +14,8 @@ indirect enum Expr : Equatable, ParsableByMultipleChoice, ParsableInSequence {
   case name(Name)
   case numb(Int)
   case apply(Expr, Expr)
-  case lambda([Name], Expr)
-  case mu(Name, [Name], Expr)
+  case lambda([Param], TypeExpr, Expr)
+  case mu(Name, [Param], TypeExpr, Expr)
   case tuple([Expr])
   case project(Expr, Int)
   case match(Expr, [MatchCase])
@@ -31,11 +31,11 @@ indirect enum Expr : Equatable, ParsableByMultipleChoice, ParsableInSequence {
       "Expr_apply": (.prec(.apply, .seq([.rule(Expr.self), .rule([Expr].self)])), { node in
         .apply(Expr(node[0]), .parenthesized(node[1]))
       }),
-      "Expr_lambda": (.seq([.literal("!"), .rule([Name].self), .literal("."), .rule(Expr.self)]), { node in
-        .lambda([Name](node[1]), Expr(node[3]))
+      "Expr_lambda": (.seq([.literal("!"), .rule([Param].self), .literal("->"), .rule(TypeExpr.self), .literal("."), .rule(Expr.self)]), { node in
+        .lambda([Param](node[1]), TypeExpr(node[3]), Expr(node[5]))
       }),
-      "Expr_mu": (.seq([.literal("!"), .rule(Name.self), .rule([Name].self), .literal("."), .rule(Expr.self)]), { node in
-        .mu(Name(node[1]), [Name](node[2]), Expr(node[4]))
+      "Expr_mu": (.seq([.literal("!"), .rule(Name.self), .rule([Param].self), .literal("->"), .rule(TypeExpr.self), .literal("."), .rule(Expr.self)]), { node in
+        .mu(Name(node[1]), [Param](node[2]), TypeExpr(node[4]), Expr(node[6]))
       }),
       "Expr_tuple": (.rule([Expr].self), { node in
         .parenthesized(node[0])

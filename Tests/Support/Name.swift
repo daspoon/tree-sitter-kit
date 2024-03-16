@@ -12,7 +12,7 @@ struct Name : Equatable, ParsableInSequence {
   let text : String
 
   static var productionRule : ProductionRule<Self> {
-    .single(.pattern("[a-z]+"))
+    .single(.pattern("[a-zA-Z_]+[0-9a-zA-Z_]*"))
   }
 
   init(_ node: TSNode) {

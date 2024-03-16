@@ -22,9 +22,9 @@ module.exports = grammar({
         Expr_and: $ => prec.left(3, seq($.Expr, choice('&&'), $.Expr)),
         Expr_apply: $ => prec.left(9, seq($.Expr, $.ArrayOfExpr)),
         Expr_eql: $ => prec.left(1, seq($.Expr, choice('=='), $.Expr)),
-        Expr_lambda: $ => seq('!', $.ArrayOfName, '.', $.Expr),
+        Expr_lambda: $ => seq('!', $.ArrayOfParam, '->', $.Type, '.', $.Expr),
         Expr_match: $ => seq('match', $.Expr, $.ArrayOfMatchCase),
-        Expr_mu: $ => seq('!', $.Name, $.ArrayOfName, '.', $.Expr),
+        Expr_mu: $ => seq('!', $.Name, $.ArrayOfParam, '->', $.Type, '.', $.Expr),
         Expr_mul: $ => prec.left(5, seq($.Expr, choice('*', '/', '%'), $.Expr)),
         Expr_name: $ => $.Name,
         Expr_neg: $ => prec(7, seq(choice('-'), $.Expr)),
@@ -40,10 +40,27 @@ module.exports = grammar({
 
         ArrayOfName: $ => seq('(', optional(seq($.Name, repeat(seq(',', $.Name)))), ')'),
 
+        ArrayOfParam: $ => seq('(', optional(seq($.Param, repeat(seq(',', $.Param)))), ')'),
+
+        ArrayOfType: $ => seq('(', optional(seq($.Type, repeat(seq(',', $.Type)))), ')'),
+
         Int: $ => /[0-9]+/,
 
         MatchCase: $ => seq($.Name, $.ArrayOfName, '=>', $.Expr),
 
-        Name: $ => /[a-z]+/
+        Name: $ => /[a-zA-Z_]+[0-9a-zA-Z_]*/,
+
+        Param: $ => seq($.Name, ':', $.Type),
+
+        Type: $ => choice(
+            $.Type_const,
+            $.Type_func,
+            $.Type_name,
+            $.Type_tuple
+        ),
+        Type_const: $ => seq($.Name, $.ArrayOfType),
+        Type_func: $ => prec.right(1, seq($.Type, '->', $.Type)),
+        Type_name: $ => $.Name,
+        Type_tuple: $ => $.ArrayOfType
     }
 })
