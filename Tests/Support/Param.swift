@@ -7,7 +7,7 @@
 import TreeSitterKit
 
 
-struct Param : Equatable, Parsable, ParsableInSequence {
+struct Param : Equatable, Parsable {
   let name : Name
   let type : TypeExpr
 
@@ -16,8 +16,8 @@ struct Param : Equatable, Parsable, ParsableInSequence {
     type = t
   }
 
-  static var productionRule : ProductionRule<Self> {
-    .single(.seq([.rule(Name.self), .literal(":"), .rule(TypeExpr.self)]))
+  static var syntaxExpression : TSExpression {
+    .seq([.prod(Name.self), .literal(":"), .prod(TypeExpr.self)])
   }
 
   init(_ node: TSNode) {

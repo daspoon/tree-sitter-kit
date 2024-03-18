@@ -5,30 +5,25 @@
 */
 
 
-extension Array : Parsable where Element : ParsableInSequence {
-  public static var symbolName : String
-    { "ArrayOf\(Element.symbolName)" }
-
-  public static var productionRule : ProductionRule<Self>
-    { .single(.list(of: Element.self)) }
-
-  public init(_ node: TSNode)
-    {
-      let n = node.count
-      assert(n >= 2)
-      switch n {
-        case 2 : self = []
-        default :
-          assert(n % 2 == 1)
-          self = stride(from: 1, to: n, by: 2).map { i in Element(node[i]) }
-      }
+extension Array where Element : Parsable {
+  /// Create an array of *Parsable* elements from a parset tree node matching a *list* production rule.
+  public init(_ node: TSNode, bracketed: Bool = true) {
+    let n = node.count - (bracketed ? 2 : 0)
+    let d = bracketed ? 1 : 0
+    assert(n >= 0)
+    switch n {
+      case 0 : self = []
+      default :
+        assert(n % 2 == 1)
+        self = stride(from: 0, to: n, by: 2).map { i in Element(node[d+i]) }
     }
+  }
 }
 
 
 extension Int : Parsable {
-  public static var productionRule : ProductionRule<Self>
-    { .single(.pattern("[0-9]+")) }
+  public static var syntaxExpression : TSExpression
+    { .pattern("[0-9]+") }
 
   public init(_ node: TSNode)
     { self.init(node.stringValue!)! }

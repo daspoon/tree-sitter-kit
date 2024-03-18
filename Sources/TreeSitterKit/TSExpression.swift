@@ -14,33 +14,53 @@ public indirect enum TSExpression {
       { self = .none(value) }
   }
 
-  /// A token matching a specific string; e.g. '('.
+  /// Used to specify the bracket symbols which enclose list elements.
+  public struct Brackets : Hashable {
+    public let name : String
+    public let lhs : String
+    public let rhs : String
+    public init(name n: String, lhs l: String, rhs r: String)
+      { name = n; lhs = l; rhs = r }
+  }
+
+  /// Used to specify the symbols separating list elements.
+  public struct Separator : Hashable {
+    public let name : String
+    public let text : String
+    public init(name n: String, text t: String)
+      { name = n; text = t }
+  }
+
+  /// A token matching a specific string.
   case literal(String)
-  /// A token matching a regular expression; e.g. /[a-z]+/.
+  /// A token matching a regular expression.
   case pattern(String)
-  /// A grammar rule of a given name and type; e.g. $.Expr.
-  case rule(ParsableTypeProxy)
-  /// A sequence of expressions; e.g. seq('(', $.Expr, ')').
+  /// A production rule for a specific *Parsable* type.
+  case prod(ProductionRule)
+  /// A sequence of expressions.
   case seq([TSExpression])
-  /// A choice of possible expressions; e.g. choice($.Name, $.Number).
+  /// A choice of possible expressions.
   case choice([TSExpression])
+  /// An optional expression.
+  case optional(TSExpression)
+  /// Zero or more repetitions of an expression.
+  case `repeat`(TSExpression)
   /// Specifies precedence, and optionally associativity, for a given expression.
   case prec(Prec, TSExpression)
-  /// A possibly empty sequence of a parsable type, bracketed and separated by the given (literal) strings.
-  case list(ParsableTypeProxy, (lhs: String, rhs: String), String)
 
 
-  public static func rule<T: Parsable>(_ type: T.Type) -> Self
-    { .rule(ParsableTypeProxy(T.self)) }
+  public static func prod<T: Parsable>(_ type: T.Type) -> Self
+    { .prod(.value(ParsableProxy(T.self))) }
 
-  public static func list<T: ParsableInSequence>(of type: T.Type) -> Self
-    { .list(ParsableTypeProxy(T.self), T.bracketLiterals, T.separatorLiteral) }
+  public static func list<T: Parsable>(_ t: T.Type, separator: Separator = .comma, brackets: Brackets? = .round) -> Self
+    { .prod(.list(ParsableProxy(T.self), separator, brackets)) }
+
 
   public static func infix<L: Parsable, R: Parsable>(_ prec: TSExpression.Prec, _ op: String..., lhs: L.Type, rhs: R.Type) -> Self
-    { .prec(prec, .seq([.rule(L.self), .choice(op.map {.literal($0)}), .rule(R.self)])) }
+    { .prec(prec, .seq([.prod(L.self), .choice(op.map {.literal($0)}), .prod(R.self)])) }
 
   public static func prefix<T: Parsable>(_ prec: TSExpression.Prec, _ op: String..., arg: T.Type) -> Self
-    { .prec(prec, .seq([.choice(op.map {.literal($0)}), .rule(T.self)])) }
+    { .prec(prec, .seq([.choice(op.map {.literal($0)}), .prod(T.self)])) }
 
 
   /// Return the receiver's javascript representation.
@@ -50,20 +70,36 @@ public indirect enum TSExpression {
         return "'" + literal + "'"
       case .pattern(let pattern) :
         return "/" + pattern + "/"
-      case .rule(let proxy) :
-        return "$.\(proxy.symbolName)"
+      case .prod(let rule) :
+        return "$.\(rule.symbolName)"
       case .seq(let elements) :
         return "seq(\(elements.map({$0.javascript}).joined(separator: ", ")))"
       case .choice(let elements) :
         return "choice(\(elements.map({$0.javascript}).joined(separator: ", ")))"
+      case .optional(let expr) :
+        return "optional(\(expr.javascript))"
+      case .repeat(let expr) :
+        return "repeat(\(expr.javascript))"
       case .prec(.none(let n), let expr) :
         return "prec(\(n), \(expr.javascript))"
       case .prec(.left(let n), let expr) :
         return "prec.left(\(n), \(expr.javascript))"
       case .prec(.right(let n), let expr) :
         return "prec.right(\(n), \(expr.javascript))"
-      case .list(let proxy, let brackets, let separator) :
-        return "seq('\(brackets.lhs)', optional(seq($.\(proxy.symbolName), repeat(seq('\(separator)', $.\(proxy.symbolName))))), '\(brackets.rhs)')"
     }
   }
+}
+
+
+extension TSExpression.Brackets {
+  public static let angle = Self(name: "angle", lhs: "<", rhs: ">")
+  public static let curly = Self(name: "curly", lhs: "{", rhs: "}")
+  public static let round = Self(name: "round", lhs: "(", rhs: ")")
+  public static let square = Self(name: "square", lhs: "[", rhs: "]")
+}
+
+
+extension TSExpression.Separator {
+  public static let comma = Self(name: "comma", text: ",")
+  public static let semicolon = Self(name: "semicolon", text: ";")
 }

@@ -10,14 +10,12 @@ import TreeSitterKit
 
 class FunLangTests : XCTestCase
   {
-    let grammar = Grammar<Expr>(name: "FunLang")
-
     /// Use this to generate the text of Sources/FunLang/grammar.js
     func testGenerateGrammar() throws {
-      print(grammar.javascript)
+      print(Grammar<Expr>(name: "FunLang").javascript)
     }
 
-    /// Print the parse tree for various expressions.
+    /// Use this as a convenience to print the parse trees for various expressions.
     func testParseTree() throws {
       let examples : [String] = [
         "a + b * c"
@@ -27,18 +25,6 @@ class FunLangTests : XCTestCase
           else { XCTFail("parser failed to return a syntax tree for '\(text)'"); continue }
         print("'\(text)' => \(tree.rootNode)")
       }
-    }
-
-    /// Ensure nested Parsable types are correctly inferred.
-    func testParsableSupports() throws {
-      let inferred = Expr.supportingTypeProxies
-      let expected = Set([
-        ParsableTypeProxy([Expr].self),
-        ParsableTypeProxy(Name.self), ParsableTypeProxy([Name].self),
-        ParsableTypeProxy(MatchCase.self), ParsableTypeProxy([MatchCase].self),
-        ParsableTypeProxy(Int.self),
-      ])
-      XCTAssertEqual(inferred, expected)
     }
 
     /// Test the translation of various parse trees into *Expr* instances.

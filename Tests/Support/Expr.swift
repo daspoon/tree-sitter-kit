@@ -10,7 +10,7 @@ import FunLang
 
 // A parsable type of arithmetic expressions.
 
-indirect enum Expr : Equatable, ParsableByMultipleChoice, ParsableInSequence {
+indirect enum Expr : Equatable, ParsableByCases {
   case name(Name)
   case numb(Int)
   case apply(Expr, Expr)
@@ -22,28 +22,28 @@ indirect enum Expr : Equatable, ParsableByMultipleChoice, ParsableInSequence {
 
   static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
-      "Expr_name": (.rule(Name.self), { node in
+      "Expr_name": (.prod(Name.self), { node in
         .name(Name(node))
       }),
-      "Expr_numb": (.rule(Int.self), { node in
+      "Expr_numb": (.prod(Int.self), { node in
         .numb(Int(node))
       }),
-      "Expr_apply": (.prec(.apply, .seq([.rule(Expr.self), .rule([Expr].self)])), { node in
+      "Expr_apply": (.prec(.apply, .seq([.prod(Expr.self), .list(Expr.self)])), { node in
         .apply(Expr(node[0]), .parenthesized(node[1]))
       }),
-      "Expr_lambda": (.seq([.literal("!"), .rule([Param].self), .literal("->"), .rule(TypeExpr.self), .literal("."), .rule(Expr.self)]), { node in
+      "Expr_lambda": (.seq([.literal("!"), .list(Param.self), .literal("->"), .prod(TypeExpr.self), .literal("."), .prod(Expr.self)]), { node in
         .lambda([Param](node[1]), TypeExpr(node[3]), Expr(node[5]))
       }),
-      "Expr_mu": (.seq([.literal("!"), .rule(Name.self), .rule([Param].self), .literal("->"), .rule(TypeExpr.self), .literal("."), .rule(Expr.self)]), { node in
+      "Expr_mu": (.seq([.literal("!"), .prod(Name.self), .list(Param.self), .literal("->"), .prod(TypeExpr.self), .literal("."), .prod(Expr.self)]), { node in
         .mu(Name(node[1]), [Param](node[2]), TypeExpr(node[4]), Expr(node[6]))
       }),
-      "Expr_tuple": (.rule([Expr].self), { node in
+      "Expr_tuple": (.list(Expr.self), { node in
         .parenthesized(node[0])
       }),
       "Expr_project": (.infix(.proj, ".", lhs: Expr.self, rhs: Int.self), { node in
         .project(Expr(node[0]), Int(node[2]))
       }),
-      "Expr_match": (.seq([.literal("match"), .rule(Expr.self), .rule([MatchCase].self)]), { node in
+      "Expr_match": (.seq([.literal("match"), .prod(Expr.self), .list(MatchCase.self, brackets: .curly)]), { node in
         .match(Expr(node[1]), [MatchCase](node[2]))
       }),
       "Expr_eql": (.infix(.eql, "==", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),

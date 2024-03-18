@@ -7,7 +7,7 @@
 import TreeSitterKit
 
 
-indirect enum TypeExpr : Equatable, ParsableByMultipleChoice, ParsableInSequence {
+indirect enum TypeExpr : Equatable, ParsableByCases {
   case name(Name)
   case apply(Name, [TypeExpr])
 
@@ -26,16 +26,16 @@ indirect enum TypeExpr : Equatable, ParsableByMultipleChoice, ParsableInSequence
 
   static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
-      "Type_name": (.rule(Name.self), { node in
+      "Type_name": (.prod(Name.self), { node in
         .name(Name(node))
       }),
-      "Type_const": (.seq([.rule(Name.self), .rule([TypeExpr].self)]), { node in
+      "Type_const": (.seq([.prod(Name.self), .list(TypeExpr.self)]), { node in
         .apply(Name(node[0]), [TypeExpr](node[1]))
       }),
-      "Type_tuple": (.rule([TypeExpr].self), { node in
+      "Type_tuple": (.list(TypeExpr.self), { node in
         { ts in ts.count == 1 ? ts[0] : .tuple(ts) }([TypeExpr](node))
       }),
-      "Type_func": (.prec(.right(1), .seq([.rule(TypeExpr.self), .literal("->"), .rule(TypeExpr.self)])), { node in
+      "Type_func": (.prec(.right(1), .seq([.prod(TypeExpr.self), .literal("->"), .prod(TypeExpr.self)])), { node in
         .func(TypeExpr(node[0]), TypeExpr(node[2]))
       }),
     ]

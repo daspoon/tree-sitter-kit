@@ -16,13 +16,15 @@ public struct Grammar<Root: Parsable> {
 
   /// Return the javascript representation of a tree-sitter grammar.
   public var javascript : String {
-    // Form a list starting with Root and followed by all supporting types in order of ascending symbol name.
-    let proxies : [ParsableTypeProxy] = [.init(Root.self)] + Root.supportingTypeProxies.sorted(by: {$0.symbolName < $1.symbolName})
+    // The start rule is determined by the Root type.
+    let startRule = ProductionRule(for: Root.self)
+    // Form a list beginning with the start rule and followed by the supporting rules sorted by ascending symbol name.
+    let rules = [startRule] + startRule.supportingRules.sorted(by: {$0.symbolName < $1.symbolName})
     return """
            module.exports = grammar({
                name: '\(name)',
                rules: {
-                   \(proxies.map({"\($0.productionRuleJavascript(indent: 4).indented(8))"}).joined(separator: ",\n\n" + .space(8)))
+                   \(rules.map({"\($0.javascript)"}).joined(separator: ",\n" + .space(8)))
                }
            })
            """

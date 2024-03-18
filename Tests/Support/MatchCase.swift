@@ -20,15 +20,14 @@ struct MatchCase : Equatable {
 }
 
 
-extension MatchCase : ParsableInSequence {
-  static var productionRule : ProductionRule<Self>
-    { .single(.seq([.rule(Name.self), .rule([Name].self), .literal("=>"), .rule(Expr.self)])) }
+extension MatchCase : Parsable {
+  static var syntaxExpression : TSExpression {
+    .seq([.prod(Name.self), .list(Name.self), .literal("=>"), .prod(Expr.self)])
+  }
 
   init(_ node: TSNode) {
     name = Name(node[0])
     params = [Name](node[1])
     expr = Expr(node[3])
   }
-
-  static var bracketLiterals : (lhs: String, rhs: String) = ("{", "}")
 }
