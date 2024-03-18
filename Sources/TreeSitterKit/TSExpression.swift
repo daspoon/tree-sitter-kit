@@ -103,3 +103,10 @@ extension TSExpression.Separator {
   public static let comma = Self(name: "comma", text: ",")
   public static let semicolon = Self(name: "semicolon", text: ";")
 }
+
+
+extension TSExpression : ExpressibleByStringLiteral {
+  public init(stringLiteral: String) {
+    self = .literal(stringLiteral)
+  }
+}

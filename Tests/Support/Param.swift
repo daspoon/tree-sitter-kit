@@ -17,7 +17,7 @@ struct Param : Equatable, Parsable {
   }
 
   static var syntaxExpression : TSExpression {
-    .seq([.prod(Name.self), .literal(":"), .prod(TypeExpr.self)])
+    .seq([.prod(Name.self), ":", .prod(TypeExpr.self)])
   }
 
   init(_ node: TSNode) {
