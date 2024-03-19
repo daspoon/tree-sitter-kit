@@ -52,13 +52,28 @@ public indirect enum TSExpression {
   public static func prod<T: Parsable>(_ type: T.Type) -> Self
     { .prod(.value(ParsableProxy(T.self))) }
 
-  public static func list<T: Parsable>(_ t: T.Type, separator: Separator = .comma, brackets: Brackets? = .round) -> Self
+  /// Return an expression which produces a possibly empty list of the given type, with elements bracketed and separated by the given symbols. E.g. "()", "(a, b)".
+  public static func list<T: Parsable>(_ t: T.Type, _ separator: Separator = .comma, _ brackets: Brackets = .round) -> Self
     { .prod(.list(ParsableProxy(T.self), separator, brackets)) }
 
+  /// Return an expression which produces a non-empty list of the given type, with elements delimited by the given symbol. E.g. "a; b;".
+  public static func listd<T: Parsable>(_ t: T.Type, _ delimiter: Separator) -> Self
+    { .prod(.listd(ParsableProxy(T.self), delimiter)) }
 
+
+  /// Return an expression which matches a non-empty sequence of the given expression, with elements separated by the given string literal. E.g. "a, b, c".
+  public static func repeat1(_ expr: Self, separator: String) -> Self
+    { .seq([expr, .repeat(.seq([.literal(separator), expr]))]) }
+
+  /// Return an expression which matches a non-empty sequence of the given expression, with elements delimited by the given string literal. E.g. "a; b;".
+  public static func repeat1(_ expr: Self, delimiter: String) -> Self
+    { .seq([expr, .literal(delimiter), .repeat(.seq([expr, .literal(delimiter)]))]) }
+
+  /// Return an expression which matches an application of an infix binary operator of the given argument types. E.g. "a + b".
   public static func infix<L: Parsable, R: Parsable>(_ prec: TSExpression.Prec, _ op: String..., lhs: L.Type, rhs: R.Type) -> Self
     { .prec(prec, .seq([.prod(L.self), .choice(op.map {.literal($0)}), .prod(R.self)])) }
 
+  /// Return an expression which matches an application of a prefix unary operator of the given argument type. E.g. "- a".
   public static func prefix<T: Parsable>(_ prec: TSExpression.Prec, _ op: String..., arg: T.Type) -> Self
     { .prec(prec, .seq([.choice(op.map {.literal($0)}), .prod(T.self)])) }
 

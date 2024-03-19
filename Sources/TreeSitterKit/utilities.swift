@@ -7,16 +7,20 @@
 
 extension Array where Element : Parsable {
   /// Create an array of *Parsable* elements from a parset tree node matching a *list* production rule.
-  public init(_ node: TSNode, bracketed: Bool = true) {
-    let n = node.count - (bracketed ? 2 : 0)
-    let d = bracketed ? 1 : 0
-    assert(n >= 0)
+  public init(_ node: TSNode, separator s: TSExpression.Separator = .comma, brackets b: TSExpression.Brackets = .round) {
+    let n = node.count - 2
     switch n {
       case 0 : self = []
       default :
-        assert(n % 2 == 1)
-        self = stride(from: 0, to: n, by: 2).map { i in Element(node[d+i]) }
+        assert(n > 0 && n % 2 == 1)
+        self = stride(from: 0, to: n, by: 2).map { i in Element(node[i+1]) }
     }
+  }
+
+  public init(_ node: TSNode, delimiter d: TSExpression.Separator) {
+    let n = node.count
+    assert(n > 0 && n % 2 == 0)
+    self = stride(from: 0, to: n, by: 2).map { i in Element(node[i]) }
   }
 }
 
