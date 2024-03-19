@@ -5,10 +5,9 @@
 */
 
 import TreeSitterKit
-import FunLang
 
 
-// A parsable type of arithmetic expressions.
+/// A type representing a functional expression.
 
 indirect enum Expr : Equatable, ParsableByCases {
   case name(Name)
@@ -19,6 +18,7 @@ indirect enum Expr : Equatable, ParsableByCases {
   case tuple([Expr])
   case project(Expr, Int)
   case match(Expr, [MatchCase])
+  case block(Block)
 
   static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
@@ -43,8 +43,11 @@ indirect enum Expr : Equatable, ParsableByCases {
       "Expr_project": (.infix(.proj, ".", lhs: Expr.self, rhs: Int.self), { node in
         .project(Expr(node[0]), Int(node[2]))
       }),
-      "Expr_match": (.seq(["match", .prod(Expr.self), .list(MatchCase.self, brackets: .curly)]), { node in
+      "Expr_match": (.seq(["match", .prod(Expr.self), .list(MatchCase.self, .comma, .curly)]), { node in
         .match(Expr(node[1]), [MatchCase](node[2]))
+      }),
+      "Expr_block": (.seq(["{", .prod(Block.self), "}"]), { node in
+        .block(.init(node[1]))
       }),
       "Expr_eql": (.infix(.eql, "==", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
       "Expr_or" : (.infix(.or, "||", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
@@ -97,14 +100,8 @@ extension TSExpression.Prec {
 // Define a method to create an Expr from text.
 
 extension Expr {
-  static let parser = TSParser(tree_sitter_FunLang())
-
   init(_ text: String) throws {
-    guard let tree = Self.parser.parse(text)
-      else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
-    guard tree.rootNode.hasError == false
-      else { throw TSException("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self.init(tree.rootNode)
+    self = try Block(text).expr
   }
 }
 

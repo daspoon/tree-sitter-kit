@@ -7,20 +7,20 @@
 import TreeSitterKit
 
 
-indirect enum TypeExpr : Equatable, ParsableByCases {
+/// A type representing functional type expressions.
+
+indirect enum TypeExpr : Equatable {
   case name(Name)
   case apply(Name, [TypeExpr])
-
 
   static func tuple(_ types: [TypeExpr]) -> Self
     { .apply("()", types) }
 
   static func `func`(_ src: TypeExpr, _ trg: TypeExpr) -> Self
     { .apply("->", [src, trg]) }
+}
 
-
-  // Parsable
-
+extension TypeExpr : ParsableByCases {
   static var symbolName : String
     { "Type" }
 
@@ -29,7 +29,7 @@ indirect enum TypeExpr : Equatable, ParsableByCases {
       "Type_name": (.prod(Name.self), { node in
         .name(Name(node))
       }),
-      "Type_const": (.seq([.prod(Name.self), .list(TypeExpr.self)]), { node in
+      "Type_const": (.prec(1, .seq([.prod(Name.self), .list(TypeExpr.self)])), { node in
         .apply(Name(node[0]), [TypeExpr](node[1]))
       }),
       "Type_tuple": (.list(TypeExpr.self), { node in

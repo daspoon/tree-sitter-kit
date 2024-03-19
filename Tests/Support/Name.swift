@@ -7,7 +7,8 @@
 import TreeSitterKit
 
 
-// A parsable type representing identifier names within expressions.
+/// A parsable type representing identifier names within expressions.
+
 struct Name : Equatable, Parsable {
   let text : String
 

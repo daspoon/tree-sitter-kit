@@ -7,6 +7,8 @@
 import TreeSitterKit
 
 
+/// A type which represents the binding of a parameter name and type.
+
 struct Param : Equatable, Parsable {
   let name : Name
   let type : TypeExpr
