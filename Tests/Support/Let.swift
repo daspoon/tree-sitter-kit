@@ -16,7 +16,7 @@ struct Let : Equatable {
 
 extension Let : Parsable {
   static var syntaxExpression : TSExpression
-    { .seq(["let", .prod(Param.self), "=", .prod(Expr.self)]) }
+    { "let \(Param.self) = \(Expr.self)" }
 
   init(_ node: TSNode) {
     param = Param(node[1])

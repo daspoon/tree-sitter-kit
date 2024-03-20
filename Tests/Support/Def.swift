@@ -17,16 +17,16 @@ enum Def : Equatable, ParsableByCases {
 
   static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
-      "Decl_typedef": (.prod(Typedef.self), { node in
+      "Decl_typedef": ("\(Typedef.self)", { node in
         .typedef(Typedef(node[0]))
       }),
-      "Decl_enum": (.prod(Enum.self), { node in
+      "Decl_enum": ("\(Enum.self)", { node in
         .enum(Enum(node[0]))
       }),
-      "Decl_let": (.prod(Let.self), { node in
+      "Decl_let": ("\(Let.self)", { node in
         .let(Let(node[0]))
       }),
-      "Decl_fun": (.prod(Fun.self), { node in
+      "Decl_fun": ("\(Fun.self)", { node in
         .fun(Fun(node[0]))
       }),
     ]

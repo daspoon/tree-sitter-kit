@@ -22,6 +22,9 @@ struct Name : Equatable, Parsable {
 }
 
 
+typealias NameList = [Name]
+
+
 // Allow initialization by string literal to make test cases more legible.
 extension Name : ExpressibleByStringLiteral {
   init(stringLiteral: StringLiteralType) {

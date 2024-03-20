@@ -19,12 +19,14 @@ struct Param : Equatable, Parsable {
   }
 
   static var syntaxExpression : TSExpression {
-    .seq([.prod(Name.self), ":", .prod(TypeExpr.self)])
+    "\(Name.self) : \(TypeExpr.self)"
   }
 
   init(_ node: TSNode) {
-    assert(node.count == 3 && node[1].type == ":")
     name = Name(node[0])
     type = TypeExpr(node[2])
   }
 }
+
+
+typealias ParamList = [Param]

@@ -9,7 +9,7 @@ import TreeSitterKit
 
 /// A type representing a functional expression.
 
-indirect enum Expr : Equatable, ParsableByCases {
+indirect enum Expr : Equatable {
   case name(Name)
   case numb(Int)
   case apply(Expr, Expr)
@@ -19,43 +19,50 @@ indirect enum Expr : Equatable, ParsableByCases {
   case project(Expr, Int)
   case match(Expr, [MatchCase])
   case block(Block)
+}
+
+typealias ExprList = [Expr]
+
+
+extension Expr : ParsableByCases {
+  typealias MatchCaseList = SeparatedSequence<MatchCase, Comma>
 
   static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
     return [
-      "Expr_name": (.prod(Name.self), { node in
+      "Expr_name": ("\(Name.self)", { node in
         .name(Name(node))
       }),
-      "Expr_numb": (.prod(Int.self), { node in
+      "Expr_numb": ("\(Int.self)", { node in
         .numb(Int(node))
       }),
-      "Expr_apply": (.prec(.apply, .seq([.prod(Expr.self), .list(Expr.self)])), { node in
+      "Expr_apply": (.prec(.apply, "\(Expr.self) \(ExprList.self)"), { node in
         .apply(Expr(node[0]), .parenthesized(node[1]))
       }),
-      "Expr_lambda": (.seq(["!", .list(Param.self), "->", .prod(TypeExpr.self), ".", .prod(Expr.self)]), { node in
+      "Expr_lambda": ("! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)", { node in
         .lambda([Param](node[1]), TypeExpr(node[3]), Expr(node[5]))
       }),
-      "Expr_mu": (.seq(["!", .prod(Name.self), .list(Param.self), "->", .prod(TypeExpr.self), ".", .prod(Expr.self)]), { node in
+      "Expr_mu": ("! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)", { node in
         .mu(Name(node[1]), [Param](node[2]), TypeExpr(node[4]), Expr(node[6]))
       }),
-      "Expr_tuple": (.list(Expr.self), { node in
+      "Expr_tuple": ("\(ExprList.self)", { node in
         .parenthesized(node[0])
       }),
-      "Expr_project": (.infix(.proj, ".", lhs: Expr.self, rhs: Int.self), { node in
+      "Expr_project": (.prec(.proj, "\(Expr.self) . \(Int.self)"), { node in
         .project(Expr(node[0]), Int(node[2]))
       }),
-      "Expr_match": (.seq(["match", .prod(Expr.self), .list(MatchCase.self, .comma, .curly)]), { node in
-        .match(Expr(node[1]), [MatchCase](node[2]))
+      "Expr_match": ("match \(Expr.self) { \(MatchCaseList.self) }", { node in
+        .match(Expr(node[1]), MatchCaseList(node[3]).elements)
       }),
-      "Expr_block": (.seq(["{", .prod(Block.self), "}"]), { node in
+      "Expr_block": ("{ \(Block.self) }", { node in
         .block(.init(node[1]))
       }),
-      "Expr_eql": (.infix(.eql, "==", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
-      "Expr_or" : (.infix(.or, "||", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
-      "Expr_and": (.infix(.and, "&&", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
-      "Expr_add": (.infix(.add, "+", "-", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
-      "Expr_mul": (.infix(.mult, "*", "/", "%", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
-      "Expr_pow": (.infix(.power, "^", lhs: Expr.self, rhs: Expr.self), { .infix($0) }),
-      "Expr_neg": (.prefix(.neg, "-", arg: Expr.self), { .prefix($0) }),
+      "Expr_eql": (.prec(.eql,   "\(Expr.self) \("==") \(Expr.self)"), { .infix($0) }),
+      "Expr_or" : (.prec(.or,    "\(Expr.self) \("||") \(Expr.self)"), { .infix($0) }),
+      "Expr_and": (.prec(.and,   "\(Expr.self) \("&&") \(Expr.self)"), { .infix($0) }),
+      "Expr_add": (.prec(.add,   "\(Expr.self) \("+", "-") \(Expr.self)"), { .infix($0) }),
+      "Expr_mul": (.prec(.mult,  "\(Expr.self) \("*", "/", "%") \(Expr.self)"), { .infix($0) }),
+      "Expr_pow": (.prec(.power, "\(Expr.self) \("^") \(Expr.self)"), { .infix($0) }),
+      "Expr_neg": (.prec(.neg,   "\("-") \(Expr.self)"), { .prefix($0) }),
     ]
   }
 }

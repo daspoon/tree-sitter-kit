@@ -52,14 +52,6 @@ public indirect enum TSExpression {
   public static func prod<T: Parsable>(_ type: T.Type) -> Self
     { .prod(.value(ParsableProxy(T.self))) }
 
-  /// Return an expression which produces a possibly empty list of the given type, with elements bracketed and separated by the given symbols. E.g. "()", "(a, b)".
-  public static func list<T: Parsable>(_ t: T.Type, _ separator: Separator = .comma, _ brackets: Brackets = .round) -> Self
-    { .prod(.list(ParsableProxy(T.self), separator, brackets)) }
-
-  /// Return an expression which produces a non-empty list of the given type, with elements delimited by the given symbol. E.g. "a; b;".
-  public static func listd<T: Parsable>(_ t: T.Type, _ delimiter: Separator) -> Self
-    { .prod(.listd(ParsableProxy(T.self), delimiter)) }
-
 
   /// Return an expression which matches a non-empty sequence of the given expression, with elements separated by the given string literal. E.g. "a, b, c".
   public static func repeat1(_ expr: Self, separator: String) -> Self
@@ -68,14 +60,6 @@ public indirect enum TSExpression {
   /// Return an expression which matches a non-empty sequence of the given expression, with elements delimited by the given string literal. E.g. "a; b;".
   public static func repeat1(_ expr: Self, delimiter: String) -> Self
     { .seq([expr, .literal(delimiter), .repeat(.seq([expr, .literal(delimiter)]))]) }
-
-  /// Return an expression which matches an application of an infix binary operator of the given argument types. E.g. "a + b".
-  public static func infix<L: Parsable, R: Parsable>(_ prec: TSExpression.Prec, _ op: String..., lhs: L.Type, rhs: R.Type) -> Self
-    { .prec(prec, .seq([.prod(L.self), .choice(op.map {.literal($0)}), .prod(R.self)])) }
-
-  /// Return an expression which matches an application of a prefix unary operator of the given argument type. E.g. "- a".
-  public static func prefix<T: Parsable>(_ prec: TSExpression.Prec, _ op: String..., arg: T.Type) -> Self
-    { .prec(prec, .seq([.choice(op.map {.literal($0)}), .prod(T.self)])) }
 
 
   /// Return the receiver's javascript representation.
@@ -120,8 +104,49 @@ extension TSExpression.Separator {
 }
 
 
-extension TSExpression : ExpressibleByStringLiteral {
-  public init(stringLiteral: String) {
-    self = .literal(stringLiteral)
+extension TSExpression : ExpressibleByStringInterpolation {
+  /// Build a sequence of literal and productino expressions...
+  public struct StringInterpolation : StringInterpolationProtocol {
+    var components : [TSExpression]
+
+    public init(literalCapacity: Int, interpolationCount: Int) {
+      components = []
+    }
+
+    /// Add a literal component corresponding to the given string with leading and trailing whitespace removed.
+    public mutating func appendLiteral(_ literal: String) {
+      let literal = literal.trimmingCharacters(in: .whitespaces)
+      if literal != "" {
+        components.append(.literal(literal))
+      }
+    }
+
+    /// Add a production component for the given type.
+    public mutating func appendInterpolation<T: Parsable>(_: T.Type) {
+      components.append(.prod(T.self))
+    }
+
+    /// Add a choice of literals  matching any of the given strings.
+    public mutating func appendInterpolation(_ symbols: String...) {
+      components.append(.choice(symbols.map {.literal($0)}))
+    }
+
+    /// Add an optional expression.
+    public mutating func appendInterpolation(optional expr: TSExpression) {
+      components.append(.optional(expr))
+    }
+
+    /// Return the sequence of accumulated components, or the sole component if there is exactly one.
+    var expression : TSExpression {
+      components.count == 1 ? components[0] : .seq(components)
+    }
+  }
+
+  public init(stringInterpolation interpolation: StringInterpolation) {
+    self = interpolation.expression
+  }
+
+  public init(stringLiteral literal: String) {
+    self = .literal(literal)
   }
 }

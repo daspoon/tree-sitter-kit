@@ -19,7 +19,7 @@ struct Fun : Equatable {
 
 extension Fun : Parsable {
   static var syntaxExpression : TSExpression
-    { .seq(["fun", .prod(Name.self), .list(Param.self), "->", .prod(TypeExpr.self), "{", .prod(Expr.self), "}"]) }
+    { "fun \(Name.self) \([Param].self) -> \(TypeExpr.self) { \(Expr.self) }" }
 
   init(_ node: TSNode) {
     name = Name(node[1])

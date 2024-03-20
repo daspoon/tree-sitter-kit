@@ -11,10 +11,6 @@ public enum ProductionRule : Hashable {
   case value(ParsableProxy)
   /// An auxiliary rule for one alternative of a *ParsableByChoice* type; the associated string is the rule name.
   case value_case(ParsableProxyCase, String)
-  /// An auxiliary rule for a sequence of *Parsable* type, with specified separator and brackets.
-  case list(ParsableProxy, TSExpression.Separator, TSExpression.Brackets)
-  /// An auxiliary rule for a non-empty sequence of *Parsable* type, with specified element delimiter.
-  case listd(ParsableProxy, TSExpression.Separator)
 }
 
 
@@ -36,10 +32,6 @@ extension ProductionRule {
         return proxy.symbolName
       case .value_case(_, let name) :
         return name
-      case .list(let proxy, let separator, let brackets) :
-        return "\(proxy.symbolName)_Array_\(separator.name)_\(brackets.name)"
-      case .listd(let proxy, let separator) :
-        return "\(proxy.symbolName)_Array_\(separator.name)"
     }
   }
 
@@ -50,10 +42,6 @@ extension ProductionRule {
         return proxy.syntaxExpression
       case .value_case(let proxy, let name) :
         return proxy.syntaxExpression(for: name)
-      case .list(let proxy, let separator, let brackets) :
-        return .seq([.literal(brackets.lhs), .optional(.repeat1(.prod(.value(proxy)), separator: separator.text)), .literal(brackets.rhs)])
-      case .listd(let proxy, let delimiter) :
-        return .repeat1(.prod(.value(proxy)), delimiter: delimiter.text)
     }
   }
 

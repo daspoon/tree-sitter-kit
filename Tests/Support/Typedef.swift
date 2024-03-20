@@ -16,7 +16,7 @@ struct Typedef : Equatable {
 
 extension Typedef : Parsable {
   static var syntaxExpression : TSExpression
-    { .seq(["typedef", .prod(Name.self), "=", .prod(TypeExpr.self)]) }
+    { "typedef \(Name.self) = \(TypeExpr.self)" }
 
   init(_ node: TSNode) {
     name = Name(node[1])

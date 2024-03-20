@@ -15,13 +15,15 @@ struct Block : Equatable {
 }
 
 extension Block : Parsable {
+  typealias DefList = DelimitedSequence<Def, Semicolon>
+
   static var syntaxExpression : TSExpression {
-    .seq([.optional(.listd(Def.self, .semicolon)), .prod(Expr.self)])
+    "\(optional: "\(DefList.self)") \(Expr.self)"
   }
 
   init(_ node: TSNode) {
     let k = node.count; assert(k == 1 || k == 2)
-    decls = k == 2 ? [Def](node[0], delimiter: .semicolon) : []
+    decls = k == 2 ? [Def](node[0], delimiter: Semicolon.symbol) : []
     expr = Expr(node[k == 2 ? 1 : 0])
   }
 }

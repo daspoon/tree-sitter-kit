@@ -15,12 +15,14 @@ struct Enum : Equatable {
 }
 
 extension Enum : Parsable {
+  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma>
+
   static var syntaxExpression : TSExpression
-    { .seq(["enum", .prod(Name.self), .list(EnumCase.self, .comma, .curly)]) }
+    { "enum \(Name.self) { \(EnumCaseList.self) }" }
 
   init(_ node: TSNode) {
     name = Name(node[1])
-    cases = [EnumCase](node[2])
+    cases = EnumCaseList(node[3]).elements
   }
 }
 
@@ -32,10 +34,9 @@ struct EnumCase : Equatable {
   let params : [Param]
 }
 
-
 extension EnumCase : Parsable {
   static var syntaxExpression : TSExpression
-    { .seq([.prod(Name.self), .optional(.list(Param.self))]) }
+    { "\(Name.self) \(optional: .prod(ParamList.self))" }
 
   init(_ node: TSNode) {
     name = Name(node[0])

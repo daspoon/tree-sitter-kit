@@ -22,7 +22,7 @@ struct MatchCase : Equatable {
 
 extension MatchCase : Parsable {
   static var syntaxExpression : TSExpression {
-    .seq([.prod(Name.self), .list(Name.self), "=>", .prod(Expr.self)])
+    "\(Name.self) \([Name].self) => \(Expr.self)"
   }
 
   init(_ node: TSNode) {
