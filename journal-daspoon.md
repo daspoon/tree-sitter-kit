@@ -133,7 +133,7 @@ Split the production rule for lists in twain:
   - a non-bracketed, non-empty sequence with an element delimiter; e.g. "a; b; c;"
 
 
-### Wed Mar 19, 2024
+### Wed Mar 20, 2024
 
 Aesthetic improvements to syntax expression...
   - make TSExpression conform to ExpressibleByStringInterpolation to enable concise expressions such as "! \(Name.self) . \(Expr.self)"
@@ -143,7 +143,7 @@ Aesthetic improvements to syntax expression...
       2. add protocols SeparatedSequence and DelimitedSequence to produce arrays with alternate punctuation
 
 
-### Thu Mar 20, 2024
+### Thu Mar 21, 2024
 
 Explore use of macros to generate the init method for Parsable struct types...
   - consider struct Let { let name : Name; let expr: Expr }
@@ -168,7 +168,7 @@ Notes on SwiftSyntax:
   - all declarations conform to DeclSyntaxProtocol; e.g. EnumDeclSyntax, StructDeclSyntax, ClassDeclSyntax, and ExtensionDeclSyntax
 
 
-### Fri Mar 21, 2024
+### Fri Mar 22, 2024
 
 Macro Resources:
   https://swift-ast-explorer.com
