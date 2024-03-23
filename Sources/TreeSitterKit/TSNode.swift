@@ -48,6 +48,13 @@ extension TSNode
       ts_node_child(self, UInt32(index))
     }
 
+    /// Return the child node with the given field name.
+    public subscript (_ name: String) -> TSNode {
+      name.withCString { cstr in
+        ts_node_child_by_field_name(self, cstr, UInt32(strlen(cstr)))
+      }
+    }
+
     /// Return the receiver's parent node, or *nil* if it has none.
     public var parent : TSNode? {
       let parent = ts_node_parent(self)
