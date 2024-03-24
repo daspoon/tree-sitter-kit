@@ -9,17 +9,15 @@ import TreeSitterKit
 
 /// A type representing a value definition.
 
-struct Let : Equatable {
+@ParsableStruct
+struct Let : Equatable, Parsable {
   let param : Param
   let expr : Expr
-}
 
-extension Let : Parsable {
+  init(param p: Param, expr e: Expr)
+    { param = p; expr = e }
+
   static var syntaxExpression : TSExpression
     { "let \(Param.self) = \(Expr.self)" }
 
-  init(_ node: TSNode) {
-    param = Param(node[1])
-    expr = Expr(node[3])
-  }
 }

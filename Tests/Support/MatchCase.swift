@@ -7,7 +7,8 @@
 import TreeSitterKit
 
 
-struct MatchCase : Equatable {
+@ParsableStruct
+struct MatchCase : Equatable, Parsable {
   let name : Name
   let params : [Name]
   let expr : Expr
@@ -17,17 +18,8 @@ struct MatchCase : Equatable {
     params = ps
     expr = e
   }
-}
 
+  static var syntaxExpression : TSExpression
+    { "\(Name.self) \([Name].self) => \(Expr.self)" }
 
-extension MatchCase : Parsable {
-  static var syntaxExpression : TSExpression {
-    "\(Name.self) \([Name].self) => \(Expr.self)"
-  }
-
-  init(_ node: TSNode) {
-    name = Name(node[0])
-    params = [Name](node[1])
-    expr = Expr(node[3])
-  }
 }

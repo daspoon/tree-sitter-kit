@@ -15,20 +15,12 @@ enum Def : Equatable, ParsableByCases {
   case `let`(Let)
   case `fun`(Fun)
 
-  static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
+  static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
-      "Decl_typedef": ("\(Typedef.self)", { node in
-        .typedef(Typedef(node[0]))
-      }),
-      "Decl_enum": ("\(Enum.self)", { node in
-        .enum(Enum(node[0]))
-      }),
-      "Decl_let": ("\(Let.self)", { node in
-        .let(Let(node[0]))
-      }),
-      "Decl_fun": ("\(Fun.self)", { node in
-        .fun(Fun(node[0]))
-      }),
+      "Decl_typedef": "\(Typedef.self)",
+      "Decl_enum": "\(Enum.self)",
+      "Decl_let": "\(Let.self)",
+      "Decl_fun": "\(Fun.self)",
     ]
   }
 }

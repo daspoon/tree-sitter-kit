@@ -8,6 +8,9 @@
 /// *DelimitedSequence* produces an array of one or more elements delimited by a specific symbol.
 public struct DelimitedSequence<Element: Parsable, Delimiter: Punctuation> {
   public let elements : [Element]
+  public init(elements es: [Element]) {
+    elements = es
+  }
 }
 
 extension DelimitedSequence : Parsable {
@@ -20,4 +23,7 @@ extension DelimitedSequence : Parsable {
   public init(_ node: TSNode) {
     elements = [Element](node, delimiter: Delimiter.symbol)
   }
+}
+
+extension DelimitedSequence : Equatable where Element : Equatable {
 }

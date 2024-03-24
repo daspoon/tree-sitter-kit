@@ -17,34 +17,36 @@ public protocol Parsable {
   init(_ node: TSNode)
 }
 
+public protocol NewParsable<Result> {
+
+}
+
+
 extension Parsable {
   /// Default implementation.
   public static var symbolName : String
     { "\(Self.self)" }
+
+  // TODO: delete
+  public init(_ node: TSNode) {
+    fatalError()
+  }
 }
 
 
 /// *ParsableByCases* simplifies conformance to *Parsable* for types which require multiple production rules, such as enums.
 public protocol ParsableByCases : Parsable {
-  /// A mapping of sub-rule names to pairs of syntax expressions and instance constructors.
-  static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] { get }
+  /// A mapping of enum case names to syntax expressions.
+  static var syntaxExpressionsByCaseName : [String: TSExpression] { get }
 }
 
 extension ParsableByCases {
   public static var syntaxExpression : TSExpression {
-    .choice(productionsByChoiceName.keys.sorted().map { .prod(ProductionRule(for: $0, of: Self.self)) })
-  }
-
-  public init(_ node: TSNode) {
-    precondition(node.type == Self.symbolName && node.count == 1)
-    let child = node[0]
-    guard let choice = Self.productionsByChoiceName[child.type]
-      else { fatalError() }
-    self = choice.constructor(child)
+    .choice(syntaxExpressionsByCaseName.keys.sorted().map { .prod(ProductionRule(for: $0, of: Self.self)) })
   }
 }
 
 extension ParsableByCases {
   static func syntaxExpression(for alt: String) -> TSExpression
-    { productionsByChoiceName[alt]!.expression }
+    { syntaxExpressionsByCaseName[alt]! }
 }

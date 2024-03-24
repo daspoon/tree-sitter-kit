@@ -9,22 +9,17 @@ import TreeSitterKit
 
 /// A type representing a function definition.
 
-struct Fun : Equatable {
+@ParsableStruct
+struct Fun : Equatable, Parsable {
   let name : Name
   let params : [Param]
   let type : TypeExpr
   let expr : Expr
-}
 
+  init(name n: Name, params ps: [Param], type t: TypeExpr, expr e: Expr)
+    { name = n; params = ps; type = t; expr = e }
 
-extension Fun : Parsable {
   static var syntaxExpression : TSExpression
     { "fun \(Name.self) \([Param].self) -> \(TypeExpr.self) { \(Expr.self) }" }
 
-  init(_ node: TSNode) {
-    name = Name(node[1])
-    params = [Param](node[2])
-    type = TypeExpr(node[4])
-    expr = Expr(node[6])
-  }
 }

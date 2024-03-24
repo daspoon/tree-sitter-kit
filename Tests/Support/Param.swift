@@ -9,6 +9,7 @@ import TreeSitterKit
 
 /// A type which represents the binding of a parameter name and type.
 
+
 struct Param : Equatable, Parsable {
   let name : Name
   let type : TypeExpr
@@ -22,10 +23,6 @@ struct Param : Equatable, Parsable {
     "\(Name.self) : \(TypeExpr.self)"
   }
 
-  init(_ node: TSNode) {
-    name = Name(node[0])
-    type = TypeExpr(node[2])
-  }
 }
 
 

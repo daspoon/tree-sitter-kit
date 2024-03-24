@@ -27,42 +27,25 @@ typealias ExprList = [Expr]
 extension Expr : ParsableByCases {
   typealias MatchCaseList = SeparatedSequence<MatchCase, Comma>
 
-  static var productionsByChoiceName : [String: (expression: TSExpression, constructor: (TSNode) -> Self)] {
+// TODO: ExprList => ExprTuple
+  static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
-      "Expr_name": ("\(Name.self)", { node in
-        .name(Name(node))
-      }),
-      "Expr_numb": ("\(Int.self)", { node in
-        .numb(Int(node))
-      }),
-      "Expr_apply": (.prec(.apply, "\(Expr.self) \(ExprList.self)"), { node in
-        .apply(Expr(node[0]), .parenthesized(node[1]))
-      }),
-      "Expr_lambda": ("! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)", { node in
-        .lambda([Param](node[1]), TypeExpr(node[3]), Expr(node[5]))
-      }),
-      "Expr_mu": ("! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)", { node in
-        .mu(Name(node[1]), [Param](node[2]), TypeExpr(node[4]), Expr(node[6]))
-      }),
-      "Expr_tuple": ("\(ExprList.self)", { node in
-        .parenthesized(node[0])
-      }),
-      "Expr_project": (.prec(.proj, "\(Expr.self) . \(Int.self)"), { node in
-        .project(Expr(node[0]), Int(node[2]))
-      }),
-      "Expr_match": ("match \(Expr.self) { \(MatchCaseList.self) }", { node in
-        .match(Expr(node[1]), MatchCaseList(node[3]).elements)
-      }),
-      "Expr_block": ("{ \(Block.self) }", { node in
-        .block(.init(node[1]))
-      }),
-      "Expr_eql": (.prec(.eql,   "\(Expr.self) \("==") \(Expr.self)"), { .infix($0) }),
-      "Expr_or" : (.prec(.or,    "\(Expr.self) \("||") \(Expr.self)"), { .infix($0) }),
-      "Expr_and": (.prec(.and,   "\(Expr.self) \("&&") \(Expr.self)"), { .infix($0) }),
-      "Expr_add": (.prec(.add,   "\(Expr.self) \("+", "-") \(Expr.self)"), { .infix($0) }),
-      "Expr_mul": (.prec(.mult,  "\(Expr.self) \("*", "/", "%") \(Expr.self)"), { .infix($0) }),
-      "Expr_pow": (.prec(.power, "\(Expr.self) \("^") \(Expr.self)"), { .infix($0) }),
-      "Expr_neg": (.prec(.neg,   "\("-") \(Expr.self)"), { .prefix($0) }),
+      "name" :     "\(Name.self)",
+      "numb" :     "\(Int.self)",
+      "apply" :    .prec(.apply, "\(Expr.self) \(ExprList.self)"),    // { node in .apply(Expr(node[0]), .parenthesized(node[1])) }
+      "lambda" :   "! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
+      "mu" :       "! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
+      "tuple" :    "\(ExprList.self)", // { node in .parenthesized(node[0]) } */
+      "project" :  .prec(.proj, "\(Expr.self) . \(Int.self)"),
+      "match" :    "match \(Expr.self) { \(MatchCaseList.self) }",
+      "block" :    "{ \(Block.self) }",
+      "eql" :      .prec(.eql,   "\(Expr.self) \("==") \(Expr.self)"),
+      "or"  :      .prec(.or,    "\(Expr.self) \("||") \(Expr.self)"),
+      "and" :      .prec(.and,   "\(Expr.self) \("&&") \(Expr.self)"),
+      "add" :      .prec(.add,   "\(Expr.self) \("+", "-") \(Expr.self)"),
+      "mul" :      .prec(.mult,  "\(Expr.self) \("*", "/", "%") \(Expr.self)"),
+      "pow" :      .prec(.power, "\(Expr.self) \("^") \(Expr.self)"),
+      "neg" :      .prec(.neg,   "\("-") \(Expr.self)"),
     ]
   }
 }
@@ -77,15 +60,21 @@ extension Expr {
     return exprs.count == 1 ? exprs[0] : .tuple(exprs)
   }
 
-  /// Create an application expr from a node representing an infix operator.
-  static func infix(_ node: TSNode) -> Self {
-    .apply(.name(Name(node[1])), .tuple([Expr(node[0]), Expr(node[2])]))
-  }
+  static func eql(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func or(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func and(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func add(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func mul(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func pow(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
 
-  /// Create an application expr from a node representing an prefix operator.
-  static func prefix(_ node: TSNode) -> Self {
-    .apply(.name(Name(node[0])), Expr(node[1]))
-  }
+  static func neg(_ op: Name, _ arg: Expr) -> Self
+    { .apply(.name(op), arg) }
 }
 
 
