@@ -14,6 +14,15 @@ extension DeclGroupSyntax {
 }
 
 
+extension EnumDeclSyntax {
+  public var enumCaseElements : [EnumCaseElementSyntax] {
+    memberBlock.members
+      .compactMap({$0.decl.as(EnumCaseDeclSyntax.self)})
+      .reduce([]) { $0 + $1.elements }
+  }
+}
+
+
 /// A convenience type aggregating the name, type and optional initial value of a variable declaration.
 public struct StoredPropertyInfo {
   public let name : String

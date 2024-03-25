@@ -13,16 +13,10 @@ public struct ParsableEnum {
     guard let decl = decl.as(EnumDeclSyntax.self)
       else { return nil }
 
-    var casesText : [String] = []
-    for enumCaseDecl in decl.memberBlock.members.compactMap({$0.decl.as(EnumCaseDeclSyntax.self)}) {
-      for element in enumCaseDecl.elements {
-        casesText += ["case \"\(element.name)\" : return \(enumValueText(for: element))"]
-      }
-    }
     return """
            static func from(_ node: TSNode) -> Self {
                switch node.type {
-               \(casesText.joined(separator: "\n"))
+               \(decl.enumCaseElements.map(switchCaseText(for:)).joined(separator: "\n"))
                default:
                    fatalError()
                }
@@ -30,21 +24,17 @@ public struct ParsableEnum {
            """
   }
 
-  static func enumValueText(for element: EnumCaseElementSyntax) -> String {
-    switch element.parameterClause {
-      case .some(let parameterClause) :
-        var text = ".\(element.name)("
-        for (i, parameter) in parameterClause.parameters.enumerated() {
-          let p : EnumCaseParameterSyntax = parameter
-          if i > 0 { text += ", " }
-          text += "\(parameter.type.description).from(node[\"\(i)\"])" //\(parameter.type.trimmed)(node)"
-        }
-        text += ")"
-        return text
-
-      case .none :
-        return ".\(element.name)"
+  static func switchCaseText(for element: EnumCaseElementSyntax) -> String {
+    var argumentText = ""
+    if let parameterClause = element.parameterClause {
+      argumentText += "("
+      for (i, parameter) in parameterClause.parameters.enumerated() {
+        if i > 0 { argumentText += ", " }
+        argumentText += "\(parameter.type.description).from(node[\"\(i)\"])"
+      }
+      argumentText += ")"
     }
+    return "case \"\(element.name)\" : return .\(element.name)\(argumentText)"
   }
 }
 
