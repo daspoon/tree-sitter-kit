@@ -13,12 +13,13 @@ public struct ParsableStruct {
     guard let decl = decl.as(StructDeclSyntax.self)
       else { return nil }
 
-    let bodyText = decl.storedProperties.enumerated()
-      .map({i, v in "\(v.name) = \(v.type.description)(node[\"\(i)\"])"})
-      .joined(separator: "\n")
+    let argumentsText = decl.storedProperties.enumerated()
+      .map({i, v in "\(v.name): \(v.type.description).from(node[\"\(i)\"])"})
+      .joined(separator: ", ")
+
     return """
-           init(_ node: TSNode) {
-               \(bodyText)
+           static func from(_ node: TSNode) -> Self {
+               .init(\(argumentsText))
            }
            """
   }

@@ -9,6 +9,7 @@ import TreeSitterKit
 
 /// A type representing a variety of symbol definitions.
 
+@ParsableEnum
 enum Def : Equatable, ParsableByCases {
   case `typedef`(Typedef)
   case `enum`(Enum)
@@ -17,10 +18,10 @@ enum Def : Equatable, ParsableByCases {
 
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
-      "Decl_typedef": "\(Typedef.self)",
-      "Decl_enum": "\(Enum.self)",
-      "Decl_let": "\(Let.self)",
-      "Decl_fun": "\(Fun.self)",
+      "typedef": .prod(Typedef.self),
+      "enum": .prod(Enum.self),
+      "let": .prod(Let.self),
+      "fun": .prod(Fun.self),
     ]
   }
 }

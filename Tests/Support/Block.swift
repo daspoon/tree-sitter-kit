@@ -21,10 +21,12 @@ extension Block : Parsable {
     "\(optional: "\(DefList.self)") \(Expr.self)"
   }
 
-  init(_ node: TSNode) {
+  static func from(_ node: TSNode) -> Self {
     let k = node.count; assert(k == 1 || k == 2)
-    decls = k == 2 ? [Def](node[0], delimiter: Semicolon.symbol) : []
-    expr = Expr(node[k == 2 ? 1 : 0])
+    return .init(
+      decls: k == 2 ? [Def](node[0], delimiter: Semicolon.symbol) : [],
+      expr: Expr.from(node[k == 2 ? 1 : 0])
+    )
   }
 }
 
@@ -35,6 +37,6 @@ extension Block {
       else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw TSException("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self.init(tree.rootNode)
+    self = Self.from(tree.rootNode)
   }
 }

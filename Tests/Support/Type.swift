@@ -24,7 +24,6 @@ extension TypeExpr : ParsableByCases {
   static var symbolName : String
     { "Type" }
 
-// TODO: TypeExpr => TypeTuple
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
       "name": "\(Name.self)",
@@ -32,6 +31,11 @@ extension TypeExpr : ParsableByCases {
       "tuple": "\([TypeExpr].self)", // { node in { ts in ts.count == 1 ? ts[0] : .tuple(ts) }([TypeExpr](node))
       "func": .prec(.right(1), "\(TypeExpr.self) -> \(TypeExpr.self)"),
     ]
+  }
+
+  // TODO: delete
+  public static func from(_ node: TSNode) -> Self {
+    fatalError()
   }
 }
 

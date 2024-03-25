@@ -9,7 +9,7 @@ import TreeSitterKit
 
 /// A type representing a functional expression.
 
-indirect enum Expr : Equatable {
+indirect enum Expr : Equatable, ParsableByCases {
   case name(Name)
   case numb(Int)
   case apply(Expr, Expr)
@@ -19,23 +19,17 @@ indirect enum Expr : Equatable {
   case project(Expr, Int)
   case match(Expr, [MatchCase])
   case block(Block)
-}
 
-typealias ExprList = [Expr]
-
-
-extension Expr : ParsableByCases {
   typealias MatchCaseList = SeparatedSequence<MatchCase, Comma>
 
-// TODO: ExprList => ExprTuple
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
       "name" :     "\(Name.self)",
       "numb" :     "\(Int.self)",
-      "apply" :    .prec(.apply, "\(Expr.self) \(ExprList.self)"),    // { node in .apply(Expr(node[0]), .parenthesized(node[1])) }
+      "apply" :    .prec(.apply, "\(Expr.self) \(ExprList.self)"),
       "lambda" :   "! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
       "mu" :       "! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
-      "tuple" :    "\(ExprList.self)", // { node in .parenthesized(node[0]) } */
+      "tuple" :    "\(ExprList.self)",
       "project" :  .prec(.proj, "\(Expr.self) . \(Int.self)"),
       "match" :    "match \(Expr.self) { \(MatchCaseList.self) }",
       "block" :    "{ \(Block.self) }",
@@ -51,15 +45,18 @@ extension Expr : ParsableByCases {
 }
 
 
-// Define methods to make grammar spec more concise
-
-extension Expr {
-  /// Given a node representing a bracketed sequence of exprs, return either the sole element or a tuple consisting of zero, two or more elements.
-  static func parenthesized(_ node: TSNode) -> Self {
-    let exprs = [Expr](node)
+/// *ExprList* parses a bracketed sequence of exprs, return either the sole element or a tuple consisting of zero, two or more elements.
+struct ExprList : Parsable {
+  static var syntaxExpression : TSExpression
+    { [Expr].syntaxExpression }
+  static func from(_ node: TSNode) -> Expr {
+    let exprs = [Expr].from(node)
     return exprs.count == 1 ? exprs[0] : .tuple(exprs)
   }
+}
 
+
+extension Expr {
   static func eql(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
     { .apply(.name(op), .tuple([lhs, rhs])) }
   static func or(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self

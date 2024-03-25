@@ -11,14 +11,13 @@ import TreeSitterKit
 
 @ParsableStruct
 struct Enum : Equatable, Parsable {
-  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma>
-
   let name : Name
-  let cases : EnumCaseList
+  let cases : [EnumCase]
 
   init(name n: Name, cases cs: [EnumCase])
-    { name = n; cases = .init(elements: cs) }
+    { name = n; cases = cs }
 
+  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma>
   static var syntaxExpression : TSExpression
     { "enum \(Name.self) { \(EnumCaseList.self) }" }
 

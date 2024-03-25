@@ -6,7 +6,9 @@
 
 
 /// *Parsable* identifies a language element which has a tree-sitter production rule and can be initialized with a parse tree.
-public protocol Parsable {
+public protocol Parsable<Result> {
+  associatedtype Result
+
   /// The name of the grammar symbol representing this language element. The default implementation returns the receiver's type name.
   static var symbolName : String { get }
 
@@ -14,11 +16,7 @@ public protocol Parsable {
   static var syntaxExpression : TSExpression { get }
 
   /// Initialize an instance from a compatible parse tree node. Required.
-  init(_ node: TSNode)
-}
-
-public protocol NewParsable<Result> {
-
+  static func from(_ node: TSNode) -> Result
 }
 
 
@@ -26,11 +24,6 @@ extension Parsable {
   /// Default implementation.
   public static var symbolName : String
     { "\(Self.self)" }
-
-  // TODO: delete
-  public init(_ node: TSNode) {
-    fatalError()
-  }
 }
 
 

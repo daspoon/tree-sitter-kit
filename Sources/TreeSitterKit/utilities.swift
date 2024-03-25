@@ -5,7 +5,7 @@
 */
 
 
-extension Array where Element : Parsable {
+extension Array where Element : Parsable, Element.Result == Element {
   /// Create an array of *Parsable* elements from a parset tree node matching a *list* production rule.
   public init(_ node: TSNode, separator: String, brackets: (String, String)? = nil) {
     let n = node.count - (brackets != nil ? 2 : 0)
@@ -14,27 +14,27 @@ extension Array where Element : Parsable {
       case 0 : self = []
       default :
         assert(n > 0 && n % 2 == 1)
-        self = stride(from: 0, to: n, by: 2).map { i in Element(node[d+i]) }
+        self = stride(from: 0, to: n, by: 2).map { i in Element.from(node[d+i]) }
     }
   }
 
   public init(_ node: TSNode, delimiter: String) {
     let n = node.count
     assert(n > 0 && n % 2 == 0)
-    self = stride(from: 0, to: n, by: 2).map { i in Element(node[i]) }
+    self = stride(from: 0, to: n, by: 2).map { i in Element.from(node[i]) }
   }
 }
 
 
-extension Array : Parsable where Element : Parsable {
+extension Array : Parsable where Element : Parsable, Element.Result == Element {
   public static var symbolName : String
     { "\(Element.symbolName)Array" }
 
   public static var syntaxExpression : TSExpression
     { .seq([.literal("("), .optional(.repeat1(.prod(Element.self), separator: ",")), .literal(")")]) }
 
-  public init(_ node: TSNode)
-    { self.init(node, separator: ",", brackets: ("(", ")")) }
+  public static func from(_ node: TSNode) -> Self
+    { .init(node, separator: ",", brackets: ("(", ")")) }
 }
 
 
@@ -42,8 +42,8 @@ extension Int : Parsable {
   public static var syntaxExpression : TSExpression
     { .pattern("[0-9]+") }
 
-  public init(_ node: TSNode)
-    { self.init(node.stringValue!)! }
+  public static func from(_ node: TSNode) -> Self
+    { .init(node.stringValue!)! }
 }
 
 

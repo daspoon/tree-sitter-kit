@@ -16,11 +16,11 @@ public struct ParsableEnum {
     var casesText : [String] = []
     for enumCaseDecl in decl.memberBlock.members.compactMap({$0.decl.as(EnumCaseDeclSyntax.self)}) {
       for element in enumCaseDecl.elements {
-        casesText += ["case \"\(element.name)\" : self = \(enumValueText(for: element))"]
+        casesText += ["case \"\(element.name)\" : return \(enumValueText(for: element))"]
       }
     }
     return """
-           init(_ node: TSNode) {
+           static func from(_ node: TSNode) -> Self {
                switch node.type {
                \(casesText.joined(separator: "\n"))
                default:
@@ -37,7 +37,7 @@ public struct ParsableEnum {
         for (i, parameter) in parameterClause.parameters.enumerated() {
           let p : EnumCaseParameterSyntax = parameter
           if i > 0 { text += ", " }
-          text += "\(parameter.type.description)(node[\"\(i)\"])" //\(parameter.type.trimmed)(node)"
+          text += "\(parameter.type.description).from(node[\"\(i)\"])" //\(parameter.type.trimmed)(node)"
         }
         text += ")"
         return text
