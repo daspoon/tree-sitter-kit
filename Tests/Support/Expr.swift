@@ -9,6 +9,7 @@ import TreeSitterKit
 
 /// A type representing a functional expression.
 
+@ParsableEnum
 indirect enum Expr : Equatable, ParsableByCases {
   case name(Name)
   case numb(Int)
@@ -19,6 +20,21 @@ indirect enum Expr : Equatable, ParsableByCases {
   case project(Expr, Int)
   case match(Expr, [MatchCase])
   case block(Block)
+
+  static func eql(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func or(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func and(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func add(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func mul(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func pow(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
+    { .apply(.name(op), .tuple([lhs, rhs])) }
+  static func neg(_ op: Name, _ arg: Expr) -> Self
+    { .apply(.name(op), arg) }
 
   typealias MatchCaseList = SeparatedSequence<MatchCase, Comma>
 
@@ -53,25 +69,6 @@ struct ExprList : Parsable {
     let exprs = [Expr].from(node)
     return exprs.count == 1 ? exprs[0] : .tuple(exprs)
   }
-}
-
-
-extension Expr {
-  static func eql(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func or(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func and(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func add(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func mul(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func pow(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-
-  static func neg(_ op: Name, _ arg: Expr) -> Self
-    { .apply(.name(op), arg) }
 }
 
 

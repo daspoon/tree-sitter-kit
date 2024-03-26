@@ -7,62 +7,103 @@
 import SwiftSyntax
 
 
+// MARK: -
+
 extension DeclGroupSyntax {
+  public func variableBindingWith(name: String, type: TypeSyntax, isStatic: Bool = false) -> PatternBindingSyntax? {
+    memberBlock.members
+      .compactMap({$0.decl.as(VariableDeclSyntax.self)})
+      .filter({$0.isStatic == isStatic})
+      .compactMap({$0.bindings.only})
+      .filter({
+        guard let identifier = $0.pattern.as(IdentifierPatternSyntax.self)?.identifier else { return false }
+        return identifier.text == name
+      })
+      .filter({
+        guard let annotation = $0.typeAnnotation else { return false }
+        return annotation.type == type
+      })
+      .first
+  }
+
   public var storedProperties : [StoredPropertyInfo] {
     memberBlock.members.compactMap({StoredPropertyInfo($0.decl)})
   }
 }
 
+// MARK: -
 
-extension EnumDeclSyntax {
-  public var enumCaseElements : [EnumCaseElementSyntax] {
-    memberBlock.members
-      .compactMap({$0.decl.as(EnumCaseDeclSyntax.self)})
-      .reduce([]) { $0 + $1.elements }
+//extension DeclModifierSyntax {
+//  public static func == (lhs: DeclModifierSyntax, rhs: String) -> Bool {
+//    lhs.name.text == rhs
+//  }
+//}
+
+// MARK: -
+
+extension FunctionDeclSyntax {
+  /// Return *true* if the receiver's modifiers contain 'static'.
+  public var isStatic : Bool {
+    modifiers.contains {$0.name.text == "static"}
   }
 }
 
+// MARK: -
 
-/// A convenience type aggregating the name, type and optional initial value of a variable declaration.
-public struct StoredPropertyInfo {
-  public let name : String
-  public let type : TypeSyntax
-  public let value : ExprSyntax?
-
-
-  /// Attempt to initialize an instance with a declaration, which must be a *VariableDeclSyntax* with a single bound name and type.
-  public init?(_ decl: DeclSyntax) {
-    guard let vbl = decl.as(VariableDeclSyntax.self)
+extension PatternBindingSyntax {
+  /// Return the expression returned by the defined getter. Return nil if the receiver does not have a single getter or if its code block is empty.
+  public var resultExpr : ExprSyntax? {
+    guard case .getter(let codeBlockItemList) = accessorBlock?.accessors
       else { return nil }
+    guard let returnItem = codeBlockItemList.last?.item
+      else { return nil }
+    return returnItem.kind == .returnStmt
+      ? returnItem.cast(ReturnStmtSyntax.self).expression
+      : returnItem.as(ExprSyntax.self)
+  }
+}
 
-    // Get the single binding, ensuring it has represents an identifier and type.
-    guard
-      let binding = vbl.bindings.first, vbl.bindings.count == 1,
-      let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text,
-      let type = binding.typeAnnotation?.type.trimmed
-    else {
-      return nil
+// MARK: -
+
+extension StringLiteralExprSyntax {
+  var text : String {
+    "\(segments)"
+  }
+}
+
+// MARK: -
+
+extension TypeSyntax {
+  /// Structual equality for type syntax expressions. Partial.
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    guard lhs.kind == rhs.kind else { return false }
+    switch lhs.kind {
+      case .arrayType :
+        return lhs.cast(ArrayTypeSyntax.self).element == rhs.cast(ArrayTypeSyntax.self).element
+      case .dictionaryType :
+        return lhs.cast(DictionaryTypeSyntax.self).key == rhs.cast(DictionaryTypeSyntax.self).key
+          && lhs.cast(DictionaryTypeSyntax.self).value == rhs.cast(DictionaryTypeSyntax.self).value
+      case .identifierType :
+        return lhs.cast(IdentifierTypeSyntax.self).name.text == rhs.cast(IdentifierTypeSyntax.self).name.text
+      case .optionalType :
+        return lhs.cast(OptionalTypeSyntax.self).wrappedType == rhs.cast(OptionalTypeSyntax.self).wrappedType
+      case .attributedType, .classRestrictionType, .compositionType, .functionType, .implicitlyUnwrappedOptionalType, .memberType, .metatypeType, .missingType, .namedOpaqueReturnType, .packElementType, .packExpansionType, .someOrAnyType, .suppressedType, .tupleType:
+        fallthrough
+      default :
+        return false
     }
+  }
 
-    // Ensure the declaration's binding corresponds to a stored property
-    switch binding.accessorBlock?.accessors {
-      case .none :
-        break
-      case .accessors(let accessors) :
-        for accessor in accessors {
-          switch accessor.accessorSpecifier.tokenKind {
-            case .keyword(.willSet), .keyword(.didSet) :
-              break
-            default :
-              return nil
-          }
-        }
-      case .getter :
-        return nil
-    }
+  static func == (lhs: Self, rhs: String) -> Bool {
+    lhs.trimmed.description == rhs
+  }
+}
 
-    self.name = name
-    self.type = type
-    self.value = binding.initializer?.value
+// MARK: -
+
+extension VariableDeclSyntax {
+  /// Return *true* if the receiver's modifiers contain 'static'.
+  public var isStatic : Bool {
+    modifiers.contains {$0.name.text == "static"}
   }
 }
