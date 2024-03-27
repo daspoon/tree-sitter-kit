@@ -69,6 +69,8 @@ public struct ParsableEnum : MemberMacro {
     // Return the initializer text, constructing a switch case for each element of `syntaxExpressionsByCaseName`.
     return """
        static func from(_ node: TSNode) -> Self {
+           assert(node.type == "\(symbolName)" && node.count == 1)
+           let node = node[0]
            switch node.type {
            \(
              try dictionaryElementList
