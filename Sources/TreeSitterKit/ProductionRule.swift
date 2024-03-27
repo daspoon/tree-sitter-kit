@@ -30,8 +30,8 @@ extension ProductionRule {
     switch self {
       case .value(let proxy) :
         return proxy.symbolName
-      case .value_case(_, let name) :
-        return name
+      case .value_case(let proxy, let name) :
+        return proxy.symbolName(for: name)
     }
   }
 

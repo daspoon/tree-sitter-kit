@@ -15,6 +15,9 @@ public struct ParsableProxyCase {
     _syntaxExpressionFor = { T.syntaxExpression(for: $0) }
   }
 
+  public func symbolName(for name: String) -> String
+    { superproxy.symbolName + "_" + name }
+
   public func syntaxExpression(for name: String) -> TSExpression
     { _syntaxExpressionFor(name) }
 }
