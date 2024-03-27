@@ -105,7 +105,7 @@ extension TSExpression.Separator {
 
 
 extension TSExpression : ExpressibleByStringInterpolation {
-  /// Build a sequence of literal and productino expressions...
+  /// Build a sequence of literal and production expressions...
   public struct StringInterpolation : StringInterpolationProtocol {
     var components : [TSExpression]
 
