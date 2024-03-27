@@ -24,10 +24,6 @@ extension Parsable {
   /// Default implementation.
   public static var symbolName : String
     { "\(Self.self)" }
-
-// TODO: delete
-public static func from(_ node: TSNode) -> Self
-  { fatalError() }
 }
 
 
