@@ -18,7 +18,7 @@ extension Block : Parsable {
   typealias DefList = DelimitedSequence<Def, Semicolon>
 
   static var syntaxExpression : TSExpression {
-    "\(optional: "\(DefList.self)") \(Expr.self)"
+    "\(opt: DefList.self) \(Expr.self)"
   }
 
   static func from(_ node: TSNode) -> Self {

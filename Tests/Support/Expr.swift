@@ -21,6 +21,15 @@ indirect enum Expr : Equatable, ParsableByCases {
   case match(Expr, [MatchCase])
   case block(Block)
 
+  static func paren(_ exprs: [Expr]) -> Self
+    { exprs.count == 1 ? exprs[0] : .tuple(exprs) }
+
+  static func call(_ fun: Expr, _ args: [Expr]) -> Self
+    { .apply(fun, .paren(args)) }
+
+  static func match(_ expr: Expr, _ seq: MatchCaseList) -> Self
+    { .match(expr, seq.elements) }
+
   static func eql(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
     { .apply(.name(op), .tuple([lhs, rhs])) }
   static func or(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
@@ -42,10 +51,10 @@ indirect enum Expr : Equatable, ParsableByCases {
     return [
       "name" :     "\(Name.self)",
       "numb" :     "\(Int.self)",
-      "apply" :    .prec(.apply, "\(Expr.self) \(ExprList.self)"),
-      "lambda" :   "! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
-      "mu" :       "! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
-      "tuple" :    "\(ExprList.self)",
+      "call" :     .prec(.apply, "\(Expr.self) \(ExprList.self)"),
+      "lambda" :   "! \([Param].self) -> \(TypeExpr.self) . \(Expr.self)",
+      "mu" :       "! \(Name.self) \([Param].self) -> \(TypeExpr.self) . \(Expr.self)",
+      "paren" :    "\([Expr].self)",
       "project" :  .prec(.proj, "\(Expr.self) . \(Int.self)"),
       "match" :    "match \(Expr.self) { \(MatchCaseList.self) }",
       "block" :    "{ \(Block.self) }",

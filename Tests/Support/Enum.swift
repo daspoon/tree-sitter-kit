@@ -36,7 +36,7 @@ struct EnumCase : Equatable, Parsable {
     { name = n; params = ps }
 
   static var syntaxExpression : TSExpression
-    { "\(Name.self) \(optional: .prod(ParamList.self))" }
+    { "\(Name.self) \(opt: ParamList.self)" }
 
 }
 

@@ -47,6 +47,8 @@ public indirect enum TSExpression {
   case `repeat`(TSExpression)
   /// Specifies precedence, and optionally associativity, for a given expression.
   case prec(Prec, TSExpression)
+  /// Annotate an expression with a field name.
+  case field(String, TSExpression)
 
 
   public static func prod<T: Parsable>(_ type: T.Type) -> Self
@@ -85,6 +87,8 @@ public indirect enum TSExpression {
         return "prec.left(\(n), \(expr.javascript))"
       case .prec(.right(let n), let expr) :
         return "prec.right(\(n), \(expr.javascript))"
+      case .field(let name, let expr) :
+        return "field('\(name)', \(expr.javascript))"
     }
   }
 }
@@ -105,12 +109,20 @@ extension TSExpression.Separator {
 
 
 extension TSExpression : ExpressibleByStringInterpolation {
-  /// Build a sequence of literal and production expressions...
+  /// Build a sequence of literal and capture expressions. Captures are wrapped in field expressions named by increasing numeric indices (beginning at zero).
   public struct StringInterpolation : StringInterpolationProtocol {
     var components : [TSExpression]
+    var captureCount : Int
 
     public init(literalCapacity: Int, interpolationCount: Int) {
       components = []
+      captureCount = 0
+    }
+
+    /// Called by each interpolation method to wrap the component expression in a field to enable extraction.
+    private mutating func appendCapture(_ expr: TSExpression) {
+      components.append(.field("\(captureCount)", expr))
+      captureCount += 1
     }
 
     /// Add a literal component corresponding to the given string with leading and trailing whitespace removed.
@@ -121,19 +133,19 @@ extension TSExpression : ExpressibleByStringInterpolation {
       }
     }
 
-    /// Add a production component for the given type.
+    /// Add a component to capture an instance of the given type.
     public mutating func appendInterpolation<T: Parsable>(_: T.Type) {
-      components.append(.prod(T.self))
+      appendCapture(.prod(T.self))
     }
 
-    /// Add a choice of literals  matching any of the given strings.
+    /// Add a component to capture a one of the given strings literals.
     public mutating func appendInterpolation(_ symbols: String...) {
-      components.append(.choice(symbols.map {.literal($0)}))
+      appendCapture(.choice(symbols.map {.literal($0)}))
     }
 
-    /// Add an optional expression.
-    public mutating func appendInterpolation(optional expr: TSExpression) {
-      components.append(.optional(expr))
+    /// Add a component to capture an optional instance of the given type.
+    public mutating func appendInterpolation<T: Parsable>(opt _: T.Type) {
+      appendCapture(.optional(.prod(T.self)))
     }
 
     /// Return the sequence of accumulated components, or the sole component if there is exactly one.

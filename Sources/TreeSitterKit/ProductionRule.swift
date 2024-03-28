@@ -59,7 +59,7 @@ extension ProductionRule {
             remaining.insert(support)
           case .seq(let exprs), .choice(let exprs) :
             exprs.forEach { walk($0) }
-          case .prec(_, let expr), .optional(let expr), .repeat(let expr) :
+          case .field(_, let expr), .optional(let expr), .prec(_, let expr), .repeat(let expr) :
             walk(expr)
           case .literal, .pattern :
             break

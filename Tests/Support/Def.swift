@@ -18,10 +18,10 @@ enum Def : Equatable, ParsableByCases {
 
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
-      "typedef": .prod(Typedef.self),
-      "enum": .prod(Enum.self),
-      "let": .prod(Let.self),
-      "fun": .prod(Fun.self),
+      "typedef": "\(Typedef.self)",
+      "enum": "\(Enum.self)",
+      "let": "\(Let.self)",
+      "fun": "\(Fun.self)",
     ]
   }
 }
