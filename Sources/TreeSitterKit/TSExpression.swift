@@ -111,6 +111,7 @@ extension TSExpression.Separator {
 extension TSExpression : ExpressibleByStringInterpolation {
   /// Build a sequence of literal and capture expressions. Captures are wrapped in field expressions named by increasing numeric indices (beginning at zero).
   public struct StringInterpolation : StringInterpolationProtocol {
+    var precedence : Prec?
     var components : [TSExpression]
     var captureCount : Int
 
@@ -139,7 +140,7 @@ extension TSExpression : ExpressibleByStringInterpolation {
     }
 
     /// Add a component to capture a one of the given strings literals.
-    public mutating func appendInterpolation(_ symbols: String...) {
+    public mutating func appendInterpolation(lit symbols: [String]) {
       appendCapture(.choice(symbols.map {.literal($0)}))
     }
 
@@ -148,9 +149,16 @@ extension TSExpression : ExpressibleByStringInterpolation {
       appendCapture(.optional(.prod(T.self)))
     }
 
+    /// Establish the precedence of the expression. This has no associated capture, has no effect the field labels of captures, and must be specified as the first interpolation segment.
+    public mutating func appendInterpolation(prec: Prec) {
+      assert(precedence == nil && components.count == 0)
+      precedence = prec
+    }
+
     /// Return the sequence of accumulated components, or the sole component if there is exactly one.
     var expression : TSExpression {
-      components.count == 1 ? components[0] : .seq(components)
+      let expr = components.count == 1 ? components[0] : .seq(components)
+      return precedence.map {.prec($0, expr)} ?? expr
     }
   }
 

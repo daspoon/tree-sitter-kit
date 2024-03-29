@@ -48,6 +48,14 @@ extension Int : Parsable {
 
 
 extension String {
+  // Note: we can't make String conform to Parsable without choosing an arbitrary syntax expression,
+  // but we want to enable use of String in the constructors for Parsable types...
+  public static func from(_ node: TSNode) -> Self
+    { node.stringValue! }
+}
+
+
+extension String {
   /// Return the concatenation of a number of newline characters, defaulting to 1.
   static func newline(_ n: Int = 1) -> String
     { .init(repeating: "\n", count: n) }

@@ -21,7 +21,7 @@ indirect enum TypeExpr : Equatable, ParsableByCases {
     { .apply("->", [src, trg]) }
 
   static func tuple(_ types: [TypeExpr]) -> Self
-    { .apply("()", types) }
+    { types.count == 1 ? types[0] : .apply("()", types) }
 
   static var symbolName : String
     { "Type" }
@@ -29,20 +29,10 @@ indirect enum TypeExpr : Equatable, ParsableByCases {
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
       "name": "\(Name.self)",
-      "const": .prec(1, "\(Name.self) \(TypeExprList.self)"),
-      "tuple": "\(TypeExprList.self)",
-      "func": .prec(.right(1), "\(TypeExpr.self) -> \(TypeExpr.self)"),
+      "const": "\(prec: 1) \(Name.self) \([TypeExpr].self)",
+      "tuple": "\([TypeExpr].self)",
+      "func": "\(prec: .right(1)) \(TypeExpr.self) -> \(TypeExpr.self)",
     ]
-  }
-}
-
-/// *TypeList* parses a bracketed sequence of exprs, return either the sole element or a tuple consisting of zero, two or more elements.
-struct TypeExprList : Parsable {
-  static var syntaxExpression : TSExpression
-    { [TypeExpr].syntaxExpression }
-  static func from(_ node: TSNode) -> TypeExpr {
-    let types = [TypeExpr].from(node)
-    return types.count == 1 ? types[0] : .tuple(types)
   }
 }
 

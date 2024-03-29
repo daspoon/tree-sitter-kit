@@ -30,20 +30,27 @@ indirect enum Expr : Equatable, ParsableByCases {
   static func match(_ expr: Expr, _ seq: MatchCaseList) -> Self
     { .match(expr, seq.elements) }
 
-  static func eql(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func or(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func and(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func add(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func mul(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func pow(_ lhs: Expr, _ op: Name, _ rhs: Expr) -> Self
-    { .apply(.name(op), .tuple([lhs, rhs])) }
-  static func neg(_ op: Name, _ arg: Expr) -> Self
-    { .apply(.name(op), arg) }
+  static func infix(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .apply(.name(Name(text: op)), .tuple([lhs, rhs])) }
+
+  static func eql(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .infix(lhs, op, rhs) }
+  static func or(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .infix(lhs, op, rhs) }
+  static func and(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .infix(lhs, op, rhs) }
+  static func add(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .infix(lhs, op, rhs) }
+  static func mul(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .infix(lhs, op, rhs) }
+  static func pow(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
+    { .infix(lhs, op, rhs) }
+
+  static func prefix(_ op: String, _ arg: Expr) -> Self
+    { .apply(.name(Name(text: op)), arg) }
+
+  static func neg(_ op: String, _ arg: Expr) -> Self
+    { .prefix(op, arg) }
 
   typealias MatchCaseList = SeparatedSequence<MatchCase, Comma>
 
@@ -51,32 +58,21 @@ indirect enum Expr : Equatable, ParsableByCases {
     return [
       "name" :     "\(Name.self)",
       "numb" :     "\(Int.self)",
-      "call" :     .prec(.apply, "\(Expr.self) \(ExprList.self)"),
+      "call" :     "\(prec: .apply)\(Expr.self) \([Expr].self)",
       "lambda" :   "! \([Param].self) -> \(TypeExpr.self) . \(Expr.self)",
       "mu" :       "! \(Name.self) \([Param].self) -> \(TypeExpr.self) . \(Expr.self)",
       "paren" :    "\([Expr].self)",
-      "project" :  .prec(.proj, "\(Expr.self) . \(Int.self)"),
+      "project" :  "\(prec: .proj)\(Expr.self) . \(Int.self)",
       "match" :    "match \(Expr.self) { \(MatchCaseList.self) }",
       "block" :    "{ \(Block.self) }",
-      "eql" :      .prec(.eql,   "\(Expr.self) \("==") \(Expr.self)"),
-      "or"  :      .prec(.or,    "\(Expr.self) \("||") \(Expr.self)"),
-      "and" :      .prec(.and,   "\(Expr.self) \("&&") \(Expr.self)"),
-      "add" :      .prec(.add,   "\(Expr.self) \("+", "-") \(Expr.self)"),
-      "mul" :      .prec(.mult,  "\(Expr.self) \("*", "/", "%") \(Expr.self)"),
-      "pow" :      .prec(.power, "\(Expr.self) \("^") \(Expr.self)"),
-      "neg" :      .prec(.neg,   "\("-") \(Expr.self)"),
+      "eql" :      "\(prec: .eql)\(Expr.self) \(lit: ["=="]) \(Expr.self)",
+      "or"  :      "\(prec: .or)\(Expr.self) \(lit: ["||"]) \(Expr.self)",
+      "and" :      "\(prec: .and)\(Expr.self) \(lit: ["&&"]) \(Expr.self)",
+      "add" :      "\(prec: .add)\(Expr.self) \(lit: ["+", "-"]) \(Expr.self)",
+      "mul" :      "\(prec: .mult)\(Expr.self) \(lit: ["*", "/", "%"]) \(Expr.self)",
+      "pow" :      "\(prec: .power)\(Expr.self) \(lit: ["^"]) \(Expr.self)",
+      "neg" :      "\(prec: .neg)\(lit: ["-"]) \(Expr.self)",
     ]
-  }
-}
-
-
-/// *ExprList* parses a bracketed sequence of exprs, return either the sole element or a tuple consisting of zero, two or more elements.
-struct ExprList : Parsable {
-  static var syntaxExpression : TSExpression
-    { [Expr].syntaxExpression }
-  static func from(_ node: TSNode) -> Expr {
-    let exprs = [Expr].from(node)
-    return exprs.count == 1 ? exprs[0] : .tuple(exprs)
   }
 }
 

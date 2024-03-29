@@ -10,8 +10,11 @@ import SwiftSyntaxMacros
 
 /// A macro applied to enum types whose expansion implements the following requirements of *ParsableByCases*:
 ///   - `static func from(_ node: TSNode) -> Self`
-/// The target type must provide its own implementation of `static var syntaxExpressionsByCaseName: [String: TSSyntaxExpression]`
-/// as a computed dictionary literal with string literal keys.
+/// The target type must implement the following method to return a dictionary literal with string literal keys and values:
+///   - `static var syntaxExpressionsByCaseName: [String: TSSyntaxExpression]`
+/// If the target type requires a symbol name other than its type name, if must implement the following method to return
+/// a string literal:
+///   - `static var symbolName : String`
 
 public struct ParsableEnum : MemberMacro {
   /// Used to distinguish the two means of constructing elements of the target type: an inherent case vs a static function returning *Self*.
@@ -25,6 +28,15 @@ public struct ParsableEnum : MemberMacro {
     guard let decl = decl.as(EnumDeclSyntax.self)
       else { throw Exception("applicable only to enum declarations") }
 
+    // Create a dictionary containing the signatures of this type's constructors (viz. enum cases or static
+    // functions returning Self) keyed by their identifiers. Throw if any constructors have the same key,
+    // which can occur because parameter names do not contribute to the identifiers.
+    let caseConstructors = decl.enumCaseElements.map({Signature(case: $0, of: decl)})
+    let staticConstructors = decl.staticFunctionsReturningSelf.map({Signature(functionDecl: $0)})
+    let signaturesById = try Dictionary((caseConstructors + staticConstructors).map {($0.identifier, $0)}) { c, _ in
+      throw Exception("multiple constructors with signature \(c.identifier)")
+    }
+
     // Determine this type's symbol name, either from an explicit declaration of `symbolName` or as its name.
     let symbolName : String
     if let symbolNameBinding = decl.variableBindingWith(name: "symbolName", type: "String", isStatic: true) {
@@ -33,88 +45,42 @@ public struct ParsableEnum : MemberMacro {
       symbolName = stringLiteral.text
     }
     else {
-      symbolName = "\(decl.name.trimmed)"
+      symbolName = decl.name.text
     }
 
-    // Get the mapping of case names to syntax expressions from the implementation of `syntaxExpressionsByCaseName`,
-    // which is required to return a dictionary literal.
+    // Create a list of the production rules specified by `syntaxExpressionsByCaseName`, each represented as
+    // a Signature. Note: explicitly check that each production matches a constructor because Swift macro
+    // expansion involving enums is fragile and crashes in response to unknown constructor names and argument
+    // type mismatches...
     guard let binding = decl.variableBindingWith(name: "syntaxExpressionsByCaseName", type: TypeSyntax(stringLiteral: "[String: TSExpression]"), isStatic: true)
       else { throw Exception("requires implementation of 'syntaxExpressionsByCaseName'") }
     guard let dictionaryExpr = binding.resultExpr?.as(DictionaryExprSyntax.self)
       else { throw Exception("'syntaxExpressionsByCaseName' must be implemented as a single getter returning a dictionary literal") }
     guard case .elements(let dictionaryElementList) = dictionaryExpr.content
       else { throw Exception("'syntaxExpressionsByCaseName' must return a non-empty dictionary") }
+    let rules = try dictionaryElementList.map {
+      let rule = try Signature(dictionaryElement: $0)
+      guard signaturesById[rule.identifier] != nil else { throw Exception("no constructor matching \(rule.identifier)") }
+      return rule
+    }
 
-    // Create lists pairing the this type's defined enum elements and static functions with their names,
-    // and then combine those lists to form a dictionary mapping constructor names to Constructor instances,
-    // stripping backquotes from those names. The dictionary gives preference to enum elements over static
-    // functions of the same name.
-    // TODO: the dictionary keys should incorporate parameter names and types to account for overloading.
-    let enumCaseElements : [(name: String, constructor: Constructor)] = decl.memberBlock.members
-      .compactMap({$0.decl.as(EnumCaseDeclSyntax.self)})
-      .reduce([]) { $0 + $1.elements }
-      .map({($0.name.text, .case($0))})
-    let staticFunctionDecls : [(name: String, constructor: Constructor)] = decl.memberBlock.members
-      .compactMap({$0.decl.as(FunctionDeclSyntax.self)})
-      .filter({$0.isStatic})
-      .filter({
-        guard let rtype = $0.signature.returnClause?.type else { return false }
-        return rtype == "Self"
-      })
-      .map({($0.name.text, .func($0))})
-    let constructorsByName : [String: Constructor] = Dictionary((enumCaseElements + staticFunctionDecls).map({($0.0.removing(prefix: "`", suffix: "`"), $0.1)}),
-      uniquingKeysWith: {v, _ in v}
-    )
-
-    // Return the initializer text, constructing a switch case for each element of `syntaxExpressionsByCaseName`.
+    // Return the initializer text, constructing a switch case for each production rule.
     return """
        static func from(_ node: TSNode) -> Self {
            assert(node.type == "\(symbolName)" && node.count == 1)
            let node = node[0]
            switch node.type {
-           \(
-             try dictionaryElementList
-               // Ensure each element has a string literal key, and reformat as a string/expr pair.
-               .compactMap({ element in
-                 guard let key = element.key.as(StringLiteralExprSyntax.self)
-                   else { throw Exception("'syntaxExpressionsByCaseName' must return a dictionary with string literal keys") }
-                 return (key.text, element.value)
-               })
-               // Produce a switch case for each key/expr pair which returns the key as a constructor name optionally applied to an argument list according to the corresponding declaration.
-               .compactMap({ key, expr in
-                 let argsText : String?
-                 switch constructorsByName[key] {
-                   case .case(let enumCaseElement) :
-                     argsText = argumentsText(for: enumCaseElement)
-                   case .func(let functionDecl) :
-                     argsText = argumentsText(for: functionDecl)
-                   default :
-                     return nil
-                 }
-                 return "case \"\(symbolName)_\(key)\" : return .\(key)\(argsText.map {"(" + $0 + ")"} ?? "")"
+             \(
+               rules.map({ rule in
+                 return "case \"\(symbolName)_\(rule.name)\" : return \(rule.invocationText(for: "node"))"
                })
                .joined(separator: "\n")
-           )
+             )
            default:
                fatalError()
            }
        }
        """
-  }
-
-  static func argumentsText(for functionDecl: FunctionDeclSyntax) -> String? {
-    let parameterClause = functionDecl.signature.parameterClause
-    return parameterClause.parameters.enumerated()
-      .map({"\($1.type.description).from(node[\"\($0)\"])"})
-      .joined(separator: ", ")
-  }
-
-  static func argumentsText(for element: EnumCaseElementSyntax) -> String? {
-    guard let parameterClause = element.parameterClause
-      else { return nil }
-    return parameterClause.parameters.enumerated()
-      .map({"\($1.type.description).from(node[\"\($0)\"])"})
-      .joined(separator: ", ")
   }
 
   // MARK: - MemberMacro

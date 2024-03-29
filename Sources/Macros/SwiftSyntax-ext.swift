@@ -26,6 +26,16 @@ extension DeclGroupSyntax {
       .first
   }
 
+  public var staticFunctionsReturningSelf : [FunctionDeclSyntax] {
+    return memberBlock.members
+      .compactMap({$0.decl.as(FunctionDeclSyntax.self)})
+      .filter({$0.isStatic})
+      .filter({
+        guard let rtype = $0.signature.returnClause?.type else { return false }
+        return rtype == "Self"
+      })
+  }
+
   public var storedProperties : [StoredPropertyInfo] {
     memberBlock.members.compactMap({StoredPropertyInfo($0.decl)})
   }
@@ -33,11 +43,14 @@ extension DeclGroupSyntax {
 
 // MARK: -
 
-//extension DeclModifierSyntax {
-//  public static func == (lhs: DeclModifierSyntax, rhs: String) -> Bool {
-//    lhs.name.text == rhs
-//  }
-//}
+extension EnumDeclSyntax {
+  var enumCaseElements : [EnumCaseElementSyntax] {
+    return memberBlock.members
+      .compactMap({$0.decl.as(EnumCaseDeclSyntax.self)})
+      .reduce([]) { $0 + $1.elements }
+  }
+}
+
 
 // MARK: -
 
