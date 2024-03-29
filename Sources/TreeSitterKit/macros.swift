@@ -4,8 +4,8 @@
 
 */
 
-@attached(member, names: named(from(_:)))
+@attached(member, names: named(init(parseTree:)))
 public macro ParsableStruct() = #externalMacro(module: "Macros", type: "ParsableStruct")
 
-@attached(member, names: named(from(_:)))
+@attached(member, names: named(init(parseTree:)))
 public macro ParsableEnum() = #externalMacro(module: "Macros", type: "ParsableEnum")

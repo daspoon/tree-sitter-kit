@@ -40,7 +40,7 @@ struct Signature {
     let argsText : String = parameters
       .enumerated()
       .map({ index, param in
-        "\(param.name.map{"\($0): "} ?? "")\(param.type.description).from(\(node)[\"\(index)\"])"
+        "\(param.name.map{"\($0): "} ?? "")\(param.type.description)(parseTree: \(node)[\"\(index)\"])"
       })
       .joined(separator: ", ")
     return ".\(name)(\(argsText))"

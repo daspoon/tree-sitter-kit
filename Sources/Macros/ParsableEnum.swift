@@ -9,7 +9,7 @@ import SwiftSyntaxMacros
 
 
 /// A macro applied to enum types whose expansion implements the following requirements of *ParsableByCases*:
-///   - `static func from(_ node: TSNode) -> Self`
+///   - `init(parseTree node: TSNode)`
 /// The target type must implement the following method to return a dictionary literal with string literal keys and values:
 ///   - `static var syntaxExpressionsByCaseName: [String: TSSyntaxExpression]`
 /// If the target type requires a symbol name other than its type name, if must implement the following method to return
@@ -66,13 +66,13 @@ public struct ParsableEnum : MemberMacro {
 
     // Return the initializer text, constructing a switch case for each production rule.
     return """
-       static func from(_ node: TSNode) -> Self {
+       init(parseTree node: TSNode) {
            assert(node.type == "\(symbolName)" && node.count == 1)
            let node = node[0]
            switch node.type {
              \(
                rules.map({ rule in
-                 return "case \"\(symbolName)_\(rule.name)\" : return \(rule.invocationText(for: "node"))"
+                 return "case \"\(symbolName)_\(rule.name)\" : self = \(rule.invocationText(for: "node"))"
                })
                .joined(separator: "\n")
              )

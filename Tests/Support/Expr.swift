@@ -31,7 +31,7 @@ indirect enum Expr : Equatable, ParsableByCases {
     { .match(expr, seq.elements) }
 
   static func infix(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
-    { .apply(.name(Name(text: op)), .tuple([lhs, rhs])) }
+    { .apply(.name(Name(stringLiteral: op)), .tuple([lhs, rhs])) }
 
   static func eql(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
     { .infix(lhs, op, rhs) }
@@ -47,7 +47,7 @@ indirect enum Expr : Equatable, ParsableByCases {
     { .infix(lhs, op, rhs) }
 
   static func prefix(_ op: String, _ arg: Expr) -> Self
-    { .apply(.name(Name(text: op)), arg) }
+    { .apply(.name(Name(stringLiteral: op)), arg) }
 
   static func neg(_ op: String, _ arg: Expr) -> Self
     { .prefix(op, arg) }

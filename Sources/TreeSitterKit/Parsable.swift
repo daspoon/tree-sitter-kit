@@ -6,9 +6,7 @@
 
 
 /// *Parsable* identifies a language element which has a tree-sitter production rule and can be initialized with a parse tree.
-public protocol Parsable<Result> {
-  associatedtype Result
-
+public protocol Parsable {
   /// The name of the grammar symbol representing this language element. The default implementation returns the receiver's type name.
   static var symbolName : String { get }
 
@@ -16,7 +14,7 @@ public protocol Parsable<Result> {
   static var syntaxExpression : TSExpression { get }
 
   /// Initialize an instance from a compatible parse tree node. Required.
-  static func from(_ node: TSNode) -> Result
+  init(parseTree node: TSNode)
 }
 
 
