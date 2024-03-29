@@ -52,7 +52,7 @@ public struct ParsableEnum : MemberMacro {
     // a Signature. Note: explicitly check that each production matches a constructor because Swift macro
     // expansion involving enums is fragile and crashes in response to unknown constructor names and argument
     // type mismatches...
-    guard let binding = decl.variableBindingWith(name: "syntaxExpressionsByCaseName", type: TypeSyntax(stringLiteral: "[String: TSExpression]"), isStatic: true)
+    guard let binding = decl.variableBindingWith(name: "syntaxExpressionsByCaseName", type: "[String: TSExpression]", isStatic: true)
       else { throw Exception("requires implementation of 'syntaxExpressionsByCaseName'") }
     guard let dictionaryExpr = binding.resultExpr?.as(DictionaryExprSyntax.self)
       else { throw Exception("'syntaxExpressionsByCaseName' must be implemented as a single getter returning a dictionary literal") }
