@@ -10,6 +10,21 @@ import SwiftSyntax
 // MARK: -
 
 extension DeclGroupSyntax {
+  public var typeName : String? {
+    switch kind {
+      case .classDecl :
+        return self.cast(ClassDeclSyntax.self).name.text
+      case .enumDecl :
+        return self.cast(EnumDeclSyntax.self).name.text
+      case .extensionDecl :
+        return self.cast(ExtensionDeclSyntax.self).extendedType.trimmed.description
+      case .structDecl :
+        return self.cast(StructDeclSyntax.self).name.text
+      default :
+        return nil
+    }
+  }
+
   public func variableBindingWith(name: String, type: TypeSyntax, isStatic: Bool = false) -> PatternBindingSyntax? {
     memberBlock.members
       .compactMap({$0.decl.as(VariableDeclSyntax.self)})
@@ -32,7 +47,7 @@ extension DeclGroupSyntax {
       .filter({$0.isStatic})
       .filter({
         guard let rtype = $0.signature.returnClause?.type else { return false }
-        return rtype == "Self"
+        return rtype == "Self" || (typeName.map {rtype == $0} ?? false)
       })
   }
 
