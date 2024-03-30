@@ -15,18 +15,6 @@ class FunLangTests : XCTestCase
       print(Grammar<Block>(name: "FunLang").javascript)
     }
 
-    /// Use this as a convenience to print the parse trees for various expressions.
-    func testPrintTree() throws {
-      let examples : [String] = [
-        "let x: Int = 2; x"
-      ]
-      for text in examples {
-        guard let tree = FunLang.parser.parse(text)
-          else { XCTFail("parser failed to return a syntax tree for '\(text)'"); continue }
-        print("'\(text)' => \(tree.rootNode)")
-      }
-    }
-
     /// Test the translation of various parse trees into *Expr* instances.
     func testExpr() throws {
       let examples : [(text: String, expr: Expr)] = [
