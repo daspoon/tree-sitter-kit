@@ -9,25 +9,26 @@ import TreeSitterKit
 
 /// A type representing a block -- i.e. a sequence of definitions followed by an expression.
 
-struct Block : Equatable {
+@ParsableStruct
+struct Block : Equatable, Parsable {
   let decls : [Def]
   let expr : Expr
-}
 
-extension Block : Parsable {
+  init(decls ds: [Def], expr e: Expr) {
+    decls = ds
+    expr = e
+  }
+
+  init(decls ds: DefList?, expr e: Expr) {
+    self.init(decls: ds?.elements ?? [], expr: e)
+  }
+
   typealias DefList = DelimitedSequence<Def, Semicolon>
 
   static var syntaxExpression : TSExpression {
     "\(opt: DefList.self) \(Expr.self)"
   }
 
-  init(parseTree node: TSNode) {
-    let k = node.count; assert(k == 1 || k == 2)
-    self.init(
-      decls: k == 2 ? [Def](node[0], delimiter: Semicolon.symbol) : [],
-      expr: Expr(parseTree: node[k == 2 ? 1 : 0])
-    )
-  }
 }
 
 extension Block {

@@ -26,9 +26,6 @@ struct Param : Equatable, Parsable {
 }
 
 
-typealias ParamList = [Param]
-
-
 extension Param {
   init(_ n: Name, _ t: TypeExpr)
     { self.init(name: n, type: t) }

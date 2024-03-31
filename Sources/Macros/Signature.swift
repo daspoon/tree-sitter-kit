@@ -14,7 +14,10 @@ import SwiftSyntax
 /// have no means of specifying argument names.
 
 struct Signature {
-  typealias Parameter = (name: String?, type: TypeSyntax)
+  struct Parameter {
+    let name : String?
+    let type : TypeSyntax
+  }
 
   let name : String
   let parameters : [Parameter]
@@ -37,13 +40,40 @@ struct Signature {
   /// Return the text of the constructor application to the children of a *TSNode* instance of the given named;
   /// the children are expected to have field names which are numeric indices starting from 0.
   func invocationText(for node: String) -> String {
-    let argsText : String = parameters
+    let argTexts : [String] = parameters
       .enumerated()
       .map({ index, param in
-        "\(param.name.map{"\($0): "} ?? "")\(param.type.description)(parseTree: \(node)[\"\(index)\"])"
+        let label = param.name.map {$0 + ": "} ?? ""
+        let nodeText = "\(node)[\"\(index)\"]"
+        switch param.type.as(OptionalTypeSyntax.self) {
+          case .some(let optionalType) :
+            return label + "{$0.isNull ? nil : \(optionalType.wrappedType.text)(parseTree: $0)}(\(nodeText))"
+          case .none :
+            return label + "\(param.type.text)(parseTree: \(nodeText))"
+        }
       })
-      .joined(separator: ", ")
-    return ".\(name)(\(argsText))"
+    return """
+      .\(name)(
+        \(argTexts.joined(separator: ",\n"))
+      )
+    """
+  }
+}
+
+
+extension Signature : Equatable {
+  static func == (lhs: Self, rhs: Self) -> Bool {
+    lhs.identifier == rhs.identifier
+  }
+}
+
+
+extension Signature.Parameter {
+  init(_ e: EnumCaseParameterSyntax) {
+    self.init(name: e.firstName?.text, type: e.type.trimmed)
+  }
+  init(_ p: FunctionParameterSyntax) {
+    self.init(name: p.firstName.text, type: p.type.trimmed)
   }
 }
 
@@ -53,7 +83,7 @@ extension Signature {
   init(case enumCaseElement: EnumCaseElementSyntax, of enumDecl: EnumDeclSyntax) {
     self.init(
       name: enumCaseElement.name.text,
-      parameters: (enumCaseElement.parameterClause?.parameters ?? []).map { ($0.firstName?.text, $0.type.trimmed) }
+      parameters: (enumCaseElement.parameterClause?.parameters ?? []).map { .init($0) }
     )
   }
 
@@ -61,7 +91,22 @@ extension Signature {
   init(functionDecl: FunctionDeclSyntax) {
     self.init(
       name: functionDecl.name.text,
-      parameters: functionDecl.signature.parameterClause.parameters.map { ($0.firstName.text, $0.type.trimmed) }
+      parameters: functionDecl.signature.parameterClause.parameters.map { .init($0) }
+    )
+  }
+
+  init(initializerDecl: InitializerDeclSyntax) {
+    self.init(
+      name: "init",
+      parameters: initializerDecl.signature.parameterClause.parameters.map { .init($0) }
+    )
+  }
+
+  /// Create an instance for the (synthesized) init method of a struct declaration.
+  init(structDecl: StructDeclSyntax) {
+    self.init(
+      name: "init",
+      parameters: structDecl.storedProperties.map { .init(name: $0.name, type: $0.type) }
     )
   }
 
@@ -78,51 +123,61 @@ extension Signature {
     guard nameLiteral.segments.count == 1, let nameSegment = nameLiteral.segments.first?.as(StringSegmentSyntax.self)
       else { throw Exception("dictionary key literals must have a single string segment") }
 
-    // Extract the rule/constructor name.
-    let ruleName = nameSegment.trimmedDescription
+    try self.init(name: nameSegment.trimmedDescription, syntaxExpression: exprLiteral)
+  }
 
+
+  /// Create an instance from a production rule with a given name and syntax expression.
+  init(name: String, syntaxExpression: StringLiteralExprSyntax) throws {
     // Parse the syntax component to extract the list of capture types.
-    var capturedTypeNames : [String] = []
-    for segment in exprLiteral.segments {
+    var capturedTypes : [String] = []
+    for segment in syntaxExpression.segments {
       // Ignore any segments which are not embedded expressions
       guard let exprSegment = segment.as(ExpressionSegmentSyntax.self)
         else { continue }
       // exprSegment has a property 'expressions: [LabeledExprSyntax]'
       for arg in exprSegment.expressions {
         switch arg.label?.text {
-          case .none :
-            // No label indicates a Parsable type expressed as T.self; extract the type T.
-            guard let memberAccess = arg.expression.as(MemberAccessExprSyntax.self)
-              else { throw Exception("production argument must be a member access expression") }
-            guard let baseRef = memberAccess.base
-              else { throw Exception("production argument must have a base for member access") }
-            guard memberAccess.declName.baseName.text == "self"
-              else { throw Exception("production argument must access member 'self'") }
-            switch baseRef.kind {
-              case .declReferenceExpr :
-                let declRef = baseRef.cast(DeclReferenceExprSyntax.self)
-                capturedTypeNames.append(declRef.baseName.text)
-              case .arrayExpr :
-                let arrayExpr = baseRef.cast(ArrayExprSyntax.self)
-                guard arrayExpr.elements.count == 1, let elementExpr = arrayExpr.elements.first
-                  else { throw Exception("array expression has \(arrayExpr.elements.count) elements") }
-                guard let elementRef = elementExpr.expression.as(DeclReferenceExprSyntax.self)
-                  else { throw Exception("unexpected kind for array element: \(elementExpr.kind)") }
-                capturedTypeNames.append("[\(elementRef.baseName.text)]")
-              default :
-                throw Exception("unsupported base for member access: \(baseRef.kind)")
-            }
-
+         case .none :
+            // No label indicates a Parsable type expressed as T.self.
+            capturedTypes.append(try Self.typeName(from: arg))
+          case "opt" :
+            // The 'opt' label also indicates a Parsable type expressed as T.self, but its capture is optional.
+            capturedTypes.append("\(try Self.typeName(from: arg))?")
           case "lit" :
             // The 'lit' label indicates a string from an explicit set.
-            capturedTypeNames.append("String")
-
-          default :
+            capturedTypes.append("String")
+          case "prec" :
+            // The 'prec' label indicates precedence, which has no associated capture.
             continue
+          case .some(let other) :
+            throw Exception("unhandled case: \(other)")
         }
       }
     }
+    self.init(name: name, parameters: capturedTypes.map { .init(name: nil, type: TypeSyntax(stringLiteral: $0)) })
+  }
 
-    self.init(name: ruleName, parameters: capturedTypeNames.map {(nil, TypeSyntax(stringLiteral: $0))})
+  private static func typeName(from arg: LabeledExprSyntax) throws -> String {
+    guard let memberAccess = arg.expression.as(MemberAccessExprSyntax.self)
+      else { throw Exception("production argument must be a member access expression") }
+    guard let baseRef = memberAccess.base
+      else { throw Exception("production argument must have a base for member access") }
+    guard memberAccess.declName.baseName.text == "self"
+      else { throw Exception("production argument must access member 'self'") }
+    switch baseRef.kind {
+      case .declReferenceExpr :
+        let declRef = baseRef.cast(DeclReferenceExprSyntax.self)
+        return declRef.baseName.text
+      case .arrayExpr :
+        let arrayExpr = baseRef.cast(ArrayExprSyntax.self)
+        guard arrayExpr.elements.count == 1, let elementExpr = arrayExpr.elements.first
+          else { throw Exception("array expression has \(arrayExpr.elements.count) elements") }
+        guard let elementRef = elementExpr.expression.as(DeclReferenceExprSyntax.self)
+          else { throw Exception("unexpected kind for array element: \(elementExpr.kind)") }
+        return "[" + elementRef.baseName.text + "]"
+      default :
+        throw Exception("unsupported base for member access: \(baseRef.kind)")
+    }
   }
 }

@@ -41,6 +41,11 @@ extension DeclGroupSyntax {
       .first
   }
 
+  public var initMethods : [InitializerDeclSyntax] {
+    return memberBlock.members
+      .compactMap({$0.decl.as(InitializerDeclSyntax.self)})
+  }
+
   public var staticFunctionsReturningSelf : [FunctionDeclSyntax] {
     return memberBlock.members
       .compactMap({$0.decl.as(FunctionDeclSyntax.self)})
@@ -102,6 +107,10 @@ extension StringLiteralExprSyntax {
 // MARK: -
 
 extension TypeSyntax {
+  var text : String {
+    trimmed.description
+  }
+
   /// Structual equality for type syntax expressions. Partial.
   static func == (lhs: Self, rhs: Self) -> Bool {
     guard lhs.kind == rhs.kind else { return false }
