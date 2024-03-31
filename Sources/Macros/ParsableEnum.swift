@@ -17,9 +17,6 @@ import SwiftSyntaxMacros
 ///   - `static var symbolName : String`
 
 public struct ParsableEnum : MemberMacro {
-  /// Used to distinguish the two means of constructing elements of the target type: an inherent case vs a static function returning *Self*.
-  enum Constructor { case `case`(EnumCaseElementSyntax), `func`(FunctionDeclSyntax) }
-
   /// Given an enum declaration, return the source text for the required initializer. The method body is a switch statement mapping subrule names
   /// to instances of this type, with the number and content of switch cases are determined by the static property *syntaxExpressionsByCaseName*.
   /// Each subrule name is made 'unique' by prefixing the receiver's *symbolName*, which defaults to the type name but can be overridden by an
