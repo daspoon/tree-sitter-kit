@@ -334,3 +334,12 @@ bug fix: productions involving operators don't work...
 
 Note: ExprList and TypeExprList are now redundant
   - static constructors provide that functionality
+
+
+### Sat Mar 30, 2024
+
+Complete support for optional productions
+  - the init(parseTree:) generated for structs now invokes an init or static constructor with param types matching the production rule, rather than directly assigning ivars
+      - todo: assign ivars if no such constructor exists?
+  - Signature generates conditional argument expressions (based on node.isNull) for optional captures
+      - todo: ensure the generated expression works generally, w.r.t. parsing trailing '?'
