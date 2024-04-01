@@ -19,6 +19,8 @@ public struct ParsableStruct {
     guard let decl = decl.as(StructDeclSyntax.self)
       else { return nil }
 
+    // Note whether or not the decl is 'public'
+
     // Gather the constructors for this type (both init methods and static functions returning Self) and form a dictionary indexed by their identifiers.
     let initMethods = decl.initMethods.map({Signature(initializerDecl: $0)})
     let staticConstructors = decl.staticFunctionsReturningSelf.map({Signature(functionDecl: $0)})
@@ -38,7 +40,7 @@ public struct ParsableStruct {
       else { throw Exception("no constructor matching production rule: \(ruleSignature.identifier)") }
 
     return """
-           init(parseTree node: TSNode) {
+           \(decl.visibility) init(parseTree node: TSNode) {
               self\(initSignature.invocationText(for: "node"))
            }
            """

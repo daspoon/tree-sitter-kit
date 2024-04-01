@@ -63,7 +63,7 @@ public struct ParsableEnum : MemberMacro {
 
     // Return the initializer text, constructing a switch case for each production rule.
     return """
-       init(parseTree node: TSNode) {
+       \(decl.visibility) init(parseTree node: TSNode) {
            assert(node.type == "\(symbolName)" && node.count == 1)
            let node = node[0]
            switch node.type {

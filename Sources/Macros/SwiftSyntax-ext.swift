@@ -10,6 +10,13 @@ import SwiftSyntax
 // MARK: -
 
 extension DeclGroupSyntax {
+  public var visibility : String {
+    let options : Set<String> = ["public", "internal", "private", "fileprivate"]
+    return modifiers.map({$0.name.text})
+      .filter({options.contains($0)})
+      .joined(separator: " ")
+  }
+
   public var typeName : String? {
     switch kind {
       case .classDecl :
