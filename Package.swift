@@ -37,7 +37,15 @@ let package = Package(
                 .writeToPackageDirectory(reason: "To generate parser source files"),
               ])
         ),
-        // An language target for testing purposes.
+        // Some example language targets for testing purposes...
+        .target(name: "ArithLang",
+            dependencies: [
+              .product(name: "TreeSitter", package: "tree-sitter"),
+            ],
+            path: "Sources/Xamples/ArithLang",
+            cSettings: [.headerSearchPath("src")],
+            swiftSettings: [.interoperabilityMode(.C)]
+        ),
         .target(name: "FunLang",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
@@ -46,7 +54,15 @@ let package = Package(
             cSettings: [.headerSearchPath("src")],
             swiftSettings: [.interoperabilityMode(.C)]
         ),
-        // Unit tests
+        // Test targets for the sample language targets...
+        .testTarget(name: "ArithLangTests",
+            dependencies: [
+                "TSKit",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                "ArithLang",
+            ],
+            path: "Tests/ArithLang"
+        ),
         .testTarget(name: "FunLangTests",
             dependencies: [
                 "TSKit",
