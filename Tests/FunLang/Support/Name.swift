@@ -4,7 +4,7 @@
 
 */
 
-import TreeSitterKit
+import TSKit
 
 
 /// A parsable type representing identifier names within expressions.

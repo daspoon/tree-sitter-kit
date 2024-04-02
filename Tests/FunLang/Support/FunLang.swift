@@ -6,7 +6,7 @@
 
 */
 
-import TreeSitterKit
+import TSKit
 import FunLang
 
 

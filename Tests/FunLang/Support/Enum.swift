@@ -4,7 +4,7 @@
 
 */
 
-import TreeSitterKit
+import TSKit
 
 
 /// A type representing an enumerated type definition.

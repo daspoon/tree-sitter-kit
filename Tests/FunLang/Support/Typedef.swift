@@ -4,7 +4,7 @@
 
 */
 
-import TreeSitterKit
+import TSKit
 
 
 /// A type representing a type alias.

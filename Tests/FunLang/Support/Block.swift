@@ -4,7 +4,7 @@
 
 */
 
-import TreeSitterKit
+import TSKit
 
 
 /// A type representing a block -- i.e. a sequence of definitions followed by an expression.
