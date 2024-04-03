@@ -46,6 +46,14 @@ let package = Package(
             cSettings: [.headerSearchPath("src")],
             swiftSettings: [.interoperabilityMode(.C)]
         ),
+        .target(name: "FuncLang",
+            dependencies: [
+              .product(name: "TreeSitter", package: "tree-sitter"),
+            ],
+            path: "Sources/Xamples/FuncLang",
+            cSettings: [.headerSearchPath("src")],
+            swiftSettings: [.interoperabilityMode(.C)]
+        ),
         .target(name: "TypedLang",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
@@ -62,6 +70,14 @@ let package = Package(
                 "ArithLang",
             ],
             path: "Tests/ArithLang"
+        ),
+        .testTarget(name: "FuncLangTests",
+            dependencies: [
+                "TSKit",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                "FuncLang",
+            ],
+            path: "Tests/FuncLang"
         ),
         .testTarget(name: "TypedLangTests",
             dependencies: [
