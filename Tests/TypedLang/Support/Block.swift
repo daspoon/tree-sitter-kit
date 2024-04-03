@@ -5,6 +5,7 @@
 */
 
 import TSKit
+import TypedLang
 
 
 /// A type representing a block -- i.e. a sequence of definitions followed by an expression.
@@ -34,7 +35,7 @@ struct Block : Equatable, Parsable {
 extension Block {
   /// A convenience method for initializing an instance by parsing text.
   init(_ text: String) throws {
-    guard let tree = TypedLang.parser.parse(text)
+    guard let tree = TSParser(tree_sitter_TypedLang()).parse(text)
       else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw TSException("error in parse tree for '\(text)': \(tree.rootNode.description)") }
