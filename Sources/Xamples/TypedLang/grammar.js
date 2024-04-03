@@ -1,5 +1,5 @@
 module.exports = grammar({
-    name: 'FunLang',
+    name: 'TypedLang',
     rules: {
         Block: $ => seq(field('0', optional($.DefSequenceDelimitedBySemicolon)), field('1', $.Expr)),
         Def: $ => choice($.Def_enum, $.Def_fun, $.Def_let, $.Def_typedef),

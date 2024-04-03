@@ -7,9 +7,9 @@
 */
 
 import TSKit
-import FunLang
+import TypedLang
 
 
-public struct FunLang {
-  public static let parser = TSParser(tree_sitter_FunLang())
+public struct TypedLang {
+  public static let parser = TSParser(tree_sitter_TypedLang())
 }

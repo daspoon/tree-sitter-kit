@@ -8,11 +8,11 @@ import XCTest
 import TSKit
 
 
-class FunLangTests : XCTestCase
+class TypedLangTests : XCTestCase
   {
-    /// Use this to generate the text of Sources/FunLang/grammar.js
+    /// Use this to generate the text of Sources/Xamples/TypedLang/grammar.js
     func testGenerateGrammar() throws {
-      print(Grammar<Block>(name: "FunLang").javascript)
+      print(Grammar<Block>(name: "TypedLang").javascript)
     }
 
     /// Test the translation of various parse trees into *Expr* instances.
