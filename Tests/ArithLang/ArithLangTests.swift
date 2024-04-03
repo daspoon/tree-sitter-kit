@@ -10,16 +10,6 @@ import ArithLang
 
 
 class ArithLangTests : XCTestCase {
-  /// Define a method to create an Expr by parsing a string.
-  func parseExpr(_ text: String) throws -> Expr {
-    let parser = TSParser(tree_sitter_ArithLang())
-    guard let tree = parser.parse(text)
-      else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
-    guard tree.rootNode.hasError == false
-      else { throw TSException("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    return Expr(parseTree: tree.rootNode)
-  }
-
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {
     let examples : [(text: String, term: Expr)] = [
@@ -43,7 +33,7 @@ class ArithLangTests : XCTestCase {
         .apply("+", [1, .apply("*", [2, .apply("^", [3, .apply("-", 4)])])])),
     ]
     for eg in examples {
-      XCTAssertEqual(try parseExpr(eg.text), eg.term, eg.text)
+      XCTAssertEqual(try Expr(text: eg.text), eg.term, eg.text)
     }
   }
 
@@ -58,7 +48,7 @@ class ArithLangTests : XCTestCase {
     ]
     for text in examples {
       do {
-        _ = try parseExpr(text)
+        _ = try Expr(text: text)
         XCTFail("Failed to reject '\(text)'")
       }
       catch {
