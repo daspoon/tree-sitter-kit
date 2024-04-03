@@ -20,7 +20,7 @@ struct Enum : Equatable, Parsable {
   init(name n: Name, cases cs: EnumCaseList)
     { name = n; cases = cs.elements }
 
-  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma>
+  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma, NoBrackets>
   static var syntaxExpression : TSExpression
     { "enum \(Name.self) { \(EnumCaseList.self) }" }
 

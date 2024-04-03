@@ -52,7 +52,7 @@ indirect enum Expr : Equatable, ParsableByCases {
   static func neg(_ op: String, _ arg: Expr) -> Self
     { .prefix(op, arg) }
 
-  typealias MatchCaseList = SeparatedSequence<MatchCase, Comma>
+  typealias MatchCaseList = SeparatedSequence<MatchCase, Comma, NoBrackets>
 
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
