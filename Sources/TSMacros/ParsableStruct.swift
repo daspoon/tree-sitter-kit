@@ -13,14 +13,9 @@ import SwiftSyntaxMacros
 /// The target type must implement the following method to return a string literal:
 ///   - `var syntaxExpression : TSExpression`
 
-public struct ParsableStruct {
+public struct ParsableStruct : MemberMacro {
   /// Given a struct declaration, return the source text for the required init method.
-  static func declText(for decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> String? {
-    guard let decl = decl.as(StructDeclSyntax.self)
-      else { return nil }
-
-    // Note whether or not the decl is 'public'
-
+  static func declText(for decl: StructDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Gather the constructors for this type (both init methods and static functions returning Self) and form a dictionary indexed by their identifiers.
     let initMethods = decl.initMethods.map({Signature(initializerDecl: $0)})
     let staticConstructors = decl.staticFunctionsReturningSelf.map({Signature(functionDecl: $0)})
@@ -45,31 +40,12 @@ public struct ParsableStruct {
            }
            """
   }
-}
 
+  // MARK: - MemberMacro
 
-extension ParsableStruct : MemberMacro {
   public static func expansion(of node: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> [DeclSyntax] {
-    guard let text = try declText(for: decl, in: ctx)
-      else { return [] }
-    return [DeclSyntax(stringLiteral: text)]
+    guard let decl = decl.as(StructDeclSyntax.self)
+      else { throw Exception("applicable only to struct declarations") }
+    return [DeclSyntax(stringLiteral: try declText(for: decl, in: ctx))]
   }
 }
-
-
-extension ParsableStruct : ExtensionMacro {
-  public static func expansion(of node: AttributeSyntax, attachedTo decl: some DeclGroupSyntax, providingExtensionsOf type: some TypeSyntaxProtocol, conformingTo protocols: [TypeSyntax], in ctx: some MacroExpansionContext ) throws -> [ExtensionDeclSyntax] {
-    guard let text = try declText(for: decl, in: ctx)
-      else { return [] }
-    return [
-      try ExtensionDeclSyntax(
-        """
-        extension \(raw: decl.description) {
-          \(raw: text)
-        }
-        """
-      )
-    ]
-  }
-}
-

@@ -21,10 +21,7 @@ public struct ParsableEnum : MemberMacro {
   /// to instances of this type, with the number and content of switch cases are determined by the static property *syntaxExpressionsByCaseName*.
   /// Each subrule name is made 'unique' by prefixing the receiver's *symbolName*, which defaults to the type name but can be overridden by an
   /// explcit implementation which returns a string literal. Throw if the declaration does not represent an enum or lacks an appropriate definition of *syntaxExpressionsByCaseName*.
-  static func declText(for decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> String {
-    guard let decl = decl.as(EnumDeclSyntax.self)
-      else { throw Exception("applicable only to enum declarations") }
-
+  static func declText(for decl: EnumDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Create a dictionary containing the signatures of this type's constructors (viz. enum cases or static
     // functions returning Self) keyed by their identifiers. Throw if any constructors have the same key,
     // which can occur because parameter names do not contribute to the identifiers.
@@ -83,6 +80,8 @@ public struct ParsableEnum : MemberMacro {
   // MARK: - MemberMacro
 
   public static func expansion(of node: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> [DeclSyntax] {
+    guard let decl = decl.as(EnumDeclSyntax.self)
+      else { throw Exception("applicable only to enum declarations") }
     return [DeclSyntax(stringLiteral: try declText(for: decl, in: ctx))]
   }
 }
