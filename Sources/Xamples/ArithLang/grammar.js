@@ -1,32 +1,38 @@
 
-// A simple language of arithmetic expressions.
+// A language of arithmetic expressions with variables and function application...
 
 module.exports = grammar({
     name: 'ArithLang',
     rules: {
-        // Expr is the start rule and the root node of every valid parse tree.
-        // Its various are defined as named productions to simplify converting parse trees to Swift values.
-        Expr: $ => choice(
-          $.Expr_numb,
-          $.Expr_add,
-          $.Expr_mul,
-          $.Expr_pow,
-          $.Expr_neg,
-          $.Expr_paren,
-        ),
+      // Expressions
+      Expr: $ => choice(
+        $.Expr_name,
+        $.Expr_add,
+        $.Expr_mul,
+        $.Expr_pow,
+        $.Expr_neg,
+        $.Expr_apply,
+        $.Expr_paren,
+      ),
+      // Variable names
+      Expr_name: $ => $.Name,
+      // Operators of increasing precedence
+      Expr_add: $ => prec.left(1, seq($.Expr, choice('+', '-'), $.Expr)),
+      Expr_mul: $ => prec.left(2, seq($.Expr, choice('*', '/'), $.Expr)),
+      Expr_pow: $ => prec.right(3, seq($.Expr, '^', $.Expr)),
+      Expr_neg: $ => prec(4, seq('-', $.Expr)),
+      // Function application with highest precedence
+      Expr_apply: $ => prec(5, seq($.Expr, '(', field('args', optional($.ExprList)), ')')),
+      // Parentheses
+      Expr_paren: $ => seq('(', $.Expr, ')'),
 
-        // Non-negative integers.
-        Expr_numb: $ => /[0-9]+/,
+      // A sequence of one or more expressions separated by commas
+      ExprList: $ => seq($.Expr, repeat(seq(',', $.Expr))),
 
-        // Infix binary operators with associated precedence.
-        Expr_add: $ => prec.left(1, seq($.Expr, choice('+', '-'), $.Expr)),
-        Expr_mul: $ => prec.left(2, seq($.Expr, choice('*', '/'), $.Expr)),
-        Expr_pow: $ => prec.right(3, seq($.Expr, choice('^'), $.Expr)),
+      // A variable name
+      Name: $ => /[a-zA-Z_][0-9a-zA-Z_]*/,
 
-        // Prefix unary operators with associated precedence
-        Expr_neg: $ => prec(4, seq(choice('-'), $.Expr)),
-
-        // Parenthesized expressions.
-        Expr_paren: $ => seq('(', $.Expr, ')'),
+      // An integer
+      Numb: $ => /[0-9]+/,
     }
 })

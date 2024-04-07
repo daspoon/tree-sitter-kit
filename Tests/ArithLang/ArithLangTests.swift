@@ -10,27 +10,44 @@ import ArithLang
 
 
 class ArithLangTests : XCTestCase {
+
+  /// Print the 'raw' parse tree for a given expression; not really a test, but useful for demonstration.
+  func testPrint() throws {
+    let text = "x + y ^ -z * w"
+    let parser = TSParser(tree_sitter_ArithLang())
+    let tree = parser.parse(text)!
+    print(tree.rootNode)
+  }
+
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {
     let examples : [(text: String, term: Expr)] = [
-      ("0",
-        .numb(0)),
-      ("123",
-        .numb(123)),
-      ("(42)",
-        .numb(42)),
-      ("1 + 2",
-        .apply("+", [1, 2])),
-      ("1 + 2 + 3",
-        .apply("+", [.apply("+", [1, 2]), 3])),
-      ("1 + (2 + 3)",
-        .apply("+", [1, .apply("+", [2, 3])])),
-      ("-4",
-        .apply("-", 4)),
-      ("--5",
-        .apply("-", .apply("-", 5))),
-      ("1 + 2 * 3 ^ -4",
-        .apply("+", [1, .apply("*", [2, .apply("^", [3, .apply("-", 4)])])])),
+      ("a",
+        .name("a")),
+      ("_aX2",
+        .name("_aX2")),
+      ("(a)",
+        .name("a")),
+      ("x + y",
+        .apply("+", ["x", "y"])),
+      ("x + y + z",
+        .apply("+", [.apply("+", ["x", "y"]), "z"])),
+      ("x + (y + z)",
+        .apply("+", ["x", .apply("+", ["y", "z"])])),
+      ("-x",
+        .apply("-", "x")),
+      ("--x",
+        .apply("-", .apply("-", "x"))),
+      ("x + y * z ^ -w",
+        .apply("+", ["x", .apply("*", ["y", .apply("^", ["z", .apply("-", "w")])])])),
+      ("f()",
+        .apply("f", [])),
+      ("f(x)",
+        .apply("f", "x")),
+      ("g(x, y + z, w)",
+        .apply("g", ["x", .apply("+", ["y", "z"]), "w"])),
+      ("f(x)(y)",
+        .apply(.apply("f", "x"), "y")),
     ]
     for eg in examples {
       XCTAssertEqual(try Expr(text: eg.text), eg.term, eg.text)
@@ -40,11 +57,13 @@ class ArithLangTests : XCTestCase {
   /// Ensure that parsing fails for various malformed strings...
   func testParsingFailure() throws {
     let examples : [String] = [
-      "x",      // no variables
-      "1 + ",   // missing rhs arg
-      "()",     // no empty tuples
-      "(1, 2)", // no tuples
-      "3 % 1",  // unknown symbol '%'
+      "12",     // no numbers
+      "x + ",   // missing rhs arg
+      "x % y",  // unknown symbol '%'
+      "()",     // no tuples
+      "(a, b)", // no tuples
+      "( x",
+      "x )",
     ]
     for text in examples {
       do {
