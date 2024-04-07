@@ -23,21 +23,3 @@ extension Parsable {
   public static var symbolName : String
     { "\(Self.self)" }
 }
-
-
-/// *ParsableByCases* simplifies conformance to *Parsable* for types which require multiple production rules, such as enums.
-public protocol ParsableByCases : Parsable {
-  /// A mapping of enum case names to syntax expressions.
-  static var syntaxExpressionsByCaseName : [String: TSExpression] { get }
-}
-
-extension ParsableByCases {
-  public static var syntaxExpression : TSExpression {
-    .choice(syntaxExpressionsByCaseName.keys.sorted().map { .prod(ProductionRule(for: $0, of: Self.self)) })
-  }
-}
-
-extension ParsableByCases {
-  static func syntaxExpression(for alt: String) -> TSExpression
-    { syntaxExpressionsByCaseName[alt]! }
-}
