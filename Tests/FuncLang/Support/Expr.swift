@@ -8,7 +8,7 @@ import TSKit
 import FuncLang
 
 
-@ParsableEnum
+@Parsable
 indirect enum Expr : Equatable, ParsableByCases {
   case numb(Int)
   case name(Name)

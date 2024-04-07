@@ -12,7 +12,6 @@ import SwiftSyntaxMacros
 struct MacroPlugin : CompilerPlugin
   {
     let providingMacros: [Macro.Type] = [
-      ParsableEnum.self,
-      ParsableStruct.self,
+      Parsable.self,
     ]
   }

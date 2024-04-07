@@ -1,7 +1,9 @@
 /*
 
   Created by David Spooner
-  
+
+  Methods added to various types from the Swift standard library.
+
 */
 
 

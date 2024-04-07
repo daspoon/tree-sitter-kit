@@ -9,7 +9,7 @@ import TSKit
 
 /// A type representing a type alias.
 
-@ParsableStruct
+@Parsable
 struct Typedef : Equatable, Parsable {
   let name : Name
   let type : TypeExpr

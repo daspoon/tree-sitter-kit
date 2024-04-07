@@ -2,6 +2,8 @@
 
   Created by David Spooner
 
+  Methods added to types defined in SwiftSyntax.
+
 */
 
 import SwiftSyntax

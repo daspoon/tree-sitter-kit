@@ -9,7 +9,7 @@ import TSKit
 
 /// A type representing a variety of symbol definitions.
 
-@ParsableEnum
+@Parsable
 enum Def : Equatable, ParsableByCases {
   case `typedef`(Typedef)
   case `enum`(Enum)

@@ -4,8 +4,8 @@
 
 */
 
-@attached(member, names: named(init(parseTree:)))
-public macro ParsableStruct() = #externalMacro(module: "TSMacros", type: "ParsableStruct")
+
+// Make the 'Parsable' macro defined in the TSMacros target publicly available in this target by the same name.
 
 @attached(member, names: named(init(parseTree:)))
-public macro ParsableEnum() = #externalMacro(module: "TSMacros", type: "ParsableEnum")
+public macro Parsable() = #externalMacro(module: "TSMacros", type: "Parsable")

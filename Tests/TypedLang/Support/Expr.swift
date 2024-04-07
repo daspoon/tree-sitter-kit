@@ -9,7 +9,7 @@ import TSKit
 
 /// A type representing a functional expression.
 
-@ParsableEnum
+@Parsable
 indirect enum Expr : Equatable, ParsableByCases {
   case name(Name)
   case numb(Int)

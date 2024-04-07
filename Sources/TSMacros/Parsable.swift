@@ -8,20 +8,45 @@ import SwiftSyntax
 import SwiftSyntaxMacros
 
 
-/// A macro applied to enum types whose expansion implements the following requirements of *ParsableByCases*:
+/// A member macro applied to struct types whose expansion implements the following requirement of the *Parsable* protocol:
 ///   - `init(parseTree node: TSNode)`
-/// The target type must implement the following method to return a dictionary literal with string literal keys and values:
+/// If the target type is a struct, it must implement the following method to return a string literal:
+///   - `var syntaxExpression : TSExpression`
+/// If the target type is an enum, it must instead implement the following method to return a dictionary literal with string literal keys and values:
 ///   - `static var syntaxExpressionsByCaseName: [String: TSSyntaxExpression]`
-/// If the target type requires a symbol name other than its type name, if must implement the following method to return
-/// a string literal:
-///   - `static var symbolName : String`
 
-public struct ParsableEnum : MemberMacro {
-  /// Given an enum declaration, return the source text for the required initializer. The method body is a switch statement mapping subrule names
-  /// to instances of this type, with the number and content of switch cases are determined by the static property *syntaxExpressionsByCaseName*.
-  /// Each subrule name is made 'unique' by prefixing the receiver's *symbolName*, which defaults to the type name but can be overridden by an
-  /// explcit implementation which returns a string literal. Throw if the declaration does not represent an enum or lacks an appropriate definition of *syntaxExpressionsByCaseName*.
-  static func declText(for decl: EnumDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
+public struct Parsable : MemberMacro {
+
+  /// Return the source text of `init(parseTree:TSNode)` for the given struct declaration.
+  static func structInitializerText(for decl: StructDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
+    // Gather the constructors for this type (both init methods and static functions returning Self) and form a dictionary indexed by their identifiers.
+    let initMethods = decl.initMethods.map({Signature(initializerDecl: $0)})
+    let staticConstructors = decl.staticFunctionsReturningSelf.map({Signature(functionDecl: $0)})
+    let signaturesById = try Dictionary((initMethods + staticConstructors).map {($0.identifier, $0)}) { c, _ in
+      throw Exception("multiple constructors with signature \(c.identifier)")
+    }
+
+    // Create a signature for this type's implementation of 'syntaxExpression'
+    guard let ruleBinding = decl.variableBindingWith(name: "syntaxExpression", type: "TSExpression", isStatic: true)
+      else { throw Exception("requires implementation of 'syntaxExpression'") }
+    guard let ruleExpr = ruleBinding.resultExpr?.as(StringLiteralExprSyntax.self)
+      else { throw Exception("'syntaxExpression' must be implemented as a string literal") }
+    let ruleSignature = try Signature(name: "init", syntaxExpression: ruleExpr)
+
+    // Get the constructor matching the rule signature, throwing if there is none.
+    guard let initSignature = signaturesById[ruleSignature.identifier]
+      else { throw Exception("no constructor matching production rule: \(ruleSignature.identifier)") }
+
+    return """
+     \(decl.visibility) init(parseTree node: TSNode) {
+        self\(initSignature.invocationText(for: "node"))
+     }
+     """
+  }
+
+
+  /// Return the source text of `init(parseTree:TSNode)` for the given enum declaration. Throw if the declaration lacks an appropriate definition of *syntaxExpressionsByCaseName*.
+  static func enumInitializerText(for decl: EnumDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Create a dictionary containing the signatures of this type's constructors (viz. enum cases or static
     // functions returning Self) keyed by their identifiers. Throw if any constructors have the same key,
     // which can occur because parameter names do not contribute to the identifiers.
@@ -58,7 +83,7 @@ public struct ParsableEnum : MemberMacro {
       return rule
     }
 
-    // Return the initializer text, constructing a switch case for each production rule.
+    /// Return the initializer text, constructing a switch case for each production rule. Make each subrule name  'unique' by prefixing the target type's *symbolName*.
     return """
        \(decl.visibility) init(parseTree node: TSNode) {
            assert(node.type == "\(symbolName)" && node.count == 1)
@@ -80,8 +105,15 @@ public struct ParsableEnum : MemberMacro {
   // MARK: - MemberMacro
 
   public static func expansion(of node: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> [DeclSyntax] {
-    guard let decl = decl.as(EnumDeclSyntax.self)
-      else { throw Exception("applicable only to enum declarations") }
-    return [DeclSyntax(stringLiteral: try declText(for: decl, in: ctx))]
+    let initializerText : String
+    switch decl.kind {
+      case .structDecl :
+        initializerText = try structInitializerText(for: decl.cast(StructDeclSyntax.self), in: ctx)
+      case .enumDecl :
+        initializerText = try enumInitializerText(for: decl.cast(EnumDeclSyntax.self), in: ctx)
+      default :
+        throw Exception("unsupported declaration kind")
+    }
+    return [DeclSyntax(stringLiteral: initializerText)]
   }
 }

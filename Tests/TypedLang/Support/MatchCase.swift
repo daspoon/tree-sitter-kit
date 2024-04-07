@@ -7,7 +7,7 @@
 import TSKit
 
 
-@ParsableStruct
+@Parsable
 struct MatchCase : Equatable, Parsable {
   let name : Name
   let params : [Name]

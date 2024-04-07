@@ -10,7 +10,7 @@ import TypedLang
 
 /// A type representing a block -- i.e. a sequence of definitions followed by an expression.
 
-@ParsableStruct
+@Parsable
 struct Block : Equatable, Parsable {
   let decls : [Def]
   let expr : Expr

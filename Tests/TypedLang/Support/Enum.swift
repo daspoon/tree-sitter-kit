@@ -9,7 +9,7 @@ import TSKit
 
 /// A type representing an enumerated type definition.
 
-@ParsableStruct
+@Parsable
 struct Enum : Equatable, Parsable {
   let name : Name
   let cases : [EnumCase]
@@ -30,7 +30,7 @@ struct Enum : Equatable, Parsable {
 
 // MARK: -
 
-@ParsableStruct
+@Parsable
 struct EnumCase : Equatable, Parsable {
   let name : Name
   let params : [Param]

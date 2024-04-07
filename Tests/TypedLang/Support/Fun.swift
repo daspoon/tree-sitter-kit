@@ -9,7 +9,7 @@ import TSKit
 
 /// A type representing a function definition.
 
-@ParsableStruct
+@Parsable
 struct Fun : Equatable, Parsable {
   let name : Name
   let params : [Param]
