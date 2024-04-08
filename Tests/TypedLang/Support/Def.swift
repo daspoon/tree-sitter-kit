@@ -4,7 +4,7 @@
 
 */
 
-import TSKit
+@testable import TSKit
 
 
 /// A type representing a variety of symbol definitions.
@@ -31,7 +31,7 @@ extension Def {
     // Parse a program with the declaration text followed by a trivial expression.
     let program = try Block(text + "; 1")
     guard program.decls.count == 1
-      else { throw TSException("requires a single declaration") }
+      else { throw Exception("requires a single declaration") }
     self = program.decls[0]
   }
 }

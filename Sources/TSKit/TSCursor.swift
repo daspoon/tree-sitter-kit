@@ -22,7 +22,7 @@ public class TSCursor
     /// Initialize a new instance pointing to the first subnode of the given node; fails if the given node has no subnodes.
     public convenience init(subnodesOf parent: TSNode) throws {
       guard parent.count > 0
-        else { throw TSException("") }
+        else { throw Exception("invalid argument") }
       self.init(node: parent[0])
     }
 
@@ -49,15 +49,15 @@ public class TSCursor
     public func scanElements(bracketedBy brackets: (leading: String, trailing: String)?, separatedBy separator: String, using process: (TSCursor, Int) throws -> Void) throws -> Int {
       var count : Int = 0
       guard brackets.map({scanNode(of: $0.leading)}) ?? true
-        else { throw TSException("expecting leading '\(brackets!.leading)'") }
+        else { throw Exception("expecting leading '\(brackets!.leading)'") }
       while let node, brackets?.trailing != .some(node.type) {
         guard count == 0 || scanNode(of: separator)
-          else { throw TSException("expecting '\(separator)' separator") }
+          else { throw Exception("expecting '\(separator)' separator") }
         try process(self, count)
         count += 1
       }
       guard brackets.map({scanNode(of: $0.trailing)}) ?? true
-        else { throw TSException("expecting trailing '\(brackets!.trailing)'") }
+        else { throw Exception("expecting trailing '\(brackets!.trailing)'") }
       return count
     }
 
@@ -73,9 +73,9 @@ public class TSCursor
     /// Descend into the current node. Throw if the current node is nil or has no subnodes.
     public func enter() throws -> TSNode {
       guard let node
-        else { throw TSException("node is nil") }
+        else { throw Exception("node is nil") }
       guard node.count > 0
-        else { throw TSException("node is a leaf") }
+        else { throw Exception("node is a leaf") }
       ts_tree_cursor_goto_first_child(&_cursor)
       _node = ts_tree_cursor_current_node(&_cursor)
       return _node
@@ -84,9 +84,9 @@ public class TSCursor
     /// Ascend out of the current node. Throw if the current node is nil or has no parent.
     public func exit() throws -> TSNode {
       guard let node
-        else { throw TSException("node is nil") }
+        else { throw Exception("node is nil") }
       guard ts_tree_cursor_goto_parent(&_cursor)
-        else { throw TSException("node has no parent") }
+        else { throw Exception("node has no parent") }
       _node = ts_tree_cursor_current_node(&_cursor)
       return _node
     }

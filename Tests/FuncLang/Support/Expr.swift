@@ -4,7 +4,7 @@
 
 */
 
-import TSKit
+@testable import TSKit
 import FuncLang
 
 
@@ -80,9 +80,9 @@ extension Expr {
   init(text: String) throws {
     let parser = TSParser(tree_sitter_FuncLang())
     guard let tree = parser.parse(text)
-      else { throw TSException("parser failed to return a syntax tree for '\(text)'") }
+      else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
-      else { throw TSException("error in parse tree for '\(text)': \(tree.rootNode.description)") }
+      else { throw Exception("error in parse tree for '\(text)': \(tree.rootNode.description)") }
     self.init(parseTree: tree.rootNode)
   }
 }
