@@ -31,8 +31,5 @@ module.exports = grammar({
 
       // A variable name
       Name: $ => /[a-zA-Z_][0-9a-zA-Z_]*/,
-
-      // An integer
-      Numb: $ => /[0-9]+/,
     }
 })

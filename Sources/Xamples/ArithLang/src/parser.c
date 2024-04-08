@@ -8,9 +8,9 @@
 #define LANGUAGE_VERSION 14
 #define STATE_COUNT 25
 #define LARGE_STATE_COUNT 9
-#define SYMBOL_COUNT 21
+#define SYMBOL_COUNT 20
 #define ALIAS_COUNT 0
-#define TOKEN_COUNT 11
+#define TOKEN_COUNT 10
 #define EXTERNAL_TOKEN_COUNT 0
 #define FIELD_COUNT 1
 #define MAX_ALIAS_SEQUENCE_LENGTH 4
@@ -26,17 +26,16 @@ enum {
   anon_sym_RPAREN = 7,
   anon_sym_COMMA = 8,
   sym_Name = 9,
-  sym_Numb = 10,
-  sym_Expr = 11,
-  sym_Expr_name = 12,
-  sym_Expr_add = 13,
-  sym_Expr_mul = 14,
-  sym_Expr_pow = 15,
-  sym_Expr_neg = 16,
-  sym_Expr_apply = 17,
-  sym_Expr_paren = 18,
-  sym_ExprList = 19,
-  aux_sym_ExprList_repeat1 = 20,
+  sym_Expr = 10,
+  sym_Expr_name = 11,
+  sym_Expr_add = 12,
+  sym_Expr_mul = 13,
+  sym_Expr_pow = 14,
+  sym_Expr_neg = 15,
+  sym_Expr_apply = 16,
+  sym_Expr_paren = 17,
+  sym_ExprList = 18,
+  aux_sym_ExprList_repeat1 = 19,
 };
 
 static const char * const ts_symbol_names[] = {
@@ -50,7 +49,6 @@ static const char * const ts_symbol_names[] = {
   [anon_sym_RPAREN] = ")",
   [anon_sym_COMMA] = ",",
   [sym_Name] = "Name",
-  [sym_Numb] = "Numb",
   [sym_Expr] = "Expr",
   [sym_Expr_name] = "Expr_name",
   [sym_Expr_add] = "Expr_add",
@@ -74,7 +72,6 @@ static const TSSymbol ts_symbol_map[] = {
   [anon_sym_RPAREN] = anon_sym_RPAREN,
   [anon_sym_COMMA] = anon_sym_COMMA,
   [sym_Name] = sym_Name,
-  [sym_Numb] = sym_Numb,
   [sym_Expr] = sym_Expr,
   [sym_Expr_name] = sym_Expr_name,
   [sym_Expr_add] = sym_Expr_add,
@@ -125,10 +122,6 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
     .named = false,
   },
   [sym_Name] = {
-    .visible = true,
-    .named = true,
-  },
-  [sym_Numb] = {
     .visible = true,
     .named = true,
   },
@@ -246,7 +239,6 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           lookahead == '\n' ||
           lookahead == '\r' ||
           lookahead == ' ') SKIP(0)
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(11);
       if (('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z')) ADVANCE(10);
@@ -284,10 +276,6 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
           ('A' <= lookahead && lookahead <= 'Z') ||
           lookahead == '_' ||
           ('a' <= lookahead && lookahead <= 'z')) ADVANCE(10);
-      END_STATE();
-    case 11:
-      ACCEPT_TOKEN(sym_Numb);
-      if (('0' <= lookahead && lookahead <= '9')) ADVANCE(11);
       END_STATE();
     default:
       return false;
@@ -334,7 +322,6 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
     [anon_sym_RPAREN] = ACTIONS(1),
     [anon_sym_COMMA] = ACTIONS(1),
     [sym_Name] = ACTIONS(1),
-    [sym_Numb] = ACTIONS(1),
   },
   [1] = {
     [sym_Expr] = STATE(21),
