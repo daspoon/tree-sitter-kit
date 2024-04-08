@@ -7,30 +7,6 @@
 
 /// *TSExpression* represents a syntax expression within a tree-sitter grammar.
 public indirect enum TSExpression {
-  /// A type specifying precedence and associativity.
-  public enum Prec : ExpressibleByIntegerLiteral {
-    case none(Int), left(Int), right(Int)
-    public init(integerLiteral value: Int)
-      { self = .none(value) }
-  }
-
-  /// Used to specify the bracket symbols which enclose list elements.
-  public struct Brackets : Hashable {
-    public let name : String
-    public let lhs : String
-    public let rhs : String
-    public init(name n: String, lhs l: String, rhs r: String)
-      { name = n; lhs = l; rhs = r }
-  }
-
-  /// Used to specify the symbols separating list elements.
-  public struct Separator : Hashable {
-    public let name : String
-    public let text : String
-    public init(name n: String, text t: String)
-      { name = n; text = t }
-  }
-
   /// A token matching a specific string.
   case literal(String)
   /// A token matching a regular expression.
@@ -50,10 +26,17 @@ public indirect enum TSExpression {
   /// Annotate an expression with a field name.
   case field(String, TSExpression)
 
+  /// A type specifying precedence and associativity.
+  public enum Prec {
+    case none(Int), left(Int), right(Int)
+  }
+}
 
+
+extension TSExpression {
+  /// Return an expression which matches a value of the given type.
   public static func prod<T: Parsable>(_ type: T.Type) -> Self
     { .prod(.value(ParsableProxy(T.self))) }
-
 
   /// Return an expression which matches a non-empty sequence of the given expression, with elements separated by the given string literal. E.g. "a, b, c".
   public static func repeat1(_ expr: Self, separator: String) -> Self
@@ -62,7 +45,6 @@ public indirect enum TSExpression {
   /// Return an expression which matches a non-empty sequence of the given expression, with elements delimited by the given string literal. E.g. "a; b;".
   public static func repeat1(_ expr: Self, delimiter: String) -> Self
     { .seq([expr, .literal(delimiter), .repeat(.seq([expr, .literal(delimiter)]))]) }
-
 
   /// Return the receiver's javascript representation.
   public var javascript : String {
@@ -94,19 +76,15 @@ public indirect enum TSExpression {
 }
 
 
-extension TSExpression.Brackets {
-  public static let angle = Self(name: "angle", lhs: "<", rhs: ">")
-  public static let curly = Self(name: "curly", lhs: "{", rhs: "}")
-  public static let round = Self(name: "round", lhs: "(", rhs: ")")
-  public static let square = Self(name: "square", lhs: "[", rhs: "]")
+// Allow creating Prec with associativity *none* as integer literals.
+
+extension TSExpression.Prec : ExpressibleByIntegerLiteral {
+  public init(integerLiteral value: Int)
+    { self = .none(value) }
 }
 
 
-extension TSExpression.Separator {
-  public static let comma = Self(name: "comma", text: ",")
-  public static let semicolon = Self(name: "semicolon", text: ";")
-}
-
+// Allow creating TSExpression from string literals with embedded captures.
 
 extension TSExpression : ExpressibleByStringInterpolation {
   /// Build a sequence of literal and capture expressions. Captures are wrapped in field expressions named by increasing numeric indices (beginning at zero).
