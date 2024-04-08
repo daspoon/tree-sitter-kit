@@ -8,24 +8,25 @@
 import ArithLang
 
 
-// Define the Expr type which represents our abstract syntax. Make it Equatable
-// to provide a structural equality operator for testing purposes.
+// Define the Expr type which represents our abstract syntax.
 
 indirect enum Expr {
   case name(Name)
   case tuple([Expr])
   case apply(Expr, Expr)
+}
 
-  // Create an Expr from a parse tree node.
 
+// Create an Expr from a parse tree node.
+
+extension Expr {
   init(parseTree node: TSNode) {
+    // Decide which case is represented based on the structure of the node...
     assert(node.type == "Expr" && node.count == 1)
     let node = node[0]
     switch node.type {
       case "Expr_name" :
         self = .name(Name(parseTree: node))
-      case "Expr_paren" :
-        self = Expr(parseTree: node[1])
       case "Expr_add", "Expr_mul", "Expr_pow" :
         self = .apply(
           .name(Name(parseTree: node[1])),
@@ -42,6 +43,8 @@ indirect enum Expr {
           Expr(parseTree: node[0]),
           args.isNull ? .tuple([]) : ExprList(parseTree: args).expr
         )
+      case "Expr_paren" :
+        self = Expr(parseTree: node[1])
       default :
         fatalError("unexpected node type: \(node.type)")
     }

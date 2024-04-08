@@ -11,11 +11,12 @@ import TSKit
 
 struct Name : Equatable {
   let text : String
+}
 
-  init(text: String) {
-    self.text = text
-  }
 
+// Create a Name from a parse tree node.
+
+extension Name {
   init(parseTree node: TSNode) {
     self.init(text: node.stringValue!)
   }
@@ -25,7 +26,7 @@ struct Name : Equatable {
 // Allow implicit conversion from a string literal to make test cases more legible.
 
 extension Name : ExpressibleByStringLiteral {
-  init(stringLiteral: StringLiteralType) {
-    self.init(text: stringLiteral)
+  init(stringLiteral s: String) {
+    self.init(text: s)
   }
 }
