@@ -36,7 +36,7 @@ extension ProductionRule {
   }
 
   /// Return the syntax expression for the receiver's expansion.
-  public var expandedSyntaxExpression : TSExpression {
+  public var syntaxExpression : TSExpression {
     switch self {
       case  .value(let proxy) :
         return proxy.syntaxExpression
@@ -65,14 +65,14 @@ extension ProductionRule {
             break
         }
       }
-      walk(rule.expandedSyntaxExpression)
+      walk(rule.syntaxExpression)
     }
     visited.remove(self)
     return visited
   }
 
-  /// Return the javascript representation of the form "*symbolName*: => *expandedSyntaxExpression*".
+  /// Return the javascript representation of the form "*symbolName*: => *syntaxExpression*".
   public var javascript : String {
-    "\(symbolName): $ => \(expandedSyntaxExpression.javascript)"
+    "\(symbolName): $ => \(syntaxExpression.javascript)"
   }
 }
