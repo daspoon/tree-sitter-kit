@@ -29,6 +29,11 @@ extension TSNode
       ts_node_is_null(self)
     }
 
+    /// Return *true* iff the receiver represents a named production (as opposed to a string literal).
+    public var isNamed : Bool {
+      ts_node_is_named(self)
+    }
+
     /// Return the substring of the parsed text which is represented by the receiver.
     public var substringValue : Substring! {
       guard let tree, let text = TSTree.getText(for: tree)
