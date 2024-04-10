@@ -2,22 +2,21 @@
 // A language of arithmetic expressions with variables and function application...
 
 module.exports = grammar({
-    name: 'ArithLang',
+    name: 'ExprLang',
     rules: {
-      // Expressions
+      // An expression can be either...
       Expr: $ => choice(
-        // Variable names
+        // a variable name
         /[a-zA-Z_][0-9a-zA-Z_]*/,
-        // Infix operators of increasing precedence
+        // a parenthesized expression
+        seq('(', $.Expr, ')'),
+        // an infix or prefix operator of varying precedence (higher values bind more tightly)
         prec.left(1, seq($.Expr, choice('+', '-'), $.Expr)),
         prec.left(2, seq($.Expr, choice('*', '/'), $.Expr)),
         prec.right(3, seq($.Expr, '^', $.Expr)),
-        // Prefix negation operator with higher precedence
         prec(4, seq('-', $.Expr)),
-        // Function application with highest precedence
-        prec(5, seq($.Expr, '(', optional(seq($.Expr, repeat(seq(',', $.Expr)))), ')')),
-        // Parentheses
-        seq('(', $.Expr, ')'),
+        // or a function application.
+        seq($.Expr, '(', optional(seq($.Expr, repeat(seq(',', $.Expr)))), ')'),
       ),
     }
 })

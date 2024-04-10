@@ -9,11 +9,15 @@ import TSKit
 
 // A non-empty sequence of Expr separated by commas.
 
-struct ExprList {
+struct ExprList : Parsable {
   let elements : [Expr]
 
   init(elements: [Expr]) {
     self.elements = elements
+  }
+
+  static var syntaxExpression : TSExpression {
+    .seq([.prod(Expr.self), .repeat(.seq([",", .prod(Expr.self)]))])
   }
 
   init(parseTree node: TSNode) {
@@ -21,10 +25,5 @@ struct ExprList {
     assert(n > 0 && n % 2 == 1)
     elements = stride(from: 0, to: n, by: 2)
       .map { i in Expr(parseTree: node[i]) }
-  }
-
-  /// The represented expression is either the sole element or a tuple of two or more elements.
-  var expr : Expr {
-    elements.count == 1 ? elements[0] : .tuple(elements)
   }
 }

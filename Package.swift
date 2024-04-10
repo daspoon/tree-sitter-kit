@@ -8,6 +8,7 @@ let package = Package(
     platforms: [.macOS(.v10_15), .iOS(.v13), .macCatalyst(.v13)],
     products: [
         .library(name: "TSKit", targets: ["TSKit"]),
+        .library(name: "ExprLang1", targets: ["ExprLang1"]),
         .plugin(name: "TSGen", targets: ["TSGen"]),
     ],
     dependencies: [
@@ -38,19 +39,19 @@ let package = Package(
               ])
         ),
         // Some example language targets for testing purposes...
-        .target(name: "ArithLang",
+        .target(name: "ExprLang1",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
             ],
-            path: "Sources/Xamples/ArithLang",
+            path: "Sources/Xamples/ExprLang1",
             cSettings: [.headerSearchPath("src")],
             swiftSettings: [.interoperabilityMode(.C)]
         ),
-        .target(name: "FuncLang",
+        .target(name: "ExprLang2",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
             ],
-            path: "Sources/Xamples/FuncLang",
+            path: "Sources/Xamples/ExprLang2",
             cSettings: [.headerSearchPath("src")],
             swiftSettings: [.interoperabilityMode(.C)]
         ),
@@ -63,21 +64,21 @@ let package = Package(
             swiftSettings: [.interoperabilityMode(.C)]
         ),
         // Test targets for the sample language targets...
-        .testTarget(name: "ArithLangTests",
+        .testTarget(name: "ExprLang1Tests",
             dependencies: [
                 "TSKit",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-                "ArithLang",
+                "ExprLang1",
             ],
-            path: "Tests/ArithLang"
+            path: "Tests/ExprLang1"
         ),
-        .testTarget(name: "FuncLangTests",
+        .testTarget(name: "ExprLang2Tests",
             dependencies: [
                 "TSKit",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-                "FuncLang",
+                "ExprLang2",
             ],
-            path: "Tests/FuncLang"
+            path: "Tests/ExprLang2"
         ),
         .testTarget(name: "TypedLangTests",
             dependencies: [

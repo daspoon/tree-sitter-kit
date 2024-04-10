@@ -2,7 +2,7 @@
 // A language of arithmetic expressions with variables and function application...
 
 module.exports = grammar({
-    name: 'ArithLang',
+    name: 'ExprLang',
     rules: {
       // Expressions
       Expr: $ => choice(
@@ -22,7 +22,7 @@ module.exports = grammar({
       Expr_pow: $ => prec.right(3, seq($.Expr, '^', $.Expr)),
       Expr_neg: $ => prec(4, seq('-', $.Expr)),
       // Function application with highest precedence
-      Expr_apply: $ => prec(5, seq($.Expr, '(', field('args', optional($.ExprList)), ')')),
+      Expr_apply: $ => seq($.Expr, '(', field('args', optional($.ExprList)), ')'),
       // Parentheses
       Expr_paren: $ => seq('(', $.Expr, ')'),
 

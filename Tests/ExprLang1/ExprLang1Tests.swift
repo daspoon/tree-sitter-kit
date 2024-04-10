@@ -6,18 +6,10 @@
 
 import XCTest
 import TSKit
-import ArithLang
+import ExprLang1
 
 
-class ArithLangTests : XCTestCase {
-
-  /// Print the 'raw' parse tree for a given expression; not really a test, but useful for demonstration.
-  func testPrint() throws {
-    let text = "x + y ^ -z * w"
-    let parser = TSParser(tree_sitter_ArithLang())
-    let tree = parser.parse(text)!
-    print(tree.rootNode)
-  }
+class ExprLang1Tests : XCTestCase {
 
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {
@@ -35,19 +27,19 @@ class ArithLangTests : XCTestCase {
       ("x + (y + z)",
         .apply("+", ["x", .apply("+", ["y", "z"])])),
       ("-x",
-        .apply("-", "x")),
+        .apply("-", ["x"])),
       ("--x",
-        .apply("-", .apply("-", "x"))),
+        .apply("-", [.apply("-", ["x"])])),
       ("x + y * z ^ -w",
-        .apply("+", ["x", .apply("*", ["y", .apply("^", ["z", .apply("-", "w")])])])),
+        .apply("+", ["x", .apply("*", ["y", .apply("^", ["z", .apply("-", ["w"])])])])),
       ("f()",
         .apply("f", [])),
       ("f(x)",
-        .apply("f", "x")),
+        .apply("f", ["x"])),
       ("g(x, y + z, w)",
         .apply("g", ["x", .apply("+", ["y", "z"]), "w"])),
       ("f(x)(y)",
-        .apply(.apply("f", "x"), "y")),
+        .apply(.apply("f", ["x"]), ["y"])),
     ]
     for eg in examples {
       XCTAssertEqual(try Expr(text: eg.text), eg.term, eg.text)
