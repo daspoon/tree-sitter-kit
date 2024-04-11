@@ -9,21 +9,4 @@ import TSKit
 
 // A non-empty sequence of Expr separated by commas.
 
-struct ExprList : Parsable {
-  let elements : [Expr]
-
-  init(elements: [Expr]) {
-    self.elements = elements
-  }
-
-  static var syntaxExpression : TSExpression {
-    .seq([.prod(Expr.self), .repeat(.seq([",", .prod(Expr.self)]))])
-  }
-
-  init(parseTree node: TSNode, source src: InputSource) {
-    let n = node.count
-    assert(n > 0 && n % 2 == 1)
-    elements = stride(from: 0, to: n, by: 2)
-      .map { i in Expr(parseTree: node[i], source: src) }
-  }
-}
+typealias ExprList = SeparatedSequence<Expr, Comma, NoBrackets>
