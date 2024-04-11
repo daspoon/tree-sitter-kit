@@ -16,10 +16,10 @@ struct ExprList {
     self.elements = elements
   }
 
-  init(parseTree node: TSNode) {
+  init(parseTree node: TSNode, source src: InputSource) {
     let n = node.count
     assert(n > 0 && n % 2 == 1)
     elements = stride(from: 0, to: n, by: 2)
-      .map { i in Expr(parseTree: node[i]) }
+      .map { i in Expr(parseTree: node[i], source: src) }
   }
 }

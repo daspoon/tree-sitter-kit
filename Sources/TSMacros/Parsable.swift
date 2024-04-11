@@ -9,7 +9,7 @@ import SwiftSyntaxMacros
 
 
 /// A member macro applied to struct types whose expansion implements the following requirement of the *Parsable* protocol:
-///   - `init(parseTree node: TSNode)`
+///   - `init(parseTree: TSNode, source: InputSource)`
 /// If the target type is a struct, it must implement the following method to return a string literal:
 ///   - `var syntaxExpression : TSExpression`
 /// If the target type is an enum, it must instead implement the following method to return a dictionary literal with string literal keys and values:
@@ -17,7 +17,7 @@ import SwiftSyntaxMacros
 
 public struct Parsable : MemberMacro {
 
-  /// Return the source text of `init(parseTree:TSNode)` for the given struct declaration.
+  /// Return the source text of `init(parseTree: TSNode, source: InputSource)` for the given struct declaration.
   static func structInitializerText(for decl: StructDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Gather the constructors for this type (both init methods and static functions returning Self) and form a dictionary indexed by their identifiers.
     let initMethods = decl.initMethods.map({Signature(initializerDecl: $0)})
@@ -38,14 +38,13 @@ public struct Parsable : MemberMacro {
       else { throw Exception("no constructor matching production rule: \(ruleSignature.identifier)") }
 
     return """
-     \(decl.visibility) init(parseTree node: TSNode) {
-        self\(initSignature.invocationText(for: "node"))
+     \(decl.visibility) init(parseTree node: TSNode, source src: InputSource) {
+        self\(initSignature.invocationText(for: ("node", "src")))
      }
      """
   }
 
-
-  /// Return the source text of `init(parseTree:TSNode)` for the given enum declaration. Throw if the declaration lacks an appropriate definition of *syntaxExpressionsByCaseName*.
+  /// Return the source text of `init(parseTree: TSNode, source: InputSource)` for the given enum declaration. Throw if the declaration lacks an appropriate definition of *syntaxExpressionsByCaseName*.
   static func enumInitializerText(for decl: EnumDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Create a dictionary containing the signatures of this type's constructors (viz. enum cases or static
     // functions returning Self) keyed by their identifiers. Throw if any constructors have the same key,
@@ -85,13 +84,13 @@ public struct Parsable : MemberMacro {
 
     /// Return the initializer text, constructing a switch case for each production rule. Make each subrule name  'unique' by prefixing the target type's *symbolName*.
     return """
-       \(decl.visibility) init(parseTree node: TSNode) {
+       \(decl.visibility) init(parseTree node: TSNode, source src: InputSource) {
            assert(node.type == "\(symbolName)" && node.count == 1)
            let node = node[0]
            switch node.type {
              \(
                rules.map({ rule in
-                 return "case \"\(symbolName)_\(rule.name)\" : self = \(rule.invocationText(for: "node"))"
+                 return "case \"\(symbolName)_\(rule.name)\" : self = \(rule.invocationText(for: ("node", "src")))"
                })
                .joined(separator: "\n")
              )

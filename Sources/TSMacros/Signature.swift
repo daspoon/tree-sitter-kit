@@ -39,17 +39,17 @@ struct Signature {
 
   /// Return the text of the constructor application to the children of a *TSNode* instance of the given named;
   /// the children are expected to have field names which are numeric indices starting from 0.
-  func invocationText(for node: String) -> String {
+  func invocationText(for names: (node: String, source: String)) -> String {
     let argTexts : [String] = parameters
       .enumerated()
       .map({ index, param in
         let label = param.name.map {$0 + ": "} ?? ""
-        let nodeText = "\(node)[\"\(index)\"]"
+        let nodeText = "\(names.node)[\"\(index)\"]"
         switch param.type.as(OptionalTypeSyntax.self) {
           case .some(let optionalType) :
-            return label + "{$0.isNull ? nil : \(optionalType.wrappedType.text)(parseTree: $0)}(\(nodeText))"
+            return label + "{$0.isNull ? nil : \(optionalType.wrappedType.text)(parseTree: $0, source: \(names.source))}(\(nodeText))"
           case .none :
-            return label + "\(param.type.text)(parseTree: \(nodeText))"
+            return label + "\(param.type.text)(parseTree: \(nodeText), source: \(names.source))"
         }
       })
     return """

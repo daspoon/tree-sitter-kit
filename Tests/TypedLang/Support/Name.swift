@@ -16,8 +16,8 @@ struct Name : Equatable, Parsable {
     .pattern("[a-zA-Z_]+[0-9a-zA-Z_]*")
   }
 
-  init(parseTree node: TSNode) {
-    self.init(stringLiteral: node.stringValue!)
+  init(parseTree node: TSNode, source: InputSource) {
+    self.init(stringLiteral: source.text(for: node))
   }
 }
 

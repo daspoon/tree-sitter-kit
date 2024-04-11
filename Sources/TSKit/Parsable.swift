@@ -14,7 +14,7 @@ public protocol Parsable {
   static var syntaxExpression : TSExpression { get }
 
   /// Initialize an instance from a compatible parse tree node. Required.
-  init(parseTree node: TSNode)
+  init(parseTree: TSNode, source: InputSource)
 }
 
 

@@ -29,8 +29,8 @@ extension SeparatedSequence : Parsable {
       }
     }
 
-  public init(parseTree node: TSNode)
-    { elements = [Element](node, separator: Separator.symbol, brackets: Bracket.symbols) }
+  public init(parseTree node: TSNode, source src: InputSource)
+    { elements = [Element](node, source: src, separator: Separator.symbol, brackets: Bracket.symbols) }
 }
 
 

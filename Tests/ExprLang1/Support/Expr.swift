@@ -15,31 +15,31 @@ indirect enum Expr {
   case apply(Expr, [Expr])
 
   /// Create an Expr from a parse tree node.
-  init(parseTree node: TSNode) {
+  init(parseTree node: TSNode, source src: InputSource) {
     // Decide which case is represented based on the structure of the node...
     assert(node.type == "Expr" && node.count == 1)
     let node = node[0]
     switch node.type {
       case "Expr_name" :
-        self = .name(Name(parseTree: node))
+        self = .name(Name(parseTree: node, source: src))
       case "Expr_add", "Expr_mul", "Expr_pow" :
         self = .apply(
-          .name(Name(parseTree: node[1])),
-          [Expr(parseTree: node[0]), Expr(parseTree: node[2])]
+          .name(Name(parseTree: node[1], source: src)),
+          [Expr(parseTree: node[0], source: src), Expr(parseTree: node[2], source: src)]
         )
       case "Expr_neg" :
         self = .apply(
-          .name(Name(parseTree: node[0])),
-          [Expr(parseTree: node[1])]
+          .name(Name(parseTree: node[0], source: src)),
+          [Expr(parseTree: node[1], source: src)]
         )
       case "Expr_apply" :
         let args = node["args"]
         self = .apply(
-          Expr(parseTree: node[0]),
-          args.isNull ? [] : ExprList(parseTree: args).elements
+          Expr(parseTree: node[0], source: src),
+          args.isNull ? [] : ExprList(parseTree: args, source: src).elements
         )
       case "Expr_paren" :
-        self = Expr(parseTree: node[1])
+        self = Expr(parseTree: node[1], source: src)
       default :
         fatalError("unexpected node type: \(node.type)")
     }
@@ -56,7 +56,7 @@ extension Expr {
       else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw Exception("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self.init(parseTree: tree.rootNode)
+    self.init(parseTree: tree.rootNode, source: tree.inputSource)
   }
 }
 

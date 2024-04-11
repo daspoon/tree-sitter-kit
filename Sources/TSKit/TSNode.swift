@@ -34,18 +34,15 @@ extension TSNode
       ts_node_is_named(self)
     }
 
-    /// Return the substring of the parsed text which is represented by the receiver.
-    public var substringValue : Substring! {
-      guard let tree, let text = TSTree.getText(for: tree)
-        else { print("no text for tree \(tree)"); return nil }
-      let lb = text.index(text.startIndex, offsetBy: Int(ts_node_start_byte(self)))
-      let ub = text.index(text.startIndex, offsetBy: Int(ts_node_end_byte(self)))
-      return text[Range(uncheckedBounds: (lb, ub))]
+    /// Return the range of the parsed text represented by the receiver.
+    public var sourceByteRange : Range<UInt32> {
+      ts_node_start_byte(self) ..< ts_node_end_byte(self)
     }
 
-    /// Return the substring of the parsed text which is represented by the receiver.
-    public var stringValue : String! {
-      substringValue.map {String($0)}
+    /// Return the portion of the parsed text represented by the receiver as a *String*.
+    @available(*, deprecated)
+    public var stringValue : String {
+      fatalError()
     }
 
     /// Return the number of child nodes.

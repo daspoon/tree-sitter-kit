@@ -51,7 +51,7 @@ extension Expr {
       else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw Exception("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self.init(parseTree: tree.rootNode)
+    self.init(parseTree: tree.rootNode, source: tree.inputSource)
   }
 }
 
