@@ -35,11 +35,16 @@ struct EnumCase : Equatable, Parsable {
   let name : Name
   let params : [Param]
 
-  init(name n: Name, params ps: [Param]?)
-    { name = n; params = ps ?? [] }
+  init(name n: Name, params ps: [Param] = [])
+    { name = n; params = ps}
+
+  init(name n: Name, paramList l: ParamList?)
+    { self.init(name: n, params: l?.elements ?? []) }
 
   static var syntaxExpression : TSExpression
-    { "\(Name.self) \(opt: [Param].self)" }
+    { "\(Name.self) \(opt: ParamList.self)" }
 
 }
 
+
+typealias ParamList = SeparatedSequence<Param, Comma, Parentheses>

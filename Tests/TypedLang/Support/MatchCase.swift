@@ -19,7 +19,13 @@ struct MatchCase : Equatable, Parsable {
     expr = e
   }
 
+  init(name n: Name, params ps: NameList?, expr e: Expr) {
+    self.init(name: n, params: ps?.elements ?? [], expr: e)
+  }
+
+  typealias NameList = SeparatedSequence<Name, Comma, Parentheses>
+
   static var syntaxExpression : TSExpression
-    { "\(Name.self) \([Name].self) => \(Expr.self)" }
+    { "\(Name.self) \(opt: NameList.self) => \(Expr.self)" }
 
 }

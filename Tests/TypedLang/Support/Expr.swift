@@ -21,11 +21,17 @@ indirect enum Expr : Equatable, ParsableByCases {
   case match(Expr, [MatchCase])
   case block(Block)
 
-  static func paren(_ exprs: [Expr]) -> Self
-    { exprs.count == 1 ? exprs[0] : .tuple(exprs) }
+  static func paren(_ list: ExprList?) -> Self
+    { {$0.count == 1 ? $0[0] : .tuple($0)}(list?.elements ?? []) }
 
-  static func call(_ fun: Expr, _ args: [Expr]) -> Self
+  static func call(_ fun: Expr, _ args: ExprList?) -> Self
     { .apply(fun, .paren(args)) }
+
+  static func lambda(_ params: ParamList, _ type: TypeExpr, _ expr: Expr) -> Self
+    { .lambda(params.elements, type, expr) }
+
+  static func mu(_ name: Name, _ params: ParamList, _ type: TypeExpr, _ expr: Expr) -> Self
+    { .mu(name, params.elements, type, expr) }
 
   static func match(_ expr: Expr, _ seq: MatchCaseList) -> Self
     { .match(expr, seq.elements) }
@@ -50,7 +56,7 @@ indirect enum Expr : Equatable, ParsableByCases {
     { .apply(.name(Name(stringLiteral: op)), arg) }
 
   static func neg(_ op: String, _ arg: Expr) -> Self
-    { .prefix(op, arg) }
+    { .apply(.name(Name(stringLiteral: op)), arg) }
 
   typealias MatchCaseList = SeparatedSequence<MatchCase, Comma, NoBrackets>
 
@@ -58,10 +64,10 @@ indirect enum Expr : Equatable, ParsableByCases {
     return [
       "name" :     "\(Name.self)",
       "numb" :     "\(Int.self)",
-      "call" :     "\(prec: .apply)\(Expr.self) \([Expr].self)",
-      "lambda" :   "! \([Param].self) -> \(TypeExpr.self) . \(Expr.self)",
-      "mu" :       "! \(Name.self) \([Param].self) -> \(TypeExpr.self) . \(Expr.self)",
-      "paren" :    "\([Expr].self)",
+      "call" :     "\(prec: .apply)\(Expr.self) ( \(opt: ExprList.self) )",
+      "lambda" :   "! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
+      "mu" :       "! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)",
+      "paren" :    "( \(opt: ExprList.self) )",
       "project" :  "\(prec: .proj)\(Expr.self) . \(Int.self)",
       "match" :    "match \(Expr.self) { \(MatchCaseList.self) }",
       "block" :    "{ \(Block.self) }",
@@ -75,6 +81,9 @@ indirect enum Expr : Equatable, ParsableByCases {
     ]
   }
 }
+
+
+typealias ExprList = SeparatedSequence<Expr, Comma, NoBrackets>
 
 
 // Define operator precedence symbolically

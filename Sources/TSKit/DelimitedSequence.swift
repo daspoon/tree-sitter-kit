@@ -20,8 +20,11 @@ extension DelimitedSequence : Parsable {
   public static var syntaxExpression : TSExpression
     { .repeat1(.prod(Element.self), delimiter: Delimiter.symbol) }
 
-  public init(parseTree node: TSNode, source src: InputSource)
-    { elements = [Element](node, source: src, delimiter: Delimiter.symbol) }
+  public init(parseTree node: TSNode, source src: InputSource) {
+    let n = node.count
+    assert(n > 0 && n % 2 == 0)
+    elements = stride(from: 0, to: n, by: 2).map { i in Element(parseTree: node[i], source: src) }
+  }
 }
 
 extension DelimitedSequence : Equatable where Element : Equatable {
