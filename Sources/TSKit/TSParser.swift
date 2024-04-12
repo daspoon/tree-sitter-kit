@@ -7,19 +7,19 @@
 import TreeSitter
 
 
+/// A wrapper for the tree-sitter's *TSParser* struct.
 public class TSParser
   {
     let ptr : OpaquePointer
 
-    public init(_ language: OpaquePointer) {
+    public init(_ language: TSLanguage) {
       ptr = ts_parser_new()
-      ts_parser_set_language(ptr, language)
+      ts_parser_set_language(ptr, language.ptr)
     }
 
     deinit {
       ts_parser_delete(ptr)
     }
-
 
     /// Parse text from the given input source to produce a tree which is optionally an alteration of an existing tree. May return *nil*if parsing was cancelled.
     public func parse(_ source: InputSource, existingTree: TSTree? = nil) -> TSTree? {

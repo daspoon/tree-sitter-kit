@@ -35,7 +35,7 @@ struct Block : Equatable, Parsable {
 extension Block {
   /// A convenience method for initializing an instance by parsing text.
   init(_ text: String) throws {
-    guard let tree = TSParser(tree_sitter_TypedLang()).parse(text)
+    guard let tree = TSParser(TSLanguage(tree_sitter_TypedLang())).parse(text)
       else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw Exception("error in parse tree for '\(text)': \(tree.rootNode.description)") }

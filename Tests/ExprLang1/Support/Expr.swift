@@ -51,7 +51,7 @@ indirect enum Expr {
 
 extension Expr {
   init(text: String) throws {
-    let parser = TSParser(tree_sitter_ExprLang())
+    let parser = TSParser(TSLanguage(tree_sitter_ExprLang()))
     guard let tree = parser.parse(text)
       else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
