@@ -39,12 +39,6 @@ extension TSNode
       ts_node_start_byte(self) ..< ts_node_end_byte(self)
     }
 
-    /// Return the portion of the parsed text represented by the receiver as a *String*.
-    @available(*, deprecated)
-    public var stringValue : String {
-      fatalError()
-    }
-
     /// Return the number of child nodes.
     public var count : Int {
       Int(ts_node_child_count(self))
