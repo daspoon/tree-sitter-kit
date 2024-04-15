@@ -22,7 +22,7 @@ indirect enum Expr : ParsableByCases {
       "mul"    : "\(prec:  .left(2)) \(Expr.self) \(lit: ["*", "/"]) \(Expr.self)",
       "pow"    : "\(prec: .right(3)) \(Expr.self) \(lit: ["^"]) \(Expr.self)",
       "neg"    : "\(prec:  .none(4)) \(lit: ["-"]) \(Expr.self)",
-      "apply"  : "\(Expr.self) ( \(opt: ExprList.self) )",
+      "apply"  : "\(prec:  .none(5)) \(Expr.self) ( \(opt: ExprList.self) )",
       "paren"  : "( \(Expr.self) )",
     ]
   }

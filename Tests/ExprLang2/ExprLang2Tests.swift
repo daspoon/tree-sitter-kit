@@ -45,6 +45,8 @@ class ExprLang2Tests : XCTestCase {
         .apply("g", ["x", .apply("+", ["y", "z"]), "w"])),
       ("f(x)(y)",
         .apply(.apply("f", ["x"]), ["y"])),
+      ("f() + g()",
+        .apply("+", [.apply("f", []), .apply("g", [])])),
     ]
     for eg in examples {
       XCTAssertEqual(try Expr(text: eg.text), eg.term, eg.text)

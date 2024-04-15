@@ -4,32 +4,30 @@
 module.exports = grammar({
     name: 'ExprLang',
     rules: {
-      // Expressions
+      // An expression can be either...
       Expr: $ => choice(
+        // a variable name,
         $.Expr_name,
+        // a parenthesized expression,
+        $.Expr_paren,
+        // an application of a prefix or infix operator (grouped by precedence and associativity, with higher values binding more tightly),
         $.Expr_add,
         $.Expr_mul,
         $.Expr_pow,
         $.Expr_neg,
+        // or a function applied to a sequence of arguments.
         $.Expr_apply,
-        $.Expr_paren,
       ),
-      // Variable names
       Expr_name: $ => $.Name,
-      // Operators of increasing precedence
+      Expr_paren: $ => seq('(', $.Expr, ')'),
       Expr_add: $ => prec.left(1, seq($.Expr, choice('+', '-'), $.Expr)),
       Expr_mul: $ => prec.left(2, seq($.Expr, choice('*', '/'), $.Expr)),
       Expr_pow: $ => prec.right(3, seq($.Expr, '^', $.Expr)),
       Expr_neg: $ => prec(4, seq('-', $.Expr)),
-      // Function application with highest precedence
-      Expr_apply: $ => seq($.Expr, '(', field('args', optional($.ExprList)), ')'),
-      // Parentheses
-      Expr_paren: $ => seq('(', $.Expr, ')'),
+      Expr_apply: $ => prec(5, seq($.Expr, '(', field('args', optional($.ExprList)), ')')),
 
-      // A sequence of one or more expressions separated by commas
       ExprList: $ => seq($.Expr, repeat(seq(',', $.Expr))),
 
-      // A variable name
       Name: $ => /[a-zA-Z_][0-9a-zA-Z_]*/,
     }
 })
