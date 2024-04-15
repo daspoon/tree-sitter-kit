@@ -18,12 +18,6 @@ extension TSNode
       return String(cString: ts_node_type(self)!)
     }
 
-    public func hasType(_ type: String) -> Bool {
-      type.withCString { ptr in
-        strcmp(ptr, ts_node_type(self)) == 0
-      }
-    }
-
     /// Return *true* iff the receiver is the 'null' node.
     public var isNull : Bool {
       ts_node_is_null(self)
@@ -54,22 +48,6 @@ extension TSNode
       name.withCString { cstr in
         ts_node_child_by_field_name(self, cstr, UInt32(strlen(cstr)))
       }
-    }
-
-    /// Return the receiver's parent node, or *nil* if it has none.
-    public var parent : TSNode? {
-      let parent = ts_node_parent(self)
-      return ts_node_is_null(parent) ? nil : parent
-    }
-
-    /// Return the index of the given node within the receiver's subnodes, or *nil* if it doesn't exist.
-    public func index(of subnode: TSNode) -> Int? {
-      for i in 0 ..< count {
-        if self[i] == subnode {
-          return i
-        }
-      }
-      return nil
     }
 
     /// Return *true* if the receiver represents a syntax error.
