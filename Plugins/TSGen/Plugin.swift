@@ -68,7 +68,6 @@ struct TreeSitterGen : CommandPlugin
           let grammarText = try String(contentsOfFile: grammarPath)
           guard let match = grammarText.firstMatch(of: grammarNameRegex), let nameRange = match[1].range
             else { throw Exception("failed to extract name from grammar file") }
-          // WTF: Regex behaves differently here than in a playground, returning the whole match rather than the capture text...
           let grammarName = grammarText[nameRange]
 
           // Invoke 'tree-sitter generate' with the specified grammar and working directory.
