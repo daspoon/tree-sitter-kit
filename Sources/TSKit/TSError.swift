@@ -6,8 +6,8 @@
 
 
 /// Used to signal error conditions within this package.
-internal struct Exception : Error {
-  let failureReason : String
-  init(_ text: String)
+public struct TSError : Error {
+  public let failureReason : String
+  public init(_ text: String)
     { failureReason = text }
 }

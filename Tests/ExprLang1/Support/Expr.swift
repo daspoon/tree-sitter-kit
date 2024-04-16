@@ -53,9 +53,9 @@ extension Expr {
   init(text: String) throws {
     let parser = TSParser(TSLanguage(tree_sitter_ExprLang()))
     guard let tree = parser.parse(text)
-      else { throw Exception("parser failed to return a syntax tree for '\(text)'") }
+      else { throw TSError("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
-      else { throw Exception("error in parse tree for '\(text)': \(tree.rootNode.description)") }
+      else { throw TSError("error in parse tree for '\(text)': \(tree.rootNode.description)") }
     self.init(parseTree: tree.rootNode, source: tree.inputSource)
   }
 }
