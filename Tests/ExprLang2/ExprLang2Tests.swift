@@ -13,7 +13,7 @@ class ExprLang2Tests : XCTestCase {
 
   /// Use this to generate the text of Sources/Xamples/TypedLang/grammar.js
   func testGenerateGrammar() throws {
-    print(Grammar<Expr>(name: "ExprLang").javascript)
+    print(Grammar(name: "ExprLang", rootType: Expr.self).javascript)
   }
 
   /// Ensure the result of parsing is as expected for a variety of example terms...

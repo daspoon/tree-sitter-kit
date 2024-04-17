@@ -85,8 +85,6 @@ public struct Parsable : MemberMacro {
     /// Return the initializer text, constructing a switch case for each production rule. Make each subrule name  'unique' by prefixing the target type's *symbolName*.
     return """
        \(decl.visibility) init(parseTree node: TSNode, source src: InputSource) {
-           assert(node.type == "\(symbolName)" && node.count == 1)
-           let node = node[0]
            switch node.type {
              \(
                rules.map({ rule in

@@ -10,7 +10,7 @@ public enum ProductionRule : Hashable {
   /// The primary rule for a *Parsable* type.
   case value(ParsableProxy)
   /// An auxiliary rule for one alternative of a *ParsableByChoice* type; the associated string is the rule name.
-  case value_case(ParsableProxyCase, String)
+  case value_case(ParsableByCasesProxy, String)
 }
 
 
@@ -26,12 +26,12 @@ extension ProductionRule {
   }
 
   /// Return the defined symbol name.
-  public var symbolName : String {
+  public var name : String {
     switch self {
       case .value(let proxy) :
-        return proxy.symbolName
+        return proxy.productionRuleName
       case .value_case(let proxy, let name) :
-        return proxy.symbolName(for: name)
+        return proxy.productionRuleName(for: name)
     }
   }
 
@@ -71,8 +71,8 @@ extension ProductionRule {
     return visited
   }
 
-  /// Return the javascript representation of the form "*symbolName*: => *syntaxExpression*".
+  /// Return the javascript representation of the form "*name*: => *syntaxExpression*".
   public var javascript : String {
-    "\(symbolName): $ => \(syntaxExpression.javascript)"
+    "\(name): $ => \(syntaxExpression.javascript)"
   }
 }

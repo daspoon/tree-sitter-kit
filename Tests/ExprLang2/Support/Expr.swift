@@ -46,12 +46,20 @@ indirect enum Expr : ParsableByCases {
 
 extension Expr {
   init(text: String) throws {
+    // Create a parser for the defined language.
     let parser = TSParser(TSLanguage(tree_sitter_ExprLang()))
+    // Get the parse tree for the given text; this can return nil if parsing is cancelled.
     guard let tree = parser.parse(text)
       else { throw TSError("parser failed to return a syntax tree for '\(text)'") }
+    // Throw if the parse tree contains errors.
     guard tree.rootNode.hasError == false
       else { throw TSError("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self.init(parseTree: tree.rootNode, source: tree.inputSource)
+    // The root node of the tree must derive from the start rule and have a single child.
+    let startNode = tree.rootNode
+    guard startNode.type == Grammar.startSymbol, startNode.count == 1
+      else { throw TSError("root node has unexpected type (\(startNode.type)) and/or count \(startNode.count)") }
+    // Delegate to the initializer parse tree nodes...
+    self.init(parseTree: startNode[0], source: tree.inputSource)
   }
 }
 

@@ -39,6 +39,9 @@ extension Block {
       else { throw TSError("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw TSError("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self = .init(parseTree: tree.rootNode, source: tree.inputSource)
+    let startNode = tree.rootNode
+    guard startNode.type == Grammar.startSymbol, startNode.count == 1
+      else { throw TSError("root node has unexpected type (\(startNode.type)) and/or count \(startNode.count)") }
+    self.init(parseTree: startNode[0], source: tree.inputSource)
   }
 }

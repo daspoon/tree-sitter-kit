@@ -19,6 +19,10 @@ extension ParsableByCases {
 }
 
 extension ParsableByCases {
+  /// Override Parsable's implementation to make the production hidden.
+  public static var productionRuleIsHidden : Bool
+    { true }
+
   /// Return the syntax expression for the given rule name.
   static func syntaxExpression(for name: String) -> TSExpression
     { syntaxExpressionsByCaseName[name]! }
