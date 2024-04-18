@@ -8,8 +8,8 @@
 extension String {
   /// Construct a string from a parse tree node. Note that we can't conform to *Parsable* without choosing an arbitrary syntax expression,
   /// but we want to enable use of *String* in the constructors for *Parsable* types.
-  public init(parseTree node: TSNode, source: InputSource)
-    { self = source.text(for: node) }
+  public init(parseTree node: TSNode, context ctx: ParsingContext)
+    { self = ctx.inputSource.text(for: node) }
 
   /// Return the concatenation of a number of newline characters, defaulting to 1.
   static func newline(_ n: Int = 1) -> String

@@ -15,33 +15,33 @@ indirect enum Expr {
   case apply(Expr, [Expr])
 
   /// Create an Expr from a parse tree node.
-  init(parseTree node: TSNode, source src: InputSource) {
+  init(parseTree node: TSNode, context ctx: ParsingContext) {
     // Decide which case is represented based on the structure of the node...
-    assert(node.type == "Expr" && node.count == 1)
+    assert(ctx.language.symbolName(for: node) == "Expr" && node.count == 1)
     let node = node[0]
-    switch node.type {
+    switch ctx.language.symbolName(for: node) {
       case "Expr_name" :
-        self = .name(Name(parseTree: node, source: src))
+        self = .name(Name(parseTree: node, context: ctx))
       case "Expr_add", "Expr_mul", "Expr_pow" :
         self = .apply(
-          .name(Name(parseTree: node[1], source: src)),
-          [Expr(parseTree: node[0], source: src), Expr(parseTree: node[2], source: src)]
+          .name(Name(parseTree: node[1], context: ctx)),
+          [Expr(parseTree: node[0], context: ctx), Expr(parseTree: node[2], context: ctx)]
         )
       case "Expr_neg" :
         self = .apply(
-          .name(Name(parseTree: node[0], source: src)),
-          [Expr(parseTree: node[1], source: src)]
+          .name(Name(parseTree: node[0], context: ctx)),
+          [Expr(parseTree: node[1], context: ctx)]
         )
       case "Expr_apply" :
         let args = node["args"]
         self = .apply(
-          Expr(parseTree: node[0], source: src),
-          args.isNull ? [] : ExprList(parseTree: args, source: src).elements
+          Expr(parseTree: node[0], context: ctx),
+          args.isNull ? [] : ExprList(parseTree: args, context: ctx).elements
         )
       case "Expr_paren" :
-        self = Expr(parseTree: node[1], source: src)
-      default :
-        fatalError("unexpected node type: \(node.type)")
+        self = Expr(parseTree: node[1], context: ctx)
+      case let unexpected :
+        fatalError("unexpected node type: \(unexpected)")
     }
   }
 }
@@ -50,13 +50,16 @@ indirect enum Expr {
 // Define a method to create an expression by parsing a string.
 
 extension Expr {
-  init(text: String) throws {
-    let parser = TSParser(TSLanguage(tree_sitter_ExprLang()))
-    guard let tree = parser.parse(text)
+  init(text: String, encoding: String.Encoding = .utf8) throws {
+    let language = TSLanguage(tree_sitter_ExprLang())
+    let parser = TSParser(language: language)
+    guard let source = StringInputSource(string: text, encoding: encoding)
+      else { throw TSError("unsupported string encoding: \(encoding)") }
+    guard let tree = parser.parse(source)
       else { throw TSError("parser failed to return a syntax tree for '\(text)'") }
     guard tree.rootNode.hasError == false
       else { throw TSError("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    self.init(parseTree: tree.rootNode, source: tree.inputSource)
+    self.init(parseTree: tree.rootNode, context: ParsingContext(language: language, inputSource: source))
   }
 }
 

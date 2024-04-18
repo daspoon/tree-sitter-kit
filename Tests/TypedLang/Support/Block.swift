@@ -32,16 +32,12 @@ struct Block : Equatable, Parsable {
 
 }
 
+
+fileprivate let language = TSLanguage(tree_sitter_TypedLang())
+
 extension Block {
   /// A convenience method for initializing an instance by parsing text.
   init(_ text: String) throws {
-    guard let tree = TSParser(TSLanguage(tree_sitter_TypedLang())).parse(text)
-      else { throw TSError("parser failed to return a syntax tree for '\(text)'") }
-    guard tree.rootNode.hasError == false
-      else { throw TSError("error in parse tree for '\(text)': \(tree.rootNode.description)") }
-    let startNode = tree.rootNode
-    guard startNode.type == Grammar.startSymbol, startNode.count == 1
-      else { throw TSError("root node has unexpected type (\(startNode.type)) and/or count \(startNode.count)") }
-    self.init(parseTree: startNode[0], source: tree.inputSource)
+    try self.init(text: text, language: language)
   }
 }

@@ -16,8 +16,8 @@ struct Name : Equatable {
     text = t
   }
 
-  init(parseTree node: TSNode, source: InputSource) {
-    self.init(text: source.text(for: node))
+  init(parseTree node: TSNode, context ctx: ParsingContext) {
+    self.init(text: ctx.inputSource.text(for: node))
   }
 }
 

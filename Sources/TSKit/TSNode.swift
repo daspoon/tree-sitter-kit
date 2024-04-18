@@ -12,12 +12,6 @@ public typealias TSNode = TreeSitter.TSNode
 
 extension TSNode
   {
-    /// Return the receiver's type.
-    public var type : String {
-      // TODO: avoid allocating String instances by maintaining a mapping of type-id to string in the associated language...
-      return String(cString: ts_node_type(self)!)
-    }
-
     /// Return *true* iff the receiver is the 'null' node.
     public var isNull : Bool {
       ts_node_is_null(self)
