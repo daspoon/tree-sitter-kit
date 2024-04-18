@@ -10,9 +10,11 @@ import TreeSitter
 /// A wrapper for the tree-sitter's *TSParser* struct.
 public class TSParser
   {
+    public let language : TSLanguage
     let ptr : OpaquePointer
 
     public init(_ language: TSLanguage) {
+      self.language = language
       ptr = ts_parser_new()
       ts_parser_set_language(ptr, language.ptr)
     }
