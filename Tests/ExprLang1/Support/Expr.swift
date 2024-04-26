@@ -52,7 +52,7 @@ indirect enum Expr {
 extension Expr {
   init(text: String, encoding: String.Encoding = .utf8) throws {
     let language = TSLanguage(tree_sitter_ExprLang())
-    let parser = TSParser(language: language)
+    let parser = TSParser(language)
     guard let source = StringInputSource(string: text, encoding: encoding)
       else { throw TSError("unsupported string encoding: \(encoding)") }
     guard let tree = parser.parse(source)

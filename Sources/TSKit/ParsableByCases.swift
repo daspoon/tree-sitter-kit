@@ -5,24 +5,29 @@
 */
 
 
-/// *ParsableByCases* simplifies conformance to *Parsable* for types which require multiple production rules, such as enums. It provides a default implementation for *syntaxExpression* as a choice of sub-rule productions.
+/// *ParsableByCases* simplifies conformance to *Parsable* for types which require multiple
+/// production rules, such as enums. It provides a default implementation for *syntaxExpression*
+/// as a choice of sub-rules.
 public protocol ParsableByCases : Parsable {
-  /// Return the mapping of sub-rule names to syntax expressions.
+  /// Return the mapping of sub-rule names to syntax expressions. Required.
   static var syntaxExpressionsByCaseName : [String: TSExpression] { get }
 }
 
 extension ParsableByCases {
-  /// Return a choice of the productions for the sub-rules defined by *syntaxExpressionsByCaseName*.
+  /// Return a choice of the sub-rule productions defined by *syntaxExpressionsByCaseName*.
   public static var syntaxExpression : TSExpression {
-    .choice(syntaxExpressionsByCaseName.keys.sorted().map { .prod(ProductionRule(for: $0, of: Self.self)) })
+    let subrules = syntaxExpressionsByCaseName.keys.sorted().map { name in
+      ProductionRule(for: name, of: Self.self)
+    }
+    return .choice(subrules.map {rule in .prod(rule)})
   }
+
+  /// Override Parsable's implementation to make the production hidden.
+  public static var symbolIsHidden : Bool
+    { true }
 }
 
 extension ParsableByCases {
-  /// Override Parsable's implementation to make the production hidden.
-  public static var productionRuleIsHidden : Bool
-    { true }
-
   /// Return the syntax expression for the given rule name.
   static func syntaxExpression(for name: String) -> TSExpression
     { syntaxExpressionsByCaseName[name]! }

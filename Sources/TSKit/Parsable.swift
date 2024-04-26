@@ -7,39 +7,46 @@
 import Foundation
 
 
-/// *Parsable* identifies a language element which has a tree-sitter production rule and can be initialized with a parse tree.
+/// *Parsable* identifies types which implement language elements -- i.e. which have
+/// a grammar production rule and can be initialized with a parse tree.
 public protocol Parsable {
-  /// The name of the grammar symbol representing this language element. The default implementation returns the receiver's type name.
-  static var symbolName : String { get }
-
-  /// Indicates whether or not the corresponding production rule is hidden. The default implementation returns *false*.
-  static var productionRuleIsHidden : Bool { get }
-
-  /// The name of the production rule for this language element. The default implementation returns *symbolName*, prefixed with an underscore if *productionRuleIsHidden* returns *true*.
-  static var productionRuleName : String { get }
-
-  /// Return the syntax expression for instances of this type. Required.
+  /// The syntax expression of this type's production rule. Required.
   static var syntaxExpression : TSExpression { get }
 
-  /// Initialize an instance from a compatible parse tree node. Required.
+  /// Create an instance of this type from a compatible parse tree node. Required.
   init(parseTree: TSNode, context: ParsingContext)
+
+  /// Indicates whether or not this type's production rule is hidden. The default
+  /// implementation returns *false*.
+  static var symbolIsHidden : Bool { get }
+
+  /// The name of this language element. The default implementation returns the name
+  /// of the receiving type.
+  static var typeName : String { get }
 }
 
 
 // Default implementations.
 
 extension Parsable {
+  /// The name of the production rule for this language element. The default implementation
+  /// returns *typeName*, prefixed with an underscore iff *symbolIsHidden* returns *true*.
   public static var symbolName : String
-    { "\(Self.self)" }
+    { (symbolIsHidden ? "_" : "") + typeName }
 
-  public static var productionRuleIsHidden : Bool
+  public static var symbolIsHidden : Bool
     { false }
 
-  public static var productionRuleName : String
-    { (productionRuleIsHidden ? "_" : "") + symbolName }
+  public static var typeName : String
+    { "\(Self.self)" }
+}
 
-  /// Create an instance of this type by parsing the given input source according to the given language,
-  /// which must have the receiver's type as its root type.
+
+// Parsing interface
+
+extension Parsable {
+  /// Create an instance of this type by parsing the given input source according to the
+  /// given language, which must have the receiver's type as its root type.
   public init(inputSource src: InputSource, language lng: TSLanguage) throws {
     // Create a parser for the given language
     let parser = TSParser(lng)
@@ -55,7 +62,7 @@ extension Parsable {
       else { throw TSError("start node has unexpected type (\(lng.symbolName(for: startNode))) and/or count \(startNode.count)") }
     // Ensure the sole child of the start node either corresponds to a production of this type or is hidden (e.g. corresponds to an enum case).
     let rootNode = startNode[0]
-    guard Self.productionRuleIsHidden || lng.symbolName(for: rootNode) == Self.symbolName
+    guard Self.symbolIsHidden || lng.symbolName(for: rootNode) == Self.typeName // TODO: -> symbolName
       else { throw TSError("root node has unexpected type (\(lng.symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
     self.init(parseTree: rootNode, context: ParsingContext(language: lng, inputSource: src))

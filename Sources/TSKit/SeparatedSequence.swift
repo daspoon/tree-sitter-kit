@@ -15,8 +15,8 @@ public struct SeparatedSequence<Element: Parsable, Separator: Punctuation, Brack
 
 
 extension SeparatedSequence : Parsable {
-  public static var symbolName : String
-    { "\(Element.symbolName)SequenceSeparatedBy\(Separator.self)" + (Bracket.symbols.map({_ in "BracketedBy\(Bracket.self)"}) ?? "") }
+  public static var typeName : String
+    { "\(Element.typeName)SequenceSeparatedBy\(Separator.self)" + (Bracket.symbols.map({_ in "BracketedBy\(Bracket.self)"}) ?? "") }
 
   public static var syntaxExpression : TSExpression
     {

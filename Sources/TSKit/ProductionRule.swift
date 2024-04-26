@@ -26,12 +26,12 @@ extension ProductionRule {
   }
 
   /// Return the defined symbol name.
-  public var name : String {
+  public var symbolName : String {
     switch self {
       case .value(let proxy) :
-        return proxy.productionRuleName
+        return proxy.symbolName
       case .value_case(let proxy, let name) :
-        return proxy.productionRuleName(for: name)
+        return proxy.symbolName(for: name)
     }
   }
 
@@ -73,6 +73,6 @@ extension ProductionRule {
 
   /// Return the javascript representation of the form "*name*: => *syntaxExpression*".
   public var javascript : String {
-    "\(name): $ => \(syntaxExpression.javascript)"
+    "\(symbolName): $ => \(syntaxExpression.javascript)"
   }
 }

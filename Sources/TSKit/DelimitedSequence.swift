@@ -14,8 +14,8 @@ public struct DelimitedSequence<Element: Parsable, Delimiter: Punctuation> {
 }
 
 extension DelimitedSequence : Parsable {
-  public static var symbolName : String
-    { "\(Element.symbolName)SequenceDelimitedBy\(Delimiter.self)" }
+  public static var typeName : String
+    { "\(Element.typeName)SequenceDelimitedBy\(Delimiter.self)" }
 
   public static var syntaxExpression : TSExpression
     { .repeat1(.prod(Element.self), delimiter: Delimiter.symbol) }

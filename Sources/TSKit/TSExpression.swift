@@ -54,7 +54,7 @@ extension TSExpression {
       case .pattern(let pattern) :
         return "/" + pattern + "/"
       case .prod(let rule) :
-        return "$.\(rule.name)"
+        return "$.\(rule.symbolName)"
       case .seq(let elements) :
         return "seq(\(elements.map({$0.javascript}).joined(separator: ", ")))"
       case .choice(let elements) :

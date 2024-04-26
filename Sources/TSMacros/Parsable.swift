@@ -17,6 +17,20 @@ import SwiftSyntaxMacros
 
 public struct Parsable : MemberMacro {
 
+  /// The requirement of MemberMacro. It expects a struct or enum declaration and returns an initializer accordingly.
+  public static func expansion(of node: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> [DeclSyntax] {
+    let initializerText : String
+    switch decl.kind {
+      case .structDecl :
+        initializerText = try structInitializerText(for: decl.cast(StructDeclSyntax.self), in: ctx)
+      case .enumDecl :
+        initializerText = try enumInitializerText(for: decl.cast(EnumDeclSyntax.self), in: ctx)
+      default :
+        throw Exception("unsupported declaration kind")
+    }
+    return [DeclSyntax(stringLiteral: initializerText)]
+  }
+
   /// Return the source text of `init(parseTree:context:)` for the given struct declaration.
   static func structInitializerText(for decl: StructDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Gather the constructors for this type (both init methods and static functions returning Self) and form a dictionary indexed by their identifiers.
@@ -55,15 +69,15 @@ public struct Parsable : MemberMacro {
       throw Exception("multiple constructors with signature \(c.identifier)")
     }
 
-    // Determine this type's symbol name, either from an explicit declaration of `symbolName` or as its name.
-    let symbolName : String
-    if let symbolNameBinding = decl.variableBindingWith(name: "symbolName", type: "String", isStatic: true) {
-      guard let stringLiteral = symbolNameBinding.resultExpr?.as(StringLiteralExprSyntax.self)
-        else { throw Exception("'symbolName' must be implemented as a single getter returning a string literal") }
-      symbolName = stringLiteral.text
+    // Determine this type's name, either from an explicit implementation of `typeName` or from the host declaration.
+    let typeName : String
+    if let typeNameBinding = decl.variableBindingWith(name: "typeName", type: "String", isStatic: true) {
+      guard let stringLiteral = typeNameBinding.resultExpr?.as(StringLiteralExprSyntax.self)
+        else { throw Exception("'typeName' must be implemented as a single getter returning a string literal") }
+      typeName = stringLiteral.text
     }
     else {
-      symbolName = decl.name.text
+      typeName = decl.name.text
     }
 
     // Create a list of the production rules specified by `syntaxExpressionsByCaseName`, each represented as
@@ -82,13 +96,13 @@ public struct Parsable : MemberMacro {
       return rule
     }
 
-    /// Return the initializer text, constructing a switch case for each production rule. Make each subrule name  'unique' by prefixing the target type's *symbolName*.
+    /// Return the initializer text, constructing a switch case for each production rule. Make each subrule name  'unique' by prefixing the target type's *typeName*.
     return """
        \(decl.visibility) init(parseTree node: TSNode, context ctx: ParsingContext) {
            switch ctx.language.symbolName(for: node) {
              \(
                rules.map({ rule in
-                 return "case \"\(symbolName)_\(rule.name)\" : self = \(rule.invocationText(for: ("node", "ctx")))"
+                 return "case \"\(typeName)_\(rule.name)\" : self = \(rule.invocationText(for: ("node", "ctx")))"
                })
                .joined(separator: "\n")
              )
@@ -97,20 +111,5 @@ public struct Parsable : MemberMacro {
            }
        }
        """
-  }
-
-  // MARK: - MemberMacro
-
-  public static func expansion(of node: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in ctx: some MacroExpansionContext) throws -> [DeclSyntax] {
-    let initializerText : String
-    switch decl.kind {
-      case .structDecl :
-        initializerText = try structInitializerText(for: decl.cast(StructDeclSyntax.self), in: ctx)
-      case .enumDecl :
-        initializerText = try enumInitializerText(for: decl.cast(EnumDeclSyntax.self), in: ctx)
-      default :
-        throw Exception("unsupported declaration kind")
-    }
-    return [DeclSyntax(stringLiteral: initializerText)]
   }
 }

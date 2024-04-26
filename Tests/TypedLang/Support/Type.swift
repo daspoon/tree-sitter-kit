@@ -23,7 +23,7 @@ indirect enum TypeExpr : Equatable, ParsableByCases {
   static func tuple(_ types: TypeExprList?) -> Self
     { {$0.count == 1 ? $0[0] : .apply("()", $0)}(types?.elements ?? []) }
 
-  static var symbolName : String
+  static var typeName : String
     { "Type" }
 
   typealias TypeExprList = SeparatedSequence<TypeExpr, Comma, NoBrackets>

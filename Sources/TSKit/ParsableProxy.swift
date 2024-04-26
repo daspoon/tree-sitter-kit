@@ -5,20 +5,21 @@
 */
 
 
-/// *ParsableProxy* acts as a representative for a *Parsable* type, allowing interaction with that type.
+/// *ParsableProxy* acts as a representative for a *Parsable* type, allowing interaction
+/// with that type.
 public struct ParsableProxy {
   private let type : Any.Type
-  private let _productionRuleName : () -> String
+  private let _symbolName : () -> String
   private let _syntaxExpression : () -> TSExpression
 
   public init<T: Parsable>(_ t: T.Type) {
     type = t
-    _productionRuleName = { T.productionRuleName }
+    _symbolName = { T.symbolName }
     _syntaxExpression = { T.syntaxExpression }
   }
 
-  public var productionRuleName : String
-    { _productionRuleName() }
+  public var symbolName : String
+    { _symbolName() }
 
   public var syntaxExpression : TSExpression
     { _syntaxExpression() }
