@@ -1,5 +1,6 @@
 module.exports = grammar({
     name: 'TypedLang',
+    word: $ => $.Word,
     rules: {
         start: $ => $.Block,
         Block: $ => seq(field('0', optional($.DefSequenceDelimitedBySemicolon)), field('1', $._Expr)),
@@ -45,6 +46,7 @@ module.exports = grammar({
         Typedef: $ => seq('typedef', field('0', $.Name), '=', field('1', $._Type)),
         _Def: $ => choice($.Def_enum, $.Def_fun, $.Def_let, $.Def_typedef),
         _Expr: $ => choice($.Expr_add, $.Expr_and, $.Expr_block, $.Expr_call, $.Expr_eql, $.Expr_lambda, $.Expr_match, $.Expr_mu, $.Expr_mul, $.Expr_name, $.Expr_neg, $.Expr_numb, $.Expr_or, $.Expr_paren, $.Expr_pow, $.Expr_project),
-        _Type: $ => choice($.Type_const, $.Type_func, $.Type_name, $.Type_tuple)
+        _Type: $ => choice($.Type_const, $.Type_func, $.Type_name, $.Type_tuple),
+        Word: $ => /([a-zA-Z_][0-9a-zA-Z_]* | [!#%&*+-/<=>^|~]+)/
     }
 })

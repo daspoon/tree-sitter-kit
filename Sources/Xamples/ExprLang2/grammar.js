@@ -1,5 +1,6 @@
 module.exports = grammar({
     name: 'ExprLang',
+    word: $ => $.Word,
     rules: {
         start: $ => $._Expr,
         _Expr: $ => choice($.Expr_add, $.Expr_apply, $.Expr_mul, $.Expr_name, $.Expr_neg, $.Expr_paren, $.Expr_pow),
@@ -11,6 +12,7 @@ module.exports = grammar({
         Expr_neg: $ => prec(4, seq(field('0', choice('-')), field('1', $._Expr))),
         Expr_paren: $ => seq('(', field('0', $._Expr), ')'),
         Expr_pow: $ => prec.right(3, seq(field('0', $._Expr), field('1', choice('^')), field('2', $._Expr))),
-        Name: $ => /[a-zA-Z_][0-9a-zA-Z_]*/
+        Name: $ => /[a-zA-Z_][0-9a-zA-Z_]*/,
+        Word: $ => /([a-zA-Z_][0-9a-zA-Z_]* | [!#%&*+-/<=>^|~]+)/
     }
 })
