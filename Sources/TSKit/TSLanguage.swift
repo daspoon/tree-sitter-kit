@@ -43,7 +43,11 @@ public struct TSLanguage {
 
   /// Return the name of the symbol for the given node.
   public func symbolName(for node: TSNode) -> String {
-    let symbol = ts_node_grammar_symbol(node)
+    symbolName(for: ts_node_grammar_symbol(node))
+  }
+
+  /// Return the string representation of the given symbol.
+  public func symbolName(for symbol: TSSymbol) -> String {
     guard let name = symbolNames[symbol]
       else { print("\(#function) -- no name for symbol \(symbol)"); return "UNKNOWN(\(symbol))" }
     return name
@@ -52,7 +56,7 @@ public struct TSLanguage {
   /// Return the field name with the given identifier.
   public func fieldName(for id: TSFieldId) -> String {
     guard let name = fieldNames[id]
-      else { print("\(#function) -- no name for symbol \(id)"); return "UNKNOWN(\(id))" }
+      else { print("\(#function) -- no name for field id \(id)"); return "UNKNOWN(\(id))" }
     return name
   }
 
