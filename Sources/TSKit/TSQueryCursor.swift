@@ -7,6 +7,10 @@
 import TreeSitter
 
 
+public typealias TSQueryCapture = TreeSitter.TSQueryCapture
+public typealias TSQueryMatch = TreeSitter.TSQueryMatch
+
+
 /// A wrapper for tree-sitter's *TSQueryCursor* type.
 public class TSQueryCursor {
   let ptr : OpaquePointer
@@ -38,17 +42,25 @@ public class TSQueryCursor {
     ts_query_cursor_exec(ptr, query.ptr, node)
   }
 
-  public var nextMatch : TSQueryMatch? {
+  /// Return a lazy sequence of the receiver's matches through incremental calls to `ts_query_cursor_next_match`.
+  public var matches : AnySequence<TSQueryMatch> {
+    let ptr = ptr
     var match = TSQueryMatch()
-    return ts_query_cursor_next_match(ptr, &match) ? match : nil
+    return AnySequence(AnyIterator {
+      guard ts_query_cursor_next_match(ptr, &match) else { return nil }
+      return match
+    })
   }
 
-  public var nextCapture : TSQueryCapture? {
+  /// Return a lazy sequence of the receiver's captures through incremental calls to `ts_query_cursor_next_capture`.
+  public var captures : AnySequence<TSQueryCapture> {
+    let ptr = ptr
     var match = TSQueryMatch()
     var index = UInt32(0)
-    guard ts_query_cursor_next_capture(ptr, &match, &index)
-      else { return nil }
-    assert((0 ..< UInt32(match.capture_count)).contains(index))
-    return match.captures![Int(index)]
+    return AnySequence(AnyIterator {
+      guard ts_query_cursor_next_capture(ptr, &match, &index) else { return nil }
+      assert((0 ..< UInt32(match.capture_count)).contains(index))
+      return match.captures![Int(index)]
+    })
   }
 }
