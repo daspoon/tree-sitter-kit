@@ -8,6 +8,7 @@ import TreeSitter
 
 
 public typealias TSNode = TreeSitter.TSNode
+public typealias TSStateId = TreeSitter.TSStateId
 
 
 extension TSNode
@@ -52,6 +53,11 @@ extension TSNode
     /// Return *true* if the receiver or any of its descendants represents a syntax error.
     public var hasError : Bool {
       ts_node_has_error(self)
+    }
+
+    /// Return the node's parse state.
+    public var state : TSStateId {
+      ts_node_parse_state(self)
     }
   }
 
