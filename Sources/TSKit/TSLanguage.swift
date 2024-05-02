@@ -53,6 +53,10 @@ public struct TSLanguage {
     return name
   }
 
+  public func symbolType(for symbol: TSSymbol) -> TSSymbolType {
+    ts_language_symbol_type(ptr, symbol)
+  }
+
   /// Return the field name with the given identifier.
   public func fieldName(for id: TSFieldId) -> String {
     guard let name = fieldNames[id]
