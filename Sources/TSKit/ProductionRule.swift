@@ -6,28 +6,30 @@
 
 
 /// *ProductionRule* represents a tree-sitter grammar rule of various forms.
-public enum ProductionRule : Hashable {
-  /// The primary rule for a *Parsable* type.
-  case value(ParsableProxy)
-  /// An auxiliary rule for one alternative of a *ParsableByChoice* type; the associated string is the rule name.
-  case value_case(ParsableByCasesProxy, String)
-}
 
+public struct ProductionRule : Hashable {
+  enum Kind : Hashable {
+    /// The primary rule for a *Parsable* type.
+    case value(ParsableProxy)
+    /// An auxiliary rule for one alternative of a *ParsableByChoice* type; the associated string is the rule name.
+    case value_case(ParsableByCasesProxy, String)
+  }
 
-extension ProductionRule {
+  let kind : Kind
+
   /// Convenience initializer
   public init<T: Parsable>(for type: T.Type) {
-    self = .value(.init(type))
+    kind = .value(.init(type))
   }
 
   /// Convenience initializer
   public init<T: ParsableByCases>(for alternative: String, of type: T.Type) {
-    self = .value_case(.init(type), alternative)
+    kind = .value_case(.init(type), alternative)
   }
 
   /// Return the defined symbol name.
   public var symbolName : String {
-    switch self {
+    switch kind {
       case .value(let proxy) :
         return proxy.symbolName
       case .value_case(let proxy, let name) :
@@ -37,7 +39,7 @@ extension ProductionRule {
 
   /// Return the syntax expression for the receiver's expansion.
   public var syntaxExpression : TSExpression {
-    switch self {
+    switch kind {
       case  .value(let proxy) :
         return proxy.syntaxExpression
       case .value_case(let proxy, let name) :
