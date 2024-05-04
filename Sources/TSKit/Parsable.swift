@@ -10,11 +10,7 @@ import Foundation
 /// *Parsable* identifies types which implement language elements -- i.e. which have
 /// a grammar production rule and can be initialized with a parse tree.
 public protocol Parsable {
-  /// The syntax expression of this type's production rule. Required.
-  static var syntaxExpression : TSExpression { get }
-
-  /// Create an instance of this type from a compatible parse tree node. Required.
-  init(parseTree: TSNode, context: ParsingContext)
+  static var productionRule : ProductionRule<Self> { get }
 
   /// Indicates whether or not this type's production rule is hidden. The default
   /// implementation returns *false*.
@@ -34,6 +30,10 @@ extension Parsable {
   public static var symbolName : String
     { (symbolIsHidden ? "_" : "") + typeName }
 
+  /// The syntax expression of this type's production rule. Required.
+  public static var syntaxExpression : TSExpression
+    { productionRule.syntaxExpression }
+
   public static var symbolIsHidden : Bool
     { false }
 
@@ -47,7 +47,7 @@ extension Parsable {
 extension Parsable {
   /// Create an instance of this type by parsing the given input source according to the
   /// given language, which must have the receiver's type as its root type.
-  public init(inputSource src: InputSource, language lng: TSLanguage) throws {
+  public static func from(inputSource src: InputSource, language lng: TSLanguage) throws -> Self {
     // Create a parser for the given language
     let parser = TSParser(lng)
     // Get the parse tree for the input source; this can return nil if parsing is cancelled.
@@ -65,13 +65,13 @@ extension Parsable {
     guard Self.symbolIsHidden || lng.symbolName(for: rootNode) == Self.typeName // TODO: -> symbolName
       else { throw TSError("root node has unexpected type (\(lng.symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
-    self.init(parseTree: rootNode, context: ParsingContext(language: lng, inputSource: src))
+    return try throwingCast(Self.productionRule.constructor(rootNode, ParsingContext(language: lng, inputSource: src)))
   }
 
   /// Create an instance of this type by parsing the given string according to the given language.
-  public init(text: String, encoding: String.Encoding = .utf8, language: TSLanguage) throws {
+  public static func from(text: String, encoding: String.Encoding = .utf8, language: TSLanguage) throws -> Self {
     guard let source = StringInputSource(string: text)
       else { throw TSError("unsupported string encoding: \(encoding)") }
-    try self.init(inputSource: source, language: language)
+    return try Self.from(inputSource: source, language: language)
   }
 }

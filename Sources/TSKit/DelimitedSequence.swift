@@ -17,13 +17,16 @@ extension DelimitedSequence : Parsable {
   public static var typeName : String
     { "\(Element.typeName)SequenceDelimitedBy\(Delimiter.self)" }
 
-  public static var syntaxExpression : TSExpression
-    { .repeat1(.prod(Element.self), delimiter: Delimiter.symbol) }
-
-  public init(parseTree node: TSNode, context ctx: ParsingContext) {
-    let n = node.count
-    assert(n > 0 && n % 2 == 0)
-    elements = stride(from: 0, to: n, by: 2).map { i in Element(parseTree: node[i], context: ctx) }
+  public static var productionRule : ProductionRule<Self> {
+    let element = Element.productionRule.constructor
+    return .init(
+      syntaxExpression: .repeat1(.prod(Element.self), delimiter: Delimiter.symbol),
+      constructor: { node, ctx in
+        let n = node.count
+        assert(n > 0 && n % 2 == 0)
+        return try Self(elements: stride(from: 0, to: n, by: 2).map { i in try element(node[i], ctx) })
+      }
+    )
   }
 }
 

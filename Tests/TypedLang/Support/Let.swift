@@ -9,15 +9,15 @@ import TSKit
 
 /// A type representing a value definition.
 
-@Parsable
-struct Let : Equatable, Parsable {
+struct Let : Equatable {
   let param : Param
   let expr : Expr
+}
 
-  init(param p: Param, expr e: Expr)
-    { param = p; expr = e }
-
-  static var syntaxExpression : TSExpression
-    { "let \(Param.self) = \(Expr.self)" }
-
+extension Let : Parsable {
+  static var productionRule : ProductionRule<Let> {
+    return .init(descriptor: "let \(Param.self) = \(Expr.self)") { param, expr in
+      Self(param: param, expr: expr)
+    }
+  }
 }

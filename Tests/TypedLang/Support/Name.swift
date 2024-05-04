@@ -9,15 +9,19 @@ import TSKit
 
 /// A parsable type representing identifier names within expressions.
 
-struct Name : Equatable, Parsable {
+struct Name : Equatable {
   let text : String
+}
 
-  static var syntaxExpression : TSExpression {
-    .pattern("[a-zA-Z_]+[0-9a-zA-Z_]*")
-  }
 
-  init(parseTree node: TSNode, context ctx: ParsingContext) {
-    self.init(stringLiteral: ctx.inputSource.text(for: node))
+extension Name : Parsable {
+  static var productionRule : ProductionRule<Name> {
+    .init(
+      syntaxExpression: .pattern("[a-zA-Z_]+[0-9a-zA-Z_]*"),
+      constructor: { node, ctx in
+        Self(text: ctx.inputSource.text(for: node))
+      }
+    )
   }
 }
 

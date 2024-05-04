@@ -9,20 +9,18 @@ import TSKit
 
 /// A type which represents the binding of a parameter name and type.
 
-@Parsable
-struct Param : Equatable, Parsable {
+struct Param : Equatable {
   let name : Name
   let type : TypeExpr
+}
 
-  init(name n: Name, type t: TypeExpr) {
-    name = n
-    type = t
+
+extension Param : Parsable {
+  static var productionRule : ProductionRule<Param> {
+    .init(descriptor: "\(Name.self) : \(TypeExpr.self)") { name, type in
+      Self(name: name, type: type)
+    }
   }
-
-  static var syntaxExpression : TSExpression {
-    "\(Name.self) : \(TypeExpr.self)"
-  }
-
 }
 
 

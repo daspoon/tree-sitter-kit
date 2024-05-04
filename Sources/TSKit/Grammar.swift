@@ -10,21 +10,21 @@ public struct Grammar {
   /// The name assigned to the generated grammar.
   public let name : String
   /// The production rule for the root type.
-  public let rootRule : ProductionRule
+  public let rootRule : AnyProductionRule
   /// Optionally specify the grammar's word rule.
-  public let wordRule : ProductionRule?
+  public let wordRule : AnyProductionRule?
 
   public init<T: Parsable>(name n: String, rootType t: T.Type) {
     name = n
-    rootRule = ProductionRule(for: t)
+    rootRule = T.productionRule.typeErased
     wordRule = nil
   }
 
   public init<Root: Parsable, Word: Parsable>(name n: String, rootType: Root.Type, wordType: Word.Type) {
     guard case .pattern = wordType.syntaxExpression else { preconditionFailure("\(Word.self).syntaxExpression must be a pattern") }
     name = n
-    rootRule = ProductionRule(for: rootType)
-    wordRule = ProductionRule(for: wordType)
+    rootRule = Root.productionRule.typeErased
+    wordRule = Word.productionRule.typeErased
   }
 
   /// Return the symbol for the start rule for any instance.
@@ -38,7 +38,7 @@ public struct Grammar {
     // and the word rule if specified and not among the supporting rules.
     let supportingRules = rootRule.supportingRules
     var rules = [rootRule] + supportingRules.sorted(by: {$0.symbolName < $1.symbolName})
-    if let wordRule, supportingRules.contains(wordRule) == false {
+    if let wordRule, supportingRules.contains(where: {$0.symbol == wordRule.symbol}) == false {
       rules.append(wordRule)
     }
     // Return the javascript source, with the start rule appearing first...

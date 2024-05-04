@@ -10,35 +10,38 @@ import ExprLang2
 
 // Define the Expr type which represents our abstract syntax.
 
-@Parsable
-indirect enum Expr : ParsableByCases {
+indirect enum Expr {
   case name(Name)
   case apply(Expr, [Expr])
+}
 
-  static var syntaxExpressionsByCaseName : [String : TSExpression] {
+
+extension Expr : ParsableByCases {
+  static var productionRulesByCaseName : [String: ProductionRule<Self>] {
     return [
-      "name"   : "\(Name.self)",
-      "add"    : "\(prec:  .left(1)) \(Expr.self) \(lit: ["+", "-"]) \(Expr.self)",
-      "mul"    : "\(prec:  .left(2)) \(Expr.self) \(lit: ["*", "/"]) \(Expr.self)",
-      "pow"    : "\(prec: .right(3)) \(Expr.self) \(lit: ["^"]) \(Expr.self)",
-      "neg"    : "\(prec:  .none(4)) \(lit: ["-"]) \(Expr.self)",
-      "apply"  : "\(prec:  .none(5)) \(Expr.self) ( \(opt: ExprList.self) )",
-      "paren"  : "( \(Expr.self) )",
+      "name": .init(descriptor: "\(Name.self)") { name in
+        Expr.name(name)
+      },
+      "add": .init(descriptor: "\(prec:  .left(1)) \(Expr.self) \(["+", "-"]) \(Expr.self)") { lhs, op, rhs in
+        .apply(.name(Name(stringLiteral: op)), [lhs, rhs])
+      },
+      "mul": .init(descriptor: "\(prec:  .left(2)) \(Expr.self) \(["*", "/"]) \(Expr.self)") { lhs, op, rhs in
+        .apply(.name(Name(stringLiteral: op)), [lhs, rhs])
+      },
+      "pow": .init(descriptor: "\(prec: .right(3)) \(Expr.self) \(["^"]) \(Expr.self)") { lhs, op, rhs in
+        .apply(.name(Name(stringLiteral: op)), [lhs, rhs])
+      },
+      "neg": .init(descriptor: "\(prec:  .none(4)) \(["-"]) \(Expr.self)") { op, arg in
+        .apply(.name(Name(stringLiteral: op)), [arg])
+      },
+      "apply": .init(descriptor: "\(prec:  .none(5)) \(Expr.self) ( \(opt: ExprList.self) )") { fun, args in
+        .apply(fun, args?.elements ?? [])
+      },
+      "paren": .init(descriptor: "( \(Expr.self) )") { expr in
+        expr
+      },
     ]
   }
-
-  static func add(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
-    { .apply(.name(Name(stringLiteral: op)), [lhs, rhs]) }
-  static func mul(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
-    { .apply(.name(Name(stringLiteral: op)), [lhs, rhs]) }
-  static func pow(_ lhs: Expr, _ op: String, _ rhs: Expr) -> Self
-    { .apply(.name(Name(stringLiteral: op)), [lhs, rhs]) }
-  static func neg(_ op: String, _ arg: Expr) -> Self
-    { .apply(.name(Name(stringLiteral: op)), [arg]) }
-  static func apply(_ fun: Expr, _ args: ExprList?) -> Self
-    { .apply(fun, args?.elements ?? []) }
-  static func paren(_ expr: Expr) -> Self
-    { expr }
 }
 
 
@@ -51,7 +54,7 @@ fileprivate let language = TSLanguage(tree_sitter_ExprLang())
 
 extension Expr {
   init(text: String) throws {
-    try self.init(text: text, language: language)
+    self = try Self.from(text: text, language: language)
   }
 }
 

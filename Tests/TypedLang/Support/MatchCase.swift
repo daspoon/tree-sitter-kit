@@ -7,25 +7,17 @@
 import TSKit
 
 
-@Parsable
-struct MatchCase : Equatable, Parsable {
+struct MatchCase : Equatable {
   let name : Name
   let params : [Name]
   let expr : Expr
+}
 
-  init(name n: Name, params ps: [Name] = [], expr e: Expr) {
-    name = n
-    params = ps
-    expr = e
-  }
-
-  init(name n: Name, params ps: NameList?, expr e: Expr) {
-    self.init(name: n, params: ps?.elements ?? [], expr: e)
-  }
-
+extension MatchCase : Parsable {
   typealias NameList = SeparatedSequence<Name, Comma, Parentheses>
-
-  static var syntaxExpression : TSExpression
-    { "\(Name.self) \(opt: NameList.self) => \(Expr.self)" }
-
+  static var productionRule : ProductionRule<MatchCase> {
+    ProductionRule(descriptor: "\(Name.self) \(Optional<NameList>.self) => \(Expr.self)") { (name: Name, nlist: NameList?, expr: Expr) -> MatchCase in
+      Self(name: name, params: nlist?.elements ?? [], expr: expr)
+    }
+  }
 }

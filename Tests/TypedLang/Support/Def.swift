@@ -9,22 +9,25 @@
 
 /// A type representing a variety of symbol definitions.
 
-@Parsable
-enum Def : Equatable, ParsableByCases {
+enum Def : Equatable {
   case `typedef`(Typedef)
   case `enum`(Enum)
   case `let`(Let)
   case `fun`(Fun)
+}
 
-  static var syntaxExpressionsByCaseName : [String: TSExpression] {
+
+extension Def : ParsableByCases {
+  static var productionRulesByCaseName : [String: ProductionRule<Self>] {
     return [
-      "typedef": "\(Typedef.self)",
-      "enum": "\(Enum.self)",
-      "let": "\(Let.self)",
-      "fun": "\(Fun.self)",
+      "typedef": .init(descriptor: "\(Typedef.self)") { Def.typedef($0) },
+      "enum": .init(descriptor: "\(Enum.self)") { Def.enum($0) },
+      "let": .init(descriptor: "\(Let.self)") { Def.let($0) },
+      "fun": .init(descriptor: "\(Fun.self)") { Def.fun($0) },
     ]
   }
 }
+
 
 extension Def {
   init(_ text: String) throws {

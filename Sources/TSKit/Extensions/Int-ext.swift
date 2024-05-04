@@ -6,9 +6,12 @@
 
 
 extension Int : Parsable {
-  public static var syntaxExpression : TSExpression
-    { .pattern("[0-9]+") }
-
-  public init(parseTree node: TSNode, context ctx: ParsingContext)
-    { self.init(ctx.inputSource.text(for: node))! }
+  public static var productionRule : ProductionRule<Self> {
+    .init(
+      syntaxExpression: .pattern("[0-9]+"),
+      constructor: { node, ctx in
+        Self(ctx.inputSource.text(for: node))!
+      }
+    )
+  }
 }

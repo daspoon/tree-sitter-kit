@@ -9,15 +9,15 @@ import TSKit
 
 /// A type representing a type alias.
 
-@Parsable
-struct Typedef : Equatable, Parsable {
+struct Typedef : Equatable {
   let name : Name
   let type : TypeExpr
+}
 
-  init(name n: Name, type t: TypeExpr)
-    { name = n; type = t }
-
-  static var syntaxExpression : TSExpression
-    { "typedef \(Name.self) = \(TypeExpr.self)" }
-
+extension Typedef : Parsable {
+  static var productionRule : ProductionRule<Self> {
+    .init(descriptor: "typedef \(Name.self) = \(TypeExpr.self)") { name, type in
+      Self(name: name, type: type)
+    }
+  }
 }

@@ -9,19 +9,28 @@ import TSKit
 
 /// A type representing functional type expressions.
 
-@Parsable
-indirect enum TypeExpr : Equatable, ParsableByCases {
+indirect enum TypeExpr : Equatable {
   case name(Name)
   case apply(Name, [TypeExpr])
+}
 
-  static func const(_ name: Name, _ types: TypeExprList?) -> Self
-    { .apply(name, types?.elements ?? []) }
-
-  static func `func`(_ src: TypeExpr, _ trg: TypeExpr) -> Self
-    { .apply("->", [src, trg]) }
-
-  static func tuple(_ types: TypeExprList?) -> Self
-    { {$0.count == 1 ? $0[0] : .apply("()", $0)}(types?.elements ?? []) }
+extension TypeExpr : ParsableByCases {
+  static var productionRulesByCaseName : [String: ProductionRule<Self>] {
+    return [
+      "name": .init(descriptor: "\(Name.self)") { name in
+        .name(name)
+      },
+      "const": .init(descriptor: "\(prec: 1) \(Name.self) ( \(opt: TypeExprList.self) )") { name, types in
+        .apply(name, types?.elements ?? [])
+      },
+      "tuple": .init(descriptor: "( \(opt: TypeExprList.self) )") { types in
+        {$0.count == 1 ? $0[0] : .apply("()", $0)}(types?.elements ?? [])
+      },
+      "func": .init(descriptor: "\(prec: .right(1)) \(TypeExpr.self) -> \(TypeExpr.self)") { src, trg in
+        .apply("->", [src, trg])
+      },
+    ]
+  }
 
   static var typeName : String
     { "Type" }
@@ -30,10 +39,9 @@ indirect enum TypeExpr : Equatable, ParsableByCases {
 
   static var syntaxExpressionsByCaseName : [String: TSExpression] {
     return [
-      "name": "\(Name.self)",
-      "const": "\(prec: 1) \(Name.self) ( \(opt: TypeExprList.self) )",
-      "tuple": "( \(opt: TypeExprList.self) )",
-      "func": "\(prec: .right(1)) \(TypeExpr.self) -> \(TypeExpr.self)",
+      "": ,
+      "": ,
+      "": ,
     ]
   }
 }

@@ -9,41 +9,34 @@ import TSKit
 
 /// A type representing an enumerated type definition.
 
-@Parsable
-struct Enum : Equatable, Parsable {
+struct Enum : Equatable {
   let name : Name
   let cases : [EnumCase]
-
-  init(name n: Name, cases cs: [EnumCase])
-    { name = n; cases = cs }
-
-  init(name n: Name, cases cs: EnumCaseList)
-    { name = n; cases = cs.elements }
-
-  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma, NoBrackets>
-  static var syntaxExpression : TSExpression
-    { "enum \(Name.self) { \(EnumCaseList.self) }" }
-
 }
 
+extension Enum : Parsable {
+  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma, NoBrackets>
+  static var productionRule : ProductionRule<Self> {
+    .init(descriptor: "enum \(Name.self) { \(EnumCaseList.self) }") { name, cases in
+      Self(name: name, cases: cases.elements)
+    }
+  }
+}
 
 
 // MARK: -
 
-@Parsable
-struct EnumCase : Equatable, Parsable {
+struct EnumCase : Equatable {
   let name : Name
   let params : [Param]
+}
 
-  init(name n: Name, params ps: [Param] = [])
-    { name = n; params = ps}
-
-  init(name n: Name, paramList l: ParamList?)
-    { self.init(name: n, params: l?.elements ?? []) }
-
-  static var syntaxExpression : TSExpression
-    { "\(Name.self) \(opt: ParamList.self)" }
-
+extension EnumCase : Parsable {
+  static var productionRule : ProductionRule<Self> {
+    .init(descriptor: "\(Name.self) \(Optional<ParamList>.self)") { name, params in
+      Self(name: name, params: params?.elements ?? [])
+    }
+  }
 }
 
 
