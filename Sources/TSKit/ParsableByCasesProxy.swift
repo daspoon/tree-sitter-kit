@@ -14,7 +14,7 @@ public struct ParsableByCasesProxy {
   public init<T: ParsableByCases>(_ t: T.Type) {
     type = t
     _typeName = { T.typeName }
-    _productionRuleFor = { T.productionRulesByCaseName[$0]!.typeErased }
+    _productionRuleFor = { T.productionRulesBySymbolName[$0]!.typeErased }
   }
 
   public func symbolName(for name: String) -> String

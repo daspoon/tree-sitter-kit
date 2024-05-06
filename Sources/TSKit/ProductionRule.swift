@@ -84,21 +84,6 @@ public struct ProductionRule<T: Parsable> {
     )
   }
 
-  /// TODO: move this into ParsableByCases.productionRule if possible !!!
-  public init() where T : ParsableByCases {
-    let subrulesByCaseName = T.productionRulesByCaseName
-    print("\(#function) -- \(subrulesByCaseName.keys)")
-    self.init(
-      syntaxExpression: .choice(subrulesByCaseName.map {name, _ in .prod(.init(T.self, case: name))}),
-      constructor: { node, ctx in
-        let caseName = ctx.language.symbolName(for: node)
-        guard let subrule = subrulesByCaseName[caseName]
-          else { throw TSError("unexpected node type: \(caseName)") }
-        return try subrule.constructor(node, ctx)
-      }
-    )
-  }
-
   /// Return a type-erased representative of this rule for use in grammar generation.
   public var typeErased : AnyProductionRule {
     .init(symbol: .init(T.self), syntaxExpression: syntaxExpression, constructor: constructor)
@@ -148,11 +133,6 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
     public mutating func appendInterpolation<C: Parsable>(_ type: Optional<C>.Type) {
       appendCapture(of: type, with: .optional(.prod(C.self)))
     }
-
-//    /// Add a component to capture one of the given strings literals.
-//    public mutating func appendInterpolation<S: Sequence>(_ candidates: String...) where S.Element == String {
-//      appendCapture(of: String.self, with: .choice(candidates.map {.literal($0)}))
-//    }
 
     /// Establish the precedence of the expression. This has no associated capture, has no effect the field labels of captures, and must be specified as the first interpolation segment.
     public mutating func appendInterpolation(prec: TSExpression.Prec) {
