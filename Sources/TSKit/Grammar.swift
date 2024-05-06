@@ -5,7 +5,9 @@
 */
 
 
-/// A *Grammar* generates the javascript source for a tree-sitter grammar with a specified name. The production rules are determined by the *Root* type and each *Parsable* type reachable through its *syntaxExpression*.
+/// A *Grammar* generates the javascript source for a tree-sitter grammar with a specified name.
+/// The production rules are determined by the *Root* type and each *Parsable* type reachable
+/// through its *productionRule*.
 public struct Grammar {
   /// The name assigned to the generated grammar.
   public let name : String

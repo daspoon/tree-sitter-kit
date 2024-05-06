@@ -5,16 +5,17 @@
 */
 
 
-/// *ParsableByCases* simplifies conformance to *Parsable* for types which require multiple
-/// production rules, such as enums. It provides a default implementation for *productionRule*
-/// as a choice of sub-rules.
+/// *ParsableByCases* identifies types which are parsable by more than one grammar
+/// productions rule, such as enums. It implements *productionRule* as a hidden
+/// rule mapping to a choice of sub-rules.
 public protocol ParsableByCases : Parsable {
-  /// Return the mapping of sub-rule names to syntax expressions. Required.
+  /// The mapping of case names to alternate production rules. Required.
   static var productionRulesByCaseName : [String: ProductionRule<Self>] { get }
 }
 
 extension ParsableByCases {
-  /// Return a production rule corresponding to a choice
+  /// Return a production rule corresponding to a choice of the alternate production
+  /// rules specified by *productionRulesByCaseName*.
   public static var productionRule : ProductionRule<Self>
     { .init() }
 

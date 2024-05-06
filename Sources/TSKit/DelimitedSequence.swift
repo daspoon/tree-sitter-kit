@@ -18,13 +18,12 @@ extension DelimitedSequence : Parsable {
     { "\(Element.typeName)SequenceDelimitedBy\(Delimiter.self)" }
 
   public static var productionRule : ProductionRule<Self> {
-    let element = Element.productionRule.constructor
     return .init(
       syntaxExpression: .repeat1(.prod(Element.self), delimiter: Delimiter.symbol),
       constructor: { node, ctx in
         let n = node.count
         assert(n > 0 && n % 2 == 0)
-        return try Self(elements: stride(from: 0, to: n, by: 2).map { i in try element(node[i], ctx) })
+        return try Self(elements: stride(from: 0, to: n, by: 2).map { i in try Element.translate(parseTree: node[i], in: ctx) })
       }
     )
   }

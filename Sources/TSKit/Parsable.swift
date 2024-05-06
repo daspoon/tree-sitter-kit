@@ -10,6 +10,8 @@ import Foundation
 /// *Parsable* identifies types which implement language elements -- i.e. which have
 /// a grammar production rule and can be initialized with a parse tree.
 public protocol Parsable {
+  /// The grammar production rule which defines the associated symbol, syntax expression
+  /// and creation method. Required.
   static var productionRule : ProductionRule<Self> { get }
 
   /// Indicates whether or not this type's production rule is hidden. The default
@@ -19,14 +21,18 @@ public protocol Parsable {
   /// The name of this language element. The default implementation returns the name
   /// of the receiving type.
   static var typeName : String { get }
+
+  ///
+  static func translate(parseTree node: TSNode, in context: ParsingContext) throws -> Self
 }
 
 
 // Default implementations.
 
 extension Parsable {
-  /// The name of the production rule for this language element. The default implementation
-  /// returns *typeName*, prefixed with an underscore iff *symbolIsHidden* returns *true*.
+
+  /// The name of the production rule is the *typeName*, prefixed with an underscore
+  /// iff *symbolIsHidden* returns *true*.
   public static var symbolName : String
     { (symbolIsHidden ? "_" : "") + typeName }
 
@@ -39,6 +45,9 @@ extension Parsable {
 
   public static var typeName : String
     { "\(Self.self)" }
+
+  public static func translate(parseTree node: TSNode, in context: ParsingContext) throws -> Self
+    { try productionRule.constructor(node, context) }
 }
 
 

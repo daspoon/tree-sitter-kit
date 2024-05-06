@@ -60,17 +60,20 @@ public struct AnyProductionRule {
 }
 
 
+/// *ProductionRule* represents a tree-sitter grammar rule which produces a *Parsable* type.
+
 public struct ProductionRule<T: Parsable> {
   let syntaxExpression : TSExpression
   let constructor : (TSNode, ParsingContext) throws -> T
 
-  ///
+  /// Create an instance with explict syntax expression and parse tree translation method.
   public init(syntaxExpression e: TSExpression, constructor c: @escaping (TSNode, ParsingContext) throws -> T) {
     syntaxExpression = e
     constructor = c
   }
 
-  /// 
+  /// Create an instance with a syntax expression given by a custom string interpolation
+  /// and a constructor taking arguments of the types 'captured' by the interpolation.
   public init<each Q: Parsable>(descriptor: Descriptor<repeat each Q>, constructor f: @escaping (repeat each Q) throws -> T) {
     self.init(
       syntaxExpression: descriptor.syntaxExpression,
@@ -81,7 +84,7 @@ public struct ProductionRule<T: Parsable> {
     )
   }
 
-  /// 
+  /// TODO: move this into ParsableByCases.productionRule if possible !!!
   public init() where T : ParsableByCases {
     let subrulesByCaseName = T.productionRulesByCaseName
     print("\(#function) -- \(subrulesByCaseName.keys)")
@@ -96,7 +99,7 @@ public struct ProductionRule<T: Parsable> {
     )
   }
 
-  ///
+  /// Return a type-erased representative of this rule for use in grammar generation.
   public var typeErased : AnyProductionRule {
     .init(symbol: .init(T.self), syntaxExpression: syntaxExpression, constructor: constructor)
   }
@@ -136,20 +139,30 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
       components.append(contentsOf: tokens.map {.literal(String($0))})
     }
 
+    /// Add a component to capture an instance of the given type.
     public mutating func appendInterpolation<C: Parsable>(_ type: C.Type) {
       appendCapture(of: type, with: .prod(C.self))
     }
 
+    /// Add a component to capture an optional instance of the given type.
     public mutating func appendInterpolation<C: Parsable>(_ type: Optional<C>.Type) {
       appendCapture(of: type, with: .optional(.prod(C.self)))
     }
 
-    public mutating func appendInterpolation(_ literals: [String]) {
-      appendCapture(of: String.self, with: .choice(literals.map {.literal($0)}))
+//    /// Add a component to capture one of the given strings literals.
+//    public mutating func appendInterpolation<S: Sequence>(_ candidates: String...) where S.Element == String {
+//      appendCapture(of: String.self, with: .choice(candidates.map {.literal($0)}))
+//    }
+
+    /// Establish the precedence of the expression. This has no associated capture, has no effect the field labels of captures, and must be specified as the first interpolation segment.
+    public mutating func appendInterpolation(prec: TSExpression.Prec) {
+      assert(precedence == nil && components.count == 0)
+      precedence = prec
     }
 
     var expression : TSExpression {
-      components.count == 1 ? components[0] : .seq(components)
+      let expr = components.count == 1 ? components[0] : .seq(components)
+      return precedence.map {.prec($0, expr)} ?? expr
     }
   }
 

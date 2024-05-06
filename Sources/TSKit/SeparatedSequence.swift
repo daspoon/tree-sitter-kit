@@ -30,7 +30,6 @@ extension SeparatedSequence : Parsable {
     }
 
   public static var productionRule : ProductionRule<Self> {
-    let element = Element.productionRule.constructor
     return .init(syntaxExpression: syntaxExpression) { node, ctx in
       let n = node.count - (Bracket.symbols != nil ? 2 : 0)
       let d = Bracket.symbols != nil ? 1 : 0
@@ -38,7 +37,7 @@ extension SeparatedSequence : Parsable {
         case 0 : return Self(elements: [])
         default :
           assert(n > 0 && n % 2 == 1)
-          return try Self(elements: stride(from: 0, to: n, by: 2).map { i in try element(node[d+i], ctx) as! Element })
+          return try Self(elements: stride(from: 0, to: n, by: 2).map { i in try Element.translate(parseTree: node[d+i], in: ctx) })
       }
     }
   }
