@@ -22,7 +22,8 @@ public protocol Parsable {
   /// of the receiving type.
   static var typeName : String { get }
 
-  ///
+  /// Create an instance of this type from a parse tree node and a context which provides
+  /// access to the language and underlying source text.
   static func translate(parseTree node: TSNode, in context: ParsingContext) throws -> Self
 }
 
@@ -35,10 +36,6 @@ extension Parsable {
   /// iff *symbolIsHidden* returns *true*.
   public static var symbolName : String
     { (symbolIsHidden ? "_" : "") + typeName }
-
-  /// The syntax expression of this type's production rule. Required.
-  public static var syntaxExpression : TSExpression
-    { productionRule.syntaxExpression }
 
   public static var symbolIsHidden : Bool
     { false }

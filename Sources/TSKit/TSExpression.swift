@@ -36,7 +36,7 @@ public indirect enum TSExpression {
 extension TSExpression {
   /// Return an expression which matches a value of the given type.
   public static func prod<T: Parsable>(_ type: T.Type) -> Self
-    { .prod(.value(.init(T.self))) }
+    { .prod(.init(T.self)) }
 
   /// Return an expression which matches a non-empty sequence of the given expression, with elements separated by the given string literal. E.g. "a, b, c".
   public static func repeat1(_ expr: Self, separator: String) -> Self

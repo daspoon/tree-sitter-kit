@@ -5,64 +5,15 @@
 */
 
 
-/// *ProductionRule* represents a tree-sitter grammar rule of various forms.
-
-public struct AnyProductionRule {
-  let symbol : Symbol
-  let syntaxExpression : TSExpression
-  let constructor : (TSNode, ParsingContext) throws -> Any
-
-  init(symbol s: Symbol, syntaxExpression e: TSExpression, constructor c: @escaping (TSNode, ParsingContext) throws -> Any) {
-    symbol = s
-    syntaxExpression = e
-    constructor = c
-  }
-
-  /// Return the defined symbol name.
-  public var symbolName : String {
-    symbol.name
-  }
-
-  /// Return the set of rules reachable from the receiver, excluding the receiver itself.
-  public var supportingRules : [Self] {
-    var accumulatedRules : [Self] = []
-    var visitedSymbols : Set<Symbol> = []
-    var remainingSymbols : Set<Symbol> = [self.symbol]
-    while remainingSymbols.isEmpty == false {
-      let symbol = remainingSymbols.removeFirst()
-      let rule = symbol.productionRule
-      visitedSymbols.insert(symbol)
-      if symbol != self.symbol {
-        accumulatedRules.append(rule)
-      }
-      func walk(_ expr: TSExpression) {
-        switch expr {
-          case .prod(let supportingSymbol) :
-            guard visitedSymbols.contains(supportingSymbol) == false else { break }
-            remainingSymbols.insert(supportingSymbol)
-          case .seq(let exprs), .choice(let exprs) :
-            exprs.forEach { walk($0) }
-          case .field(_, let expr), .optional(let expr), .prec(_, let expr), .repeat(let expr) :
-            walk(expr)
-          case .literal, .pattern :
-            break
-        }
-      }
-      walk(rule.syntaxExpression)
-    }
-    return accumulatedRules
-  }
-
-  /// Return the javascript representation of the form "*name*: => *syntaxExpression*".
-  public var javascript : String {
-    "\(symbol.name): $ => \(syntaxExpression.javascript)"
-  }
-}
-
-
 /// *ProductionRule* represents a tree-sitter grammar rule which produces a *Parsable* type.
 
 public struct ProductionRule<T: Parsable> {
+  // A syntax expression with parsable type captures built with string interpolation.
+  public struct Descriptor<each P: Parsable> {
+    let syntaxExpression : TSExpression
+    let captureIndices : [Int]
+  }
+
   let syntaxExpression : TSExpression
   let constructor : (TSNode, ParsingContext) throws -> T
 
@@ -91,12 +42,22 @@ public struct ProductionRule<T: Parsable> {
 }
 
 
-extension ProductionRule {
-  public struct Descriptor<each P: Parsable> {
-    let syntaxExpression : TSExpression
-    let captureIndices : [Int]
+/// A type-erased *ProductionRule*.
+
+public struct AnyProductionRule {
+  let symbol : Symbol
+  let syntaxExpression : TSExpression
+  let constructor : (TSNode, ParsingContext) throws -> Any
+
+  init(symbol s: Symbol, syntaxExpression e: TSExpression, constructor c: @escaping (TSNode, ParsingContext) throws -> Any) {
+    symbol = s
+    syntaxExpression = e
+    constructor = c
   }
 }
+
+
+/// String interpolation of ProductionRule descriptors...
 
 extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
   public struct StringInterpolation : StringInterpolationProtocol {

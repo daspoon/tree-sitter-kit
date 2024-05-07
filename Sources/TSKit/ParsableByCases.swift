@@ -29,7 +29,7 @@ extension ParsableByCases {
     let productionRulesBySymbolName = Self.productionRulesBySymbolName
     return ProductionRule(
       syntaxExpression: .choice(productionRulesBySymbolName.map { name, _ in
-        .prod(.init(Self.self, case: name))
+        .prod(.init(Self.self, name: name))
       }),
       constructor: { node, ctx in
         let symbolName = ctx.language.symbolName(for: node)
