@@ -28,7 +28,7 @@ extension ParsableByCases {
   public static var productionRule : ProductionRule<Self> {
     let productionRulesBySymbolName = Self.productionRulesBySymbolName
     return ProductionRule(
-      syntaxExpression: .choice(productionRulesBySymbolName.map { name, _ in
+      syntaxExpression: .choice(productionRulesBySymbolName.keys.sorted().map { name in
         .prod(.init(Self.self, name: name))
       }),
       constructor: { node, ctx in
