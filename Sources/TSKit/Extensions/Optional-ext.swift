@@ -15,7 +15,4 @@ extension Optional : Parsable where Wrapped : Parsable {
       }
     )
   }
-  public static func translate(parseTree node: TSNode, in context: ParsingContext) throws -> Self {
-    try Wrapped.translate(parseTree: node, in: context)
-  }
 }
