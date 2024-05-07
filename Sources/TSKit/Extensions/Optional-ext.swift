@@ -11,7 +11,7 @@ extension Optional : Parsable where Wrapped : Parsable {
     return .init(
       syntaxExpression: wrappedRule.syntaxExpression,
       constructor: { node, ctx in
-        .some(try wrappedRule.constructor(node, ctx))
+        node.isNull ? .none : .some(try wrappedRule.constructor(node, ctx))
       }
     )
   }
