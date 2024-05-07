@@ -343,3 +343,277 @@ Complete support for optional productions
       - todo: assign ivars if no such constructor exists?
   - Signature generates conditional argument expressions (based on node.isNull) for optional captures
       - todo: ensure the generated expression works generally, w.r.t. parsing trailing '?'
+
+
+### Tue Apr 2, 2024
+
+Restructure package to provide better separation between exported targets and example language/test targets.
+
+Add simpler language as a motivating example...
+  - single Expr type
+  - define grammar.js and Expr.init(parseTree:) manually
+
+Note: although Expr's init(parseTree:) is fairly simple, there is no single 'source of truth'
+  - grammar.js and init(parseTree:) must be manually synchronized
+
+
+### Wed Apr 3, 2024
+
+Restructure example languages...
+  - rename FunLang to TypedLang
+  - extend ArithLang to include functions and application; call it FuncLang
+
+Extend SeparatedSequence to include optional enclosing brackets
+
+
+### Thu Apr 4, 2024
+
+Consider generalizing Parsable with an associated Return type...
+  - the constructor would change from `init(parseTree:TSNode)` to `static func from(_:TSNode) -> Result`,
+    with `Result` defaulting to `Self`
+  - the macro would assume/require `Result` to be `Self` for the affected type, so the constructor search wouldn't change
+  - but it would have to use the `Result` of each captured type to choose a matching constructor, which (I believe) is not currently possible (i.e. to retrieve members of a type outside the affected declaration)
+
+Can our macro be made to apply to an extension?
+  - yes, but it would remain MemberMacro
+  - the ExtensionMacro protocol provides the attached declaration, which would be a struct or enum
+  - the search for constructors would have to be limited to the attached declaration
+  - the macro could likely add protocol conformance to the generated extension
+  - would the attached declaration contain synthesized default initializers?
+
+
+### Mon Apr 8, 2024
+
+Iterate on write-up 
+
+
+### Tue Apr 9, 2024
+
+Write SwiftUI program to present TSNode hierarchy for a parsed expression via OutlineGroup
+  - how to maintain expansion state?
+
+Further refinement of example expression language
+
+How best to avoid duplication of unit tests for the two versions of ExprLang?
+  - create a single base class with two subclasses, each defining an Expr type and a parsing function
+  - have a single class with a list of Expr type/parse function pairs (less appealing)
+
+
+### Wed Apr 10, 2024
+
+Review tree-sitter's interface to the source text...
+  The 'designated' method for parsing is `ts_parser_parse(TSParser *self, const TSTree *old_tree, TSInput input)`, which takes an instance of the the following struct:
+    ```
+    struct TSInput {
+      void *payload;
+      const char *(*read)(void *payload, uint32_t byte_index, TSPoint position, uint32_t *bytes_read);
+      TSInputEncoding encoding
+    }
+    ```
+  When parsing a string, the following struct serves as payload
+    ```
+    struct TSStringInput {
+      const char *string;
+      uint32_t length;
+    }
+    ```
+  and the read function returns a pointer to the substring from the given index (ignoring `position`).
+  TSParser invokes `read` only to ensure the source is non-null, otherwise it is simply passed to `ts_lexer_set_input(TSLexer *self, TSInput input)`.
+  TSLexer maintains a portion of the source text in its `chunk`, `chunk_start`, and `chunk_size` members by calling TSInput's read when necessary.
+
+Begin implementing a means to retrieve source text from a byte range regardless of whether provided as a string or a file
+  - essentially we want an object with a method of the form `func text(in: Range<UInt32>) -> String`
+  - tree-sitter uses struct TSInput to retrieve portions of the source text on demand, and defines multiple parsing methods which create appropriate instances of this struct
+  - intuitively we should extend TSInput to implement the desired method, but TSInput's read method requires a TSPoint argument which I don't know how to synthesize...
+  - instead create protocol InputSource with the desired method and a means to create a TSInput
+      ```
+      protocol InputSource {
+        func text(in: Range<UInt32>) -> String
+        var tsinput : TSInput { get }
+      }
+      ```
+  - create StringInputSource which is backed by a String
+  - add a 'source' parameter to init(parseTree:)
+
+
+### Thu Apr 11, 2024
+
+Finish implementing source text retrieval by node.
+
+Eliminate unused TSCursor implementation.
+
+Remove Parsable conformance from Array; use instantiations of SeparatedSequence instead.
+
+Note: I would like to for TSExpression's string interpolation to support regex parameters, but...
+  - there is no obvious means to obtain the string representation of a Regex, which is required to create grammar source
+
+
+### Mon Apr 15, 2024
+
+Create OutlineView as alternative to OutlineGroup which supports automated expansion
+  - based on DisclosureGroup
+
+bug: OutlineView crashes on macOS when expression text is empty or contains a single identifier
+  - it appears to be triggering table view layout while layout is in progress
+  - the problem does not appear on iOS (although autolayout errors are reported in other scenarios)
+
+
+### Tue Apr 16, 2024
+
+Allow production rules to be hidden to eliminate unnecessary parse tree nodes for enum types
+  - add property productionRuleIsHidden defaulting to false; ParsableByCases override returns true
+  - add property productionRuleName to prefix symbolName with underscore when productionRuleIsHidden returns true
+  - rework Grammar to include an implicit 'start' rule; requires making Grammar non-generic
+  - various references to symbolName replaced with productionRuleName
+  - update top-level parsing methods to accommodate start node
+
+Note: I want to visually distinguish symbol names and matched text in the parse tree view, but...
+  - the foregroundColor attribute of AttributeString has no effect
+  - the code from AttributedString's documentation doesn't even compile...
+
+
+### Wed Apr 17, 2024
+
+Replace TSNode's type method (which allocates a String) with TSLanguage.symbolName(for: TSNode), and generalize the context argument provided to Parsable's ingestion method to include the language.
+  - TSNode's type method allocates a String which copies the cstring result of `ts_node_type`
+  - extend TSLanguage to maintain a table mapping numeric symbol ids to strings
+  - use `t_node_symbol` and `ts_language_symbol_name`
+
+
+### Thu Apr 18, 2024
+
+bug fix: after adopting yesterday's changes, TreeSitterView doesn't update properly..
+  - the initial tree is presented correctly, but either changing the expression or switching grammars causes the view to show errors and apparent gibberish
+  - I don't know what the problem was, but backing-out and re-introducing the changes incrementally has solved the problem
+
+Note: `tree-sitter generate` should reject grammars which define productions named `ERROR` or `_ERROR`
+  - constants `ts_builtin_sym_error` and `ts_builtin_sym_error_repeat` are defined to be UInt16.max and UInt16.max-1 respectively and are given special treatment by  `ts_language_symbol_name` and `ts_language_symbol_for_name`
+  - those constants should also be exported
+
+
+### Mon Apr 22, 2024
+
+Work on write-up...
+
+
+### Tue Apr 23, 2024
+
+Continue work on write-up...
+
+Note: I want to move the Expr example (both stages) to the TreeSitterView project...
+  - I can add a unit testing bundle and move Expr et.al. into there
+  - but the generated language must also be accessible
+  - this means the languages must also be bundled
+  - which might best be achieved by moving the existing subpackages from TreeSitterKit
+      - actually, only the 'economy' grammar is required...
+
+
+### Wed Apr 24, 2024
+
+Continue work on write-up...
+
+More build system woes...
+
+add a drop-down menu of recent expressions to avoid SwiftUI pant-shitting while editing the text field
+  - show an example for each case of the Expr translation method
+
+
+### Mon Apr 29, 2024
+
+Tree-sitter API aimed to improve error reporting added in https://github.com/tree-sitter/tree-sitter/pull/2324 :
+  ```
+  bool ts_node_is_error(TSNode)
+  
+  TSStateId ts_node_parse_state(TSNode)
+  
+  void ts_tree_cursor_reset_to(TSTreeCursor *, const TSStreeCursor *)
+  bool ts_tree_cursor_goto_previous_sibling(TSTreeCursor *)
+  bool ts_tree_cursor_goto_last_child(TSTreeCursor *)
+  
+  uint32_t ts_language_state_count(const TSLanguage *)
+  TSStateId ts_language_next_state(const TSLanguage *, TSStateId, TSSymbol);
+
+  TSLookaheadIterator *ts_lookahead_iterator_new(const TSLanguage *, TSStateId);
+  TSSymbol ts_lookahead_iterator_current_symbol(const TSLookaheadIterator *);
+  bool ts_lookahead_iterator_advance(TSLookaheadIterator *);
+  void ts_lookahead_iterator_delete(TSLookaheadIterator *);
+  ```
+
+Explore use of TSQuery et.al. for finding errors
+  - implement Swift wrappers for TSQuery and TSQueryCursor
+  - create a TSQuery which captures error nodes "(ERROR @node)"
+  - create a TSQueryCursor and execute the query on the root node
+  - use the cursor's nextCapture method to step through all ERROR nodes
+
+
+### Tue Apr 30, 2024
+
+Extend Grammar to allow specifying 'word' attribute of grammar.js
+  - tree-sitter requires it be a named rule whose expression is a pattern, so we can't use choices or productions
+  - add Grammar.init overload with parsable type parameter
+  - note: the effect on parser.c is to set the 'keyword_lex_fn' and 'keyword_capture_token' elements of the language struct
+
+Replace TSQueryCursor nextMatch and nextCapture with matches and captures respectively
+
+
+### Thu May 2, 2024
+
+Can we specify a production rule as a pairing of syntax expression and closure?
+
+    struct LetDecl : Parsable {
+      let name : Name
+      let type : Type
+      let expr : Expr
+
+      static var productionRule : ProductionRule<Self> {
+        .init("let \(Name.self) : \(Type.self) = \(Expr.self)", {
+          Self(name: $0, type: $1, expr: $2)
+        })
+      }
+    }
+  
+This would require (string-interpolated) syntax expressions be variadic
+
+    enum SyntaxExpr<each T: Parsable> : ExpressibleByStringInterpolation {
+      let captureTypes : (repeat each T)
+      var captureCount : Int = 0
+      init(literalCapacity: Int, interpolationCount: Int) {
+      }
+      mutating func appendInterpolation<T: Parsable>(_: T.Type) {
+        assert(T.self == captureTypes[captureCount])
+      }
+    }
+
+If possible, it would eliminate the macro-generated init methods...
+
+
+### Fri May 3, 2024
+
+Continue work on new production rule format...
+
+
+### Mon May 6, 2024
+
+Continue work on new production rule format...
+  - extend and symplify Symbol, eliminating proxy types ParsableProxy and ParsableByCasesProxy
+  - minimize AnyProductionRule, moving calculation of support symbols to Grammar
+
+bug: grammar generation runs, but 'case' rules appear with symbol of hidden parent type
+  - attempted to add extend ProductionRule with either a Symbol or a symbol name, but Swift shits itself 
+
+
+### Tue May 7, 2024
+
+submit bug report for parameter pack issue (viz. ProductionRule can't be extended to maintain symbol/name)
+
+bug fix: adapt grammar generation to avoid parameter pack issue 
+
+bug fix: sort production rule choices in syntax expression for ParsableByCases
+
+tweak sorting of symbols to ignore leading underscore
+
+reinstate use of field names in ProductionRule constructors...
+
+bug fix: optional productions use TSNode.isNull to determine whether or not node exists
+
+update TypedLangTests to use new productoin rule format
