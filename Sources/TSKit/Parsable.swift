@@ -71,7 +71,7 @@ extension Parsable {
     guard Self.symbolIsHidden || lng.symbolName(for: rootNode) == Self.typeName // TODO: -> symbolName
       else { throw TSError("root node has unexpected type (\(lng.symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
-    return try throwingCast(Self.productionRule.constructor(rootNode, ParsingContext(language: lng, inputSource: src)))
+    return try Self.translate(parseTree: rootNode, in: ParsingContext(language: lng, inputSource: src))
   }
 
   /// Create an instance of this type by parsing the given string according to the given language.
