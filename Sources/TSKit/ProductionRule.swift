@@ -11,7 +11,7 @@ public struct ProductionRule<T: Parsable> {
   // A syntax expression with parsable type captures built with string interpolation.
   public struct Descriptor<each P: Parsable> {
     let syntaxExpression : TSExpression
-    let captureIndices : [Int]
+    let fieldNames : [String]
   }
 
   let syntaxExpression : TSExpression
@@ -30,7 +30,7 @@ public struct ProductionRule<T: Parsable> {
       syntaxExpression: descriptor.syntaxExpression,
       constructor: { node, ctx in
         var i = 0
-        return try f(repeat try throwingCast((each Q).productionRule.constructor(node[descriptor.captureIndices[i.postincrement()]], ctx)))
+        return try f(repeat try (each Q).productionRule.constructor(node[descriptor.fieldNames[i.postincrement()]], ctx))
       }
     )
   }
@@ -64,20 +64,21 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
     var precedence : TSExpression.Prec?
     var components : [TSExpression] = []
     var captureTypes : [Any.Type] = []
-    var captureIndices : [Int] = []
+    var fieldNames : [String] = []
 
     public init(literalCapacity: Int, interpolationCount: Int) {
       _ = (repeat (captureTypes.append((each P).self)))
     }
 
     private mutating func appendCapture(of type: Any.Type, with expr: TSExpression) {
-      let captureIndex = captureIndices.count
+      let captureIndex = fieldNames.count
       guard captureIndex < captureTypes.count
         else { fatalError("capture index out of bounds: \(captureIndex)") }
       guard captureTypes[captureIndex] == (type as Any.Type)
         else { fatalError("capture type mismatch: \(type) != \(captureTypes[captureIndex])") }
-      components.append(.field("\(captureIndex)", expr))
-      captureIndices.append(captureIndex)
+      let fieldName = "\(captureIndex)"
+      components.append(.field(fieldName, expr))
+      fieldNames.append(fieldName)
     }
 
     public mutating func appendLiteral(_ literal: String) {
@@ -108,10 +109,10 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
   }
 
   public init(stringInterpolation interpolation: StringInterpolation) {
-    self.init(syntaxExpression: interpolation.expression, captureIndices: interpolation.captureIndices)
+    self.init(syntaxExpression: interpolation.expression, fieldNames: interpolation.fieldNames)
   }
 
   public init(stringLiteral literal: String) {
-    self.init(syntaxExpression: .literal(literal), captureIndices: [])
+    self.init(syntaxExpression: .literal(literal), fieldNames: [])
   }
 }
