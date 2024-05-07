@@ -19,7 +19,7 @@ struct Block : Equatable {
 extension Block : Parsable {
   typealias DefList = DelimitedSequence<Def, Semicolon>
   static var productionRule : ProductionRule<Self> {
-    .init(descriptor: "\(Optional<DefList>.self) \(Expr.self)") { deflist, expr in
+    .init(descriptor: "\(Optional<DefList>.self) \(Expr.self)") { (deflist: DefList?, expr) in
       Self(decls: deflist?.elements ?? [], expr: expr)
     }
   }
@@ -31,6 +31,6 @@ fileprivate let language = TSLanguage(tree_sitter_TypedLang())
 extension Block {
   /// A convenience method for initializing an instance by parsing text.
   init(_ text: String) throws {
-    try Self.from(text: text, language: language)
+    self = try Self.from(text: text, language: language)
   }
 }

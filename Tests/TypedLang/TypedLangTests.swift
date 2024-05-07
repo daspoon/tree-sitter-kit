@@ -49,7 +49,7 @@ class TypedLangTests : XCTestCase
         ("!(x:Int) -> Int. x + 1",
           .lambda([Param("x", "Int")], "Int", .infix_op("+", "x", 1))),
         ("!(f: Int -> Int, x: Int) -> Bool. f(x) == 0",
-          .lambda([Param("f", .func("Int", "Int")), Param("x", "Int")], "Bool", .infix_op("==", .apply("f", "x"), 0))),
+          .lambda([Param("f", .arrow("Int", "Int")), Param("x", "Int")], "Bool", .infix_op("==", .apply("f", "x"), 0))),
         ("!f(x:Int) -> Int. f(x)",
           .mu("f", [Param("x", "Int")], "Int", .apply("f", "x"))),
         ("(!(x: Int) -> Int. x + 1)(2)",
@@ -62,7 +62,7 @@ class TypedLangTests : XCTestCase
           .infix_op("+", .project("p", 1), .project("p", 2))),
         ("match f(x) { nil() => 1, cons(h,t) => 2 }",
           .match(.apply("f", "x"), [
-            .init(name: "nil", expr: 1),
+            .init(name: "nil", params: [], expr: 1),
             .init(name: "cons", params: ["h", "t"], expr: 2),
           ])),
         ("{ 1 }",

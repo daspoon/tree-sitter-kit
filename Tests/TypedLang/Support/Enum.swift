@@ -15,9 +15,9 @@ struct Enum : Equatable {
 }
 
 extension Enum : Parsable {
-  typealias EnumCaseList = SeparatedSequence<EnumCase, Comma, NoBrackets>
+  typealias CaseList = SeparatedSequence<EnumCase, Comma, NoBrackets>
   static var productionRule : ProductionRule<Self> {
-    .init(descriptor: "enum \(Name.self) { \(EnumCaseList.self) }") { name, cases in
+    .init(descriptor: "enum \(Name.self) { \(CaseList.self) }") { (name, cases: CaseList) -> Self in
       Self(name: name, cases: cases.elements)
     }
   }
@@ -33,7 +33,7 @@ struct EnumCase : Equatable {
 
 extension EnumCase : Parsable {
   static var productionRule : ProductionRule<Self> {
-    .init(descriptor: "\(Name.self) \(Optional<ParamList>.self)") { name, params in
+    .init(descriptor: "\(Name.self) \(Optional<ParamList>.self)") { (name, params: ParamList?) -> Self in
       Self(name: name, params: params?.elements ?? [])
     }
   }

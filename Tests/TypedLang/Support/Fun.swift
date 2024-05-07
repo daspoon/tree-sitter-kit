@@ -18,7 +18,7 @@ struct Fun : Equatable {
 
 extension Fun : Parsable {
   static var productionRule : ProductionRule<Fun> {
-    .init(descriptor: "fun \(Name.self) \(ParamList.self) -> \(TypeExpr.self) { \(Expr.self) }") { name, plist, rtype, body in
+    .init(descriptor: "fun \(Name.self) \(ParamList.self) -> \(TypeExpr.self) { \(Expr.self) }") { (name, plist: ParamList, rtype, body) -> Self in
       Self(name: name, params: plist.elements, type: rtype, expr: body)
     }
   }

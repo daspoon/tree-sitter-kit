@@ -32,13 +32,13 @@ extension Expr : ParsableByCases {
       "numb" : .init(descriptor: "\(Int.self)") { int in
         .numb(int)
       },
-      "call" : .init(descriptor: "\(prec: .apply)\(Expr.self) ( \(opt: ExprList.self) )") { fun, args in
+      "call" : .init(descriptor: "\(prec: .apply)\(Expr.self) ( \(Optional<ExprList>.self) )") { fun, args in
         .apply(fun, .paren(args))
       },
-      "lambda" : .init(descriptor: "! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)") { plist, rtype, expr in
+      "lambda" : .init(descriptor: "! \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)") { (plist: ParamList, rtype, expr) in
         .lambda(plist.elements, rtype, expr)
       },
-      "mu" : .init(descriptor: "! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)") { name, plist, rtype, expr in
+      "mu" : .init(descriptor: "! \(Name.self) \(ParamList.self) -> \(TypeExpr.self) . \(Expr.self)") { (name, plist: ParamList, rtype, expr) in
         .mu(name, plist.elements, rtype, expr)
       },
       "paren" : .init(descriptor: "( \(Optional<ExprList>.self) )") { elist in
@@ -47,31 +47,32 @@ extension Expr : ParsableByCases {
       "project" : .init(descriptor: "\(prec: .proj)\(Expr.self) . \(Int.self)") { expr, index in
         .project(expr, index)
       },
-      "match" : .init(descriptor: "match \(Expr.self) { \(MatchCaseList.self) }") { expr, caselist in
+      "match" : .init(descriptor: "match \(Expr.self) { \(MatchCaseList.self) }") { (expr, caselist: MatchCaseList) in
         .match(expr, caselist.elements)
       },
-      "block" : .init(descriptor: "{ \(Block.self) }") { x in
+      "block" : .init(descriptor: "{ \(Block.self) }") { block in
+        .block(block)
       },
-      "eql" : .init(descriptor: "\(prec: .eql)\(Expr.self) \("==") \(Expr.self)") { lhs, op, rhs in
-        .infix(lhs, op, rhs)
+      "eql" : .init(descriptor: "\(prec: .eql)\(Expr.self) \(OpCmp.self) \(Expr.self)") { (lhs, op: OpCmp, rhs) in
+        .infix(lhs, op.text, rhs)
       },
-      "or"  : .init(descriptor: "\(prec: .or)\(Expr.self) \("||") \(Expr.self)") { lhs, op, rhs in
-        .infix(lhs, op, rhs)
+      "or"  : .init(descriptor: "\(prec: .or)\(Expr.self) \(OpDisj.self) \(Expr.self)") { (lhs, op: OpDisj, rhs) in
+        .infix(lhs, op.text, rhs)
       },
-      "and" : .init(descriptor: "\(prec: .and)\(Expr.self) \("&&") \(Expr.self)") { lhs, op, rhs in
-        .infix(lhs, op, rhs)
+      "and" : .init(descriptor: "\(prec: .and)\(Expr.self) \(OpConj.self) \(Expr.self)") { (lhs, op: OpConj, rhs) in
+        .infix(lhs, op.text, rhs)
       },
-      "add" : .init(descriptor: "\(prec: .add)\(Expr.self) \("+", "-") \(Expr.self)") { lhs, op, rhs in
-        .infix(lhs, op, rhs)
+      "add" : .init(descriptor: "\(prec: .add)\(Expr.self) \(OpAdd.self) \(Expr.self)") { (lhs, op: OpAdd, rhs) in
+        .infix(lhs, op.text, rhs)
       },
-      "mul" : .init(descriptor: "\(prec: .mult)\(Expr.self) \("*", "/", "%") \(Expr.self)") { lhs, op, rhs in
-        .infix(lhs, op, rhs)
+      "mul" : .init(descriptor: "\(prec: .mult)\(Expr.self) \(OpMul.self) \(Expr.self)") { (lhs, op: OpMul, rhs) in
+        .infix(lhs, op.text, rhs)
       },
-      "pow" : .init(descriptor: "\(prec: .power)\(Expr.self) \("^") \(Expr.self)") { lhs, op, rhs in
-        .infix(lhs, op, rhs)
+      "pow" : .init(descriptor: "\(prec: .power)\(Expr.self) \(OpPow.self) \(Expr.self)") { (lhs, op: OpPow, rhs) in
+        .infix(lhs, op.text, rhs)
       },
-      "neg" : .init(descriptor: "\(prec: .neg)\("-") \(Expr.self)") { op, arg in
-        .prefix(op, arg)
+      "neg" : .init(descriptor: "\(prec: .neg)\(OpNeg.self) \(Expr.self)") { (op: OpNeg, arg) in
+        .prefix(op.text, arg)
       },
     ]
   }
