@@ -29,4 +29,17 @@ extension String {
     buf[n] = 0
     return (UnsafePointer(UnsafeRawPointer(buf).bindMemory(to: CChar.self, capacity: n)), n)
   }
+
+
+  /// Return a copy of the receiver with the given prefix and/or suffix removed.
+  func removing(prefix: String? = nil, suffix: String? = nil) -> String {
+    var trimmed = self
+    if let prefix, let range = trimmed.range(of: prefix, options:.anchored) {
+      trimmed = String(trimmed[range.upperBound ..< trimmed.endIndex])
+    }
+    if let suffix, let range = trimmed.range(of: suffix, options: [.anchored, .backwards]) {
+      trimmed = String(trimmed[trimmed.startIndex ..< range.lowerBound])
+    }
+    return trimmed
+  }
 }

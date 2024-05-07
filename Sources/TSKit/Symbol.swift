@@ -30,7 +30,6 @@ public struct Symbol {
   }
 }
 
-
 extension Symbol : Hashable {
   public func hash(into hasher: inout Hasher) {
     hasher.combine(ObjectIdentifier(type))
@@ -38,9 +37,14 @@ extension Symbol : Hashable {
   }
 }
 
-
 extension Symbol : Equatable {
   public static func == (lhs: Self, rhs: Self) -> Bool {
     lhs.type == rhs.type && lhs.name == rhs.name
+  }
+}
+
+extension Symbol : Comparable {
+  public static func < (lhs: Self, rhs: Self) -> Bool {
+    lhs.name.removing(prefix: "_") < rhs.name.removing(prefix: "_")
   }
 }

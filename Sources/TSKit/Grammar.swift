@@ -70,7 +70,7 @@ public struct Grammar {
   public var javascript : String {
     // Form a list containing the root rule and each of the supporting rules (including
     // the 'word') sorted by ascending symbol name.
-    let symbols = [rootSymbol] + supportingSymbols.sorted(by: {$0.name < $1.name})
+    let symbols = [rootSymbol] + supportingSymbols.sorted()
 
     // Return the javascript source, with the start rule appearing first...
     return """
