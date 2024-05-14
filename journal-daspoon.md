@@ -627,3 +627,82 @@ note: string interpolation for syntax expressions is unsatisfying because mismat
   - we can make appendInterpolation throw, but this requires the methods which specify production to throw
   - note that the syntax for declaring a throwing property is var p : T { get throws }
 
+
+### Mon May 13, 2024
+
+I want to streamline the build process by:
+  - defining production rules as static methods on language/syntax types
+  - generating grammar.js/json from the production rules of (a set of) syntax types
+  - generating and compiling parser.c within the build process
+  - having both the syntax types and the generated parser live in the same build target
+
+This is not currently possible because...
+  - SPM does not allow mixed language targets, so grammar.js and the generated parser.c must live a separate target
+  - the language target must either depend on the parser target (i.e. a circular dependency), or split in two so that we have a chain of three dependent targets: the language type definitions, the grammar/parser generation, and finally the parametrized/language-specific parser
+  - were SPM to allow mixed-language targets, we would have to run code based on the language type definitions in order to generate the grammar, which (in a compiled language) requires separating the language and parser targets
+
+It appears the only way forward is to use a macro to generate both the grammar and the parser...
+  - but macros can't create or alter files, so we must run tree-sitter generate within the macro and incorporate its output into the attached declaration;
+  - and macros can't invoke subprocesses, so we must: 
+      - link the tree-sitter cli as a library
+      - expose a method which takes grammar source and returns the parse tables (viz. the result of the build_tables method in mod.rs)
+      - generate a static instance of the TSLanguage struct using those parse tables
+  - this will eliminate the need for parser.c
+
+We would need to change Grammar from a struct to a protocol...
+    ```
+    protocol Grammar<Root> {
+      associatedtype Root : Parsable
+      /// The language name. Required.
+      static var name : String { get }
+      /// The shared instance of the language structure. Implementation provided (by the *Grammar* macro).
+      static var language : TSLanguage { get }
+    }
+    ```
+    
+The top-level parsing method can then be provided by Grammar, replacing Parsable.init(inputSource: InputSource, language: TSLanguage):
+    ```
+    extension Grammar {
+      static func parse(inputSource: InputSource) throws -> Root { ... }
+    }
+    ```
+    
+We will need to rework sequence types as protocols (rather than typealiases) in order to make their production rules available within macro expansion:
+    ```
+    protocol ParsableAsSeparatedSequence<Element> {
+      associatedtype Element : Parsable
+      static var separator : String { get }
+    }
+    ```
+
+As there is no API to to access declarations outside of the one to which a macro is attached, all supporting types must be defined within that 'top-level' declaration:
+    ```
+    @Grammar
+    struct ExprLang : Grammar<Expr> {
+      @Parsable
+      enum Expr : ParsableByCases {
+        case name(Name) :
+        case apply(Expr, [Expr])
+        static var syntaxExpressionsByCaseName : [String: SyntaxExpression] {
+          "name": "\(Name.self)",
+          "call": "\(Expr.self) ( \(Optional<ExprList>.self) )",
+          "add": "\(Expr.self) \("+", "-") \(Expr.self)",
+        }
+      }
+      @Parsable
+      struct Name : Parsable {
+        let text : String
+        static var syntaxExpression : SyntaxExpression {
+          .pattern("[a-z]+")
+        }
+      }
+      @Parsable
+      struct ExprList : ParsableAsSeparatedSequence {
+        typealias Element = Expr
+        static let separator = ","
+      }
+    }
+    ```
+
+Unfortunately Swift doesn't support nested macro applications (citing a 'circular reference' error)...
+
