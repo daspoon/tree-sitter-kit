@@ -12,6 +12,6 @@ import SwiftSyntaxMacros
 struct MacroPlugin : CompilerPlugin
   {
     let providingMacros: [Macro.Type] = [
-      Parsable.self,
+      Grammar.self,
     ]
   }

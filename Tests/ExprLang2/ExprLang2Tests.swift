@@ -9,11 +9,25 @@ import TSKit
 import ExprLang2
 
 
+typealias Expr = ExprLang.Expr
+extension Expr : ExpressibleByStringLiteral {
+  init(stringLiteral text: String) {
+    self = .name(Name(text: text))
+  }
+}
+
+typealias Name = ExprLang.Name
+extension Name : ExpressibleByStringLiteral {
+  init(stringLiteral s: String) {
+    self.init(text: s)
+  }
+}
+
+
 class ExprLang2Tests : XCTestCase {
 
   /// Use this to generate the text of Sources/Xamples/TypedLang/grammar.js
   func testGenerateGrammar() throws {
-    print(Grammar(name: "ExprLang", rootType: Expr.self, wordType: Word.self).javascript)
   }
 
   /// Ensure the result of parsing is as expected for a variety of example terms...
@@ -49,7 +63,7 @@ class ExprLang2Tests : XCTestCase {
         .apply("+", [.apply("f", []), .apply("g", [])])),
     ]
     for eg in examples {
-      XCTAssertEqual(try Expr(text: eg.text), eg.term, eg.text)
+      XCTAssertEqual(try ExprLang.parse(text: eg.text), eg.term, eg.text)
     }
   }
 
@@ -66,7 +80,7 @@ class ExprLang2Tests : XCTestCase {
     ]
     for text in examples {
       do {
-        _ = try Expr(text: text)
+        _ = try ExprLang.parse(text: text)
         XCTFail("Failed to reject '\(text)'")
       }
       catch {

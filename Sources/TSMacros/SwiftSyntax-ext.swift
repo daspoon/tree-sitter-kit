@@ -9,6 +9,48 @@
 import SwiftSyntax
 
 
+extension ClosureSignatureSyntax {
+  public var parameterCount : Int {
+    switch parameterClause {
+      case .none :
+        return 0
+      case .simpleInput(let shorthandParameterList) :
+        return shorthandParameterList.count
+      case .parameterClause(let parameterClause) :
+        return parameterClause.parameters.count
+    }
+  }
+}
+
+
+extension DeclSyntax {
+  public var typeName : String? {
+    switch kind {
+      case .classDecl :
+        return self.cast(ClassDeclSyntax.self).name.text
+      case .enumDecl :
+        return self.cast(EnumDeclSyntax.self).name.text
+      case .structDecl :
+        return self.cast(StructDeclSyntax.self).name.text
+      default :
+        return nil
+    }
+  }
+
+  public var inheritanceClause : InheritanceClauseSyntax? {
+    switch kind {
+      case .classDecl :
+        return self.as(ClassDeclSyntax.self)?.inheritanceClause
+      case .enumDecl :
+        return self.as(EnumDeclSyntax.self)?.inheritanceClause
+      case .structDecl :
+        return self.as(StructDeclSyntax.self)?.inheritanceClause
+      default :
+        return nil
+    }
+  }
+}
+
 // MARK: -
 
 extension DeclGroupSyntax {
@@ -20,18 +62,14 @@ extension DeclGroupSyntax {
   }
 
   public var typeName : String? {
-    switch kind {
-      case .classDecl :
-        return self.cast(ClassDeclSyntax.self).name.text
-      case .enumDecl :
-        return self.cast(EnumDeclSyntax.self).name.text
-      case .extensionDecl :
-        return self.cast(ExtensionDeclSyntax.self).extendedType.trimmed.description
-      case .structDecl :
-        return self.cast(StructDeclSyntax.self).name.text
-      default :
-        return nil
-    }
+    self.as(DeclSyntax.self)?.typeName
+  }
+
+  public func aliasType(for name: String) -> TypeSyntax? {
+    memberBlock.members
+      .compactMap({$0.decl.as(TypeAliasDeclSyntax.self)})
+      .filter({$0.name.text == "Element"})
+      .only?.initializer.value
   }
 
   public func variableBindingWith(name: String, type: TypeSyntax, isStatic: Bool = false) -> PatternBindingSyntax? {
@@ -108,6 +146,12 @@ extension PatternBindingSyntax {
 // MARK: -
 
 extension StringLiteralExprSyntax {
+  var stringLiteral : String? {
+    guard let stringSegment = segments.first?.as(StringSegmentSyntax.self), segments.count == 1
+      else { return nil }
+    return stringSegment.trimmedDescription
+  }
+
   var text : String {
     "\(segments)"
   }

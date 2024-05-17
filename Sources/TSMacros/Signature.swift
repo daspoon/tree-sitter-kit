@@ -113,19 +113,15 @@ extension Signature {
   /// Create an instance from an element of a dictionary literal which representing a production rule, with the key providing a constructor
   /// name and the value its syntax expression -- both of which must be string literals.
   init(dictionaryElement: DictionaryElementSyntax) throws {
-    // Ensure both key and value components are string literals.
-    guard let nameLiteral = dictionaryElement.key.as(StringLiteralExprSyntax.self)
+    // Ensure the key is a string literal.
+    guard let name = dictionaryElement.key.as(StringLiteralExprSyntax.self)?.stringLiteral
       else { throw Exception("dictionary keys must be string literals") }
+    // Ensure the value is a string literal expression.
     guard let exprLiteral = dictionaryElement.value.as(StringLiteralExprSyntax.self)
-      else { throw Exception("dictionary values must be string literals") }
+      else { throw Exception("dictionary values must be string literal expressions") }
 
-    // Ensure the key component consists of a single string segment
-    guard nameLiteral.segments.count == 1, let nameSegment = nameLiteral.segments.first?.as(StringSegmentSyntax.self)
-      else { throw Exception("dictionary key literals must have a single string segment") }
-
-    try self.init(name: nameSegment.trimmedDescription, syntaxExpression: exprLiteral)
+    try self.init(name: name, syntaxExpression: exprLiteral)
   }
-
 
   /// Create an instance from a production rule with a given name and syntax expression.
   init(name: String, syntaxExpression: StringLiteralExprSyntax) throws {
@@ -144,7 +140,7 @@ extension Signature {
           case "opt" :
             // The 'opt' label also indicates a Parsable type expressed as T.self, but its capture is optional.
             capturedTypes.append("\(try Self.typeName(from: arg))?")
-          case "lit" :
+          case "lit", "pat" :
             // The 'lit' label indicates a string from an explicit set.
             capturedTypes.append("String")
           case "prec" :

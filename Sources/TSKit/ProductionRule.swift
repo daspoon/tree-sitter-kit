@@ -9,9 +9,10 @@
 
 public struct ProductionRule<T: Parsable> {
   // A syntax expression with parsable type captures built with string interpolation.
-  public struct Descriptor<each P: Parsable> {
+  public struct Descriptor {
     let syntaxExpression : TSExpression
     let fieldNames : [String]
+    let captureTypes : [Any.Type]
   }
 
   let syntaxExpression : TSExpression
@@ -25,7 +26,7 @@ public struct ProductionRule<T: Parsable> {
 
   /// Create an instance with a syntax expression given by a custom string interpolation
   /// and a constructor taking arguments of the types 'captured' by the interpolation.
-  public init<each Q: Parsable>(descriptor: Descriptor<repeat each Q>, constructor f: @escaping (repeat each Q) throws -> T) {
+  public init<each Q: Parsable>(descriptor: Descriptor, constructor f: @escaping (repeat each Q) throws -> T) {
     self.init(
       syntaxExpression: descriptor.syntaxExpression,
       constructor: { node, ctx in
@@ -63,22 +64,17 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
   public struct StringInterpolation : StringInterpolationProtocol {
     var precedence : TSExpression.Prec?
     var components : [TSExpression] = []
-    var captureTypes : [Any.Type] = []
     var fieldNames : [String] = []
+    var captureTypes : [Any.Type] = []
 
     public init(literalCapacity: Int, interpolationCount: Int) {
-      _ = (repeat (captureTypes.append((each P).self)))
     }
 
     private mutating func appendCapture(of type: Any.Type, with expr: TSExpression) {
-      let captureIndex = fieldNames.count
-      guard captureIndex < captureTypes.count
-        else { fatalError("capture index out of bounds: \(captureIndex)") }
-      guard captureTypes[captureIndex] == (type as Any.Type)
-        else { fatalError("capture type mismatch: \(type) != \(captureTypes[captureIndex])") }
-      let fieldName = "\(captureIndex)"
+      let fieldName = "\(captureTypes.count)"
       components.append(.field(fieldName, expr))
       fieldNames.append(fieldName)
+      captureTypes.append(type)
     }
 
     public mutating func appendLiteral(_ literal: String) {
@@ -92,8 +88,16 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
     }
 
     /// Add a component to capture an optional instance of the given type.
-    public mutating func appendInterpolation<C: Parsable>(_ type: Optional<C>.Type) {
+    public mutating func appendInterpolation<C: Parsable>(opt type: C.Type) {
       appendCapture(of: type, with: .optional(.prod(C.self)))
+    }
+
+    public mutating func appendInterpolation(lit literals: [String]) {
+      appendCapture(of: String.self, with: .choice(literals.map {.literal($0)}))
+    }
+
+    public mutating func appendInterpolation(pat pattern: String) {
+      appendCapture(of: String.self, with: .pattern(pattern))
     }
 
     /// Establish the precedence of the expression. This has no associated capture, has no effect the field labels of captures, and must be specified as the first interpolation segment.
@@ -109,10 +113,10 @@ extension ProductionRule.Descriptor : ExpressibleByStringInterpolation {
   }
 
   public init(stringInterpolation interpolation: StringInterpolation) {
-    self.init(syntaxExpression: interpolation.expression, fieldNames: interpolation.fieldNames)
+    self.init(syntaxExpression: interpolation.expression, fieldNames: interpolation.fieldNames, captureTypes: interpolation.captureTypes)
   }
 
   public init(stringLiteral literal: String) {
-    self.init(syntaxExpression: .literal(literal), fieldNames: [])
+    self.init(syntaxExpression: .literal(literal), fieldNames: [], captureTypes: [])
   }
 }
