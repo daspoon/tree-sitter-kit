@@ -16,19 +16,28 @@ public protocol Grammar<Root> {
   /// The grammar/language name. The default implementation returns the receiver's type name.
   static var name : String { get }
 
+  /// Optionally specifies the pattern for the word rule. The default implementation returns nil.
+  static var word : String? { get }
+
   /// The shared instance of the language structure. Implementation provided.
   static var language : TSLanguage { get }
+
+  /// Produce an instance of the root type from the the root node of a parse tree. Implementation provided.
+  static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
 }
 
 
 extension Grammar {
   public static var name : String
     { "\(Self.self)" }
+
+  public static var word : String?
+    { nil }
 }
 
 
-//
 extension Grammar {
+  /// Extract the text for the given node. This enables String to be treated as a parsable types within with respect to production rule captures.
   public static func extractString(from node: TSNode, in context: ParsingContext) -> String {
     context.inputSource.text(for: node)
   }
@@ -55,8 +64,7 @@ extension Grammar {
     guard Root.symbolIsHidden || language.symbolName(for: rootNode) == Root.typeName
       else { throw TSError("root node has unexpected type (\(language.symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
-    let context = ParsingContext(language: language, inputSource: src)
-    return context.translator(for: Root.self)(rootNode, context)
+    return translate(parseTree: rootNode, in: ParsingContext(language: language, inputSource: src))
   }
 
   /// Create an instance of the root type from the given text.

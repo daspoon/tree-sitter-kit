@@ -6,6 +6,7 @@
 
 import TSKit
 import XCTest
+import ExprLang2
 
 
 class TmpTest : XCTestCase {
@@ -16,16 +17,23 @@ class TmpTest : XCTestCase {
 struct ExprLang : Grammar {
   typealias Root = Expr
 
+  static var word : String?
+    { "([a-zA-Z_][0-9a-zA-Z_]* | [!#%&*+-/<=>^|~]+)" }
+
+  static let language = TSLanguage(tree_sitter_ExprLang())
+
   struct Name : Equatable, Parsable {
     let text : String
     static var productionRule : ProductionRule<Self> {
-      .init(descriptor: "\(pat: "[a-zA-Z_][0-9a-zA-Z_]*")") {s in .init(text: s)}
+      .init(pattern: "[a-zA-Z_][0-9a-zA-Z_]*") { string in
+        .init(text: string)
+      }
     }
   }
 
   indirect enum Expr : Equatable, ParsableByCases {
     case name(Name)
-    case apply(Expr, [Expr]?)
+    case apply(Expr, [Expr])
     static var productionRulesByCaseName : [String: ProductionRule<Self>] {
       return [
         "name": .init(descriptor: "\(Name.self)") { name in
@@ -44,7 +52,7 @@ struct ExprLang : Grammar {
           .apply(.op(op), [arg])
         },
         "apply": .init(descriptor: "\(prec: .none(5)) \(Expr.self) ( \(opt: ExprList.self) )") { (fun, args: ExprList?) in
-          .apply(fun, args?.elements)
+          .apply(fun, args?.elements ?? [])
         },
         "paren": .init(descriptor: "( \(Expr.self) )") { expr in
           expr

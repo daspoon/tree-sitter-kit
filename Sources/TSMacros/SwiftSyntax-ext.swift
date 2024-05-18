@@ -68,7 +68,7 @@ extension DeclGroupSyntax {
   public func aliasType(for name: String) -> TypeSyntax? {
     memberBlock.members
       .compactMap({$0.decl.as(TypeAliasDeclSyntax.self)})
-      .filter({$0.name.text == "Element"})
+      .filter({$0.name.text == name})
       .only?.initializer.value
   }
 

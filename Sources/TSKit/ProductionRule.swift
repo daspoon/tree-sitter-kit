@@ -19,13 +19,24 @@ public struct ProductionRule<T: Parsable> {
   let constructor : (TSNode, ParsingContext) throws -> T
 
   /// Create an instance with explict syntax expression and parse tree translation method.
-  public init(syntaxExpression e: TSExpression, constructor c: @escaping (TSNode, ParsingContext) throws -> T) {
+  internal init(syntaxExpression e: TSExpression, constructor c: @escaping (TSNode, ParsingContext) throws -> T) {
     syntaxExpression = e
     constructor = c
   }
 
-  /// Create an instance with a syntax expression given by a custom string interpolation
-  /// and a constructor taking arguments of the types 'captured' by the interpolation.
+  /// Create an instance for a terminal symbol, with syntax expression given by a regular expression
+  /// and constructor taking a matching string.
+  public init(pattern p: String, constructor f: @escaping (String) -> T) {
+    self.init(
+      syntaxExpression: .pattern(p),
+      constructor: { node, ctx in
+        f(ctx.inputSource.text(for: node))
+      }
+    )
+  }
+
+  /// Create an instance for a non-terminal symbol, with syntax expression given by a custom string
+  /// interpolation and constructor taking arguments of the types 'captured' by the interpolation.
   public init<each Q: Parsable>(descriptor: Descriptor, constructor f: @escaping (repeat each Q) throws -> T) {
     self.init(
       syntaxExpression: descriptor.syntaxExpression,

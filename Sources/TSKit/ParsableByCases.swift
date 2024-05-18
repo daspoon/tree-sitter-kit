@@ -23,23 +23,6 @@ extension ParsableByCases {
     })
   }
 
-  /// Return a production rule corresponding to a choice of the alternate production
-  /// rules specified by *productionRulesBySymbolName*.
-  public static var productionRule : ProductionRule<Self> {
-    let productionRulesBySymbolName = Self.productionRulesBySymbolName
-    return ProductionRule(
-      syntaxExpression: .choice(productionRulesBySymbolName.keys.sorted().map { name in
-        .prod(.init(Self.self, name: name))
-      }),
-      constructor: { node, ctx in
-        let symbolName = ctx.language.symbolName(for: node)
-        guard let subrule = productionRulesBySymbolName[symbolName]
-          else { throw TSError("unexpected node type: \(symbolName)") }
-        return try subrule.constructor(node, ctx)
-      }
-    )
-  }
-
   /// Override Parsable's implementation to make the production hidden.
   public static var symbolIsHidden : Bool
     { true }

@@ -49,30 +49,79 @@ class Rule {
 
 
   /// The components of a ProductionRule expression.
-  typealias Components = (signature: Signature, closure: ClosureExprSyntax)
-
-  /// Given an expression representing a ProductionRule, return the represented signature and constructor.
-  static func decomposeProductionRule(name: String, expr: ExprSyntax?) throws -> Components {
-    guard
-      let funcall = expr?.as(FunctionCallExprSyntax.self),
-      let stringLiteralExpr = funcall.arguments.only?.expression.as(StringLiteralExprSyntax.self),
-      let closureExpr = funcall.trailingClosure, funcall.additionalTrailingClosures.count == 0
-    else {
-      throw Exception("ProductionRule values must be implemented as a function call with string literal and trailing closure arguments")
+  struct Components {
+    enum Format {
+      case pattern(String)
+      case signature(Signature)
+      var parameterCount : Int {
+        switch self {
+          case .pattern : return 1
+          case .signature(let signature) : return signature.parameters.count
+        }
+      }
     }
-    // Form a signature from the syntax expression
-    let signature = try Signature(name: name, syntaxExpression: stringLiteralExpr)
-    // Ensure the parameter count of the signature matches that of the closure.
-    guard signature.parameters.count == (closureExpr.signature?.parameterCount ?? 0)
-      else { throw Exception("a ProductionRule value has a mismatch between the capture count of its descriptor and the parameter count of its closure") }
-    return (signature, closureExpr)
+    let name : String
+    let format : Format
+    let constructor : ClosureExprSyntax
+
+    init(name n: String = "", expr: ExprSyntax?) throws {
+      // Extract the argument and trailing closure.
+      guard
+        let funcall = expr?.as(FunctionCallExprSyntax.self),
+        let argument = funcall.arguments.only,
+        let argname = argument.label?.text,
+        let argexpr = argument.expression.as(StringLiteralExprSyntax.self),
+        let closure = funcall.trailingClosure, funcall.additionalTrailingClosures.count == 0,
+        let closure_sig = closure.signature
+      else {
+        throw Exception("ProductionRule values must be implemented as a function call with a labeled string literal argument and a trailing closure with explicit parameter names")
+      }
+      name = n
+      constructor = closure
+      // The argument label distinguishes determines our format...
+      switch argname {
+        case "pattern" :
+          guard let pattern = argexpr.stringLiteral
+            else { throw Exception("pattern argument must be a string literal") }
+          format = .pattern(pattern)
+        case "descriptor" :
+          format = .signature(try Signature(name: name, syntaxExpression: argexpr))
+        default :
+          throw Exception("invalid argument label: \(argname)")
+      }
+      // Ensure the parameter count of the format matches that of the closure.
+      guard format.parameterCount == closure_sig.parameterCount
+        else { throw Exception("mismatch between capture count (\(format.parameterCount)) and constructor parameter count (\(closure_sig.parameterCount))") }
+    }
+
+    /// Return the text for an invocation of the constructor to instances of the capture types.
+    var invocationText : String {
+      let argstext : String
+      switch format {
+        case .pattern :
+          argstext = "context.inputSource.text(for: node)"
+        case .signature(let signature) :
+          argstext = signature.parameters.enumerated()
+            .map({ index, param in
+              let nodeText = "node[\"\(index)\"]"
+              switch param.type.as(OptionalTypeSyntax.self) {
+                case .some(let optionalType) :
+                  return "{$0.isNull ? nil : \(Rule.extractionCallText(for: optionalType.wrappedType, with: nodeText))}(\(nodeText))"
+                case .none :
+                  return Rule.extractionCallText(for: param.type, with: nodeText)
+              }
+            })
+            .joined(separator: ", ")
+      }
+      return "\(constructor)(\(argstext))"
+    }
   }
 
 
   /// Return the text which defines the function to extract an instance of the associated type from a parse tree node and context.
   var extractionDeclText : String {
     """
-    static func extract\(typeName)(from node: TSNode, in context: ParsingContext) -> \(typeName) {
+    private static func extract\(typeName)(from node: TSNode, in context: ParsingContext) -> \(typeName) {
       \(extractionBodyText)
     }
     """
@@ -81,21 +130,6 @@ class Rule {
   /// Return the text used to create an instance of the given type from the given node.
   static func extractionCallText(for type: TypeSyntax, with nodeText: String) -> String {
     "extract\(type)(from: \(nodeText), in: context)"
-  }
-
-  /// Return the text representing the arguments to a type constructor of the same arity.
-  static func extractionArgumentsText(for signature: Signature) -> String {
-    return signature.parameters.enumerated()
-      .map({ index, param in
-        let nodeText = "node[\"\(index)\"]"
-        switch param.type.as(OptionalTypeSyntax.self) {
-          case .some(let optionalType) :
-            return "{$0.isNull ? nil : \(extractionCallText(for: optionalType.wrappedType, with: nodeText))}(\(nodeText))"
-          case .none :
-            return extractionCallText(for: param.type, with: nodeText)
-        }
-      })
-      .joined(separator: ", ")
   }
 
 
@@ -121,8 +155,7 @@ class Rule {
 // MARK: --
 
 class RuleForParsable : Rule {
-  let signature : Signature
-  let constructor : ClosureExprSyntax
+  let components : Components
 
   required init(decl: DeclGroupSyntax) throws {
     // Get the implementation of `static var productionRule : ProductionRule<Self>`
@@ -130,20 +163,20 @@ class RuleForParsable : Rule {
       else { throw Exception("requires an implementation of 'static var productionRule : ProductionRule<Self>'") }
 
     // Extract the signature and constructor elements of the production rule
-    (signature, constructor) = try Self.decomposeProductionRule(name: "", expr: binding.resultExpr)
+    components = try Components(name: "", expr: binding.resultExpr)
 
     try super.init(decl: decl)
   }
 
   override var extractionBodyText : String {
-    "\(constructor)(\(Self.extractionArgumentsText(for: signature)))"
+    components.invocationText
   }
 }
 
 // MARK: --
 
 class RuleForParsableByCases : Rule {
-  let signaturesAndConstructors : [Components]
+  let components : [Components]
 
   required init(decl: DeclGroupSyntax) throws {
     // Get the implementation of `static var productionRulesBySymbolName : [String: ProductionRule<Self>]`
@@ -155,10 +188,10 @@ class RuleForParsableByCases : Rule {
       else { throw Exception("productionRulesByCaseName must return a non-empty dictionary.") }
 
     // Translate the dictionary literal return value into a list of signature/constructor pairs...
-    signaturesAndConstructors = try dictionaryElementList.map { pair in
+    components = try dictionaryElementList.map { pair in
       guard let name = pair.key.as(StringLiteralExprSyntax.self)?.stringLiteral
         else { throw Exception("productionRulesByCaseName requires string literal keys") }
-      return try Self.decomposeProductionRule(name: name, expr: pair.value)
+      return try Components(name: name, expr: pair.value)
     }
 
     try super.init(decl: decl)
@@ -168,8 +201,8 @@ class RuleForParsableByCases : Rule {
     """
     switch context.language.symbolName(for: node) {
       \(
-        signaturesAndConstructors.map({ (signature, constructor) in
-          return "case \"\(typeName)_\(signature.name)\" : return \(constructor)(\(Self.extractionArgumentsText(for: signature)))"
+        components.map({ component in
+          return "case \"\(typeName)_\(component.name)\" : return \(component.invocationText)"
         })
         .joined(separator: "\n")
       )

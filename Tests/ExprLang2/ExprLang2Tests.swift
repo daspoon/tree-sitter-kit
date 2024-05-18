@@ -6,7 +6,6 @@
 
 import XCTest
 import TSKit
-import ExprLang2
 
 
 typealias Expr = ExprLang.Expr
@@ -25,10 +24,6 @@ extension Name : ExpressibleByStringLiteral {
 
 
 class ExprLang2Tests : XCTestCase {
-
-  /// Use this to generate the text of Sources/Xamples/TypedLang/grammar.js
-  func testGenerateGrammar() throws {
-  }
 
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {
