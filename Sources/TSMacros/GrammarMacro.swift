@@ -8,7 +8,7 @@ import SwiftSyntax
 import SwiftSyntaxMacros
 
 
-public struct Grammar : MemberMacro {
+public struct GrammarMacro : MemberMacro {
 
   static func text(for decl: StructDeclSyntax, in ctx: some MacroExpansionContext) throws -> String {
     // Get the type alias for Root

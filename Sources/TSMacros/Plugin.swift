@@ -12,6 +12,6 @@ import SwiftSyntaxMacros
 struct MacroPlugin : CompilerPlugin
   {
     let providingMacros: [Macro.Type] = [
-      Grammar.self,
+      GrammarMacro.self,
     ]
   }

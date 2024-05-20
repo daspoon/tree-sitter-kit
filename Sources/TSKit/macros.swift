@@ -16,4 +16,4 @@
 ///   `static func extractT(from: TSNode, in: ParsingContext) -> T`
 
 @attached(member, names: /*named(language), */named(translate(parseTree:context:)), arbitrary)
-public macro Grammar() = #externalMacro(module: "TSMacros", type: "Grammar")
+public macro Grammar() = #externalMacro(module: "TSMacros", type: "GrammarMacro")
