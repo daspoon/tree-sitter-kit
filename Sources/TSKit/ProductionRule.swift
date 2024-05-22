@@ -20,10 +20,8 @@ public struct ProductionRule {
   }
 
   /// An analogue of tree-sitter precedence specifications.
-  public enum Precedence : ExpressibleByIntegerLiteral {
+  public enum Precedence {
     case none(Int), left(Int), right(Int)
-    public init(integerLiteral i: Int)
-      { self = .none(i) }
   }
 
   public enum Punctuation { case sep(String), del(String) }
@@ -41,4 +39,17 @@ public struct ProductionRule {
   public struct Choice<T> {
     public init<each A>(_ expression: Expression, _ constructor: (repeat each A) throws -> T) { }
   }
+}
+
+
+extension ProductionRule.Expression : ExpressibleByStringLiteral {
+  public init(stringLiteral s: String) {
+    self = .lit(s)
+  }
+}
+
+
+extension ProductionRule.Precedence : ExpressibleByIntegerLiteral {
+  public init(integerLiteral i: Int)
+    { self = .none(i) }
 }

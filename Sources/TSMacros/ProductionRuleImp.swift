@@ -220,33 +220,42 @@ extension ProductionRuleImp.Punctuation {
 
 extension ProductionRuleImp.Expression {
   init(exprSyntax: ExprSyntax) throws {
-    guard let (name, args) = try exprSyntax.caseComponents
-      else { throw Exception("expecting Expression syntax") }
-    switch (name, args.count) {
-      case ("lit", 1) :
-        guard let string = args[0].expression.as(StringLiteralExprSyntax.self)?.stringLiteral
+    switch exprSyntax.kind {
+      case .functionCallExpr :
+        guard let (name, args) = try exprSyntax.caseComponents
+          else { throw Exception("expecting baseless member access") }
+        switch (name, args.count) {
+          case ("lit", 1) :
+            guard let string = args[0].expression.as(StringLiteralExprSyntax.self)?.stringLiteral
+              else { throw Exception("expecting string literal") }
+            self = .lit(string)
+          case ("pat", 1) :
+            guard let string = args[0].expression.as(StringLiteralExprSyntax.self)?.stringLiteral
+              else { throw Exception("expecting string literal") }
+            self = .pat(string)
+          case ("sym", 1) :
+            guard let name = try args[0].expression.typeName
+              else { throw Exception("expecting type reference") }
+            self = .sym(name)
+          case ("opt", 1) :
+            self = .opt(try Self(exprSyntax: args[0].expression))
+          case ("rep", let n) where 0 < n && n < 3 :
+            self = .rep(try Self(exprSyntax: args[0].expression), n == 2 ? try ProductionRuleImp.Punctuation(exprSyntax: args[1].expression) : nil)
+          case ("seq", 1) :
+            guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
+              else { throw Exception("expecting array argument") }
+            self = .seq(try arrayExpr.elements.map { try Self(exprSyntax: $0.expression) })
+          case ("prec", 2) :
+            self = .prec(try ProductionRuleImp.Precedence(exprSyntax: args[0].expression), try Self(exprSyntax: args[1].expression))
+          case let other :
+            throw Exception("unsupported case: \(other)")
+        }
+      case .stringLiteralExpr :
+        guard let string = exprSyntax.cast(StringLiteralExprSyntax.self).stringLiteral
           else { throw Exception("expecting string literal") }
         self = .lit(string)
-      case ("pat", 1) :
-        guard let string = args[0].expression.as(StringLiteralExprSyntax.self)?.stringLiteral
-          else { throw Exception("expecting string literal") }
-        self = .pat(string)
-      case ("sym", 1) :
-        guard let name = try args[0].expression.typeName
-          else { throw Exception("expecting type reference") }
-        self = .sym(name)
-      case ("opt", 1) :
-        self = .opt(try Self(exprSyntax: args[0].expression))
-      case ("rep", let n) where 0 < n && n < 3 :
-        self = .rep(try Self(exprSyntax: args[0].expression), n == 2 ? try ProductionRuleImp.Punctuation(exprSyntax: args[1].expression) : nil)
-      case ("seq", 1) :
-        guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
-          else { throw Exception("expecting array argument") }
-        self = .seq(try arrayExpr.elements.map { try Self(exprSyntax: $0.expression) })
-      case ("prec", 2) :
-        self = .prec(try ProductionRuleImp.Precedence(exprSyntax: args[0].expression), try Self(exprSyntax: args[1].expression))
-      case let other :
-        throw Exception("unsupported case: \(other)")
+      default :
+        throw Exception("invalid expression syntax")
     }
   }
 }
