@@ -5,6 +5,7 @@
 */
 
 
+#if false
 /// Represents the grammar symbol for either a *Parsable* type or a specific case of a *ParsableByCases* type.
 
 public struct Symbol {
@@ -48,3 +49,4 @@ extension Symbol : Comparable {
     lhs.name.removing(prefix: "_") < rhs.name.removing(prefix: "_")
   }
 }
+#endif

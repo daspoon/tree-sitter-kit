@@ -5,9 +5,6 @@
 */
 
 
-extension String : Parsable {
-}
-
 extension String {
   /// Return the concatenation of a number of newline characters, defaulting to 1.
   static func newline(_ n: Int = 1) -> String

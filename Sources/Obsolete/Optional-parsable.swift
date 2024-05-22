@@ -5,6 +5,7 @@
 */
 
 
+#if false
 extension Optional : Parsable where Wrapped : Parsable {
   public static var productionRule : ProductionRule<Self> {
     let wrappedRule = Wrapped.productionRule
@@ -16,3 +17,4 @@ extension Optional : Parsable where Wrapped : Parsable {
     )
   }
 }
+#endif

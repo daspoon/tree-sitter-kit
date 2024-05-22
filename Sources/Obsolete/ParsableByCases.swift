@@ -5,6 +5,7 @@
 */
 
 
+#if false
 /// *ParsableByCases* identifies types which are parsable by more than one grammar
 /// productions rule, such as enums. It implements *productionRule* as a hidden
 /// rule mapping to a choice of sub-rules.
@@ -27,3 +28,4 @@ extension ParsableByCases {
   public static var symbolIsHidden : Bool
     { true }
 }
+#endif

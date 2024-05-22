@@ -4,6 +4,7 @@
 
 */
 
+#if false
 import Foundation
 
 
@@ -41,3 +42,4 @@ extension Parsable {
   public static var typeName : String
     { "\(Self.self)" }
 }
+#endif

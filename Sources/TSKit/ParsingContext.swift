@@ -15,8 +15,4 @@ public struct ParsingContext {
     language = l
     inputSource = s
   }
-
-  public func translator<T: Parsable>(for type: T.Type = T.self) -> (TSNode, Self) -> T {
-    fatalError("todo")
-  }
 }

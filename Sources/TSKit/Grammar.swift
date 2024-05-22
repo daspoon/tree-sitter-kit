@@ -8,13 +8,16 @@
 import Foundation
 
 
-/// A *Grammar* generates the javascript source for a tree-sitter grammar with a specified name. The production rules are determined by the *Root* type and each *Parsable* type reachable through its *syntaxExpression*.
+/// A *Grammar* generates the javascript source for a tree-sitter grammar with a specified name.
 
 public protocol Grammar<Root> {
-  associatedtype Root : Parsable
+  associatedtype Root
 
   /// The grammar/language name. The default implementation returns the receiver's type name.
   static var name : String { get }
+
+  /// The set of production rules...
+  static var productionRules : [ProductionRule] { get }
 
   /// Optionally specifies the pattern for the word rule. The default implementation returns nil.
   static var word : String? { get }
@@ -24,6 +27,9 @@ public protocol Grammar<Root> {
 
   /// Produce an instance of the root type from the the root node of a parse tree. Implementation provided.
   static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
+
+  /// Return *true* if the rule for the given type is hidden. Implementation provided.
+  static func isRuleHidden(for type: Any.Type) -> Bool
 }
 
 
@@ -61,7 +67,7 @@ extension Grammar {
       else { throw TSError("start node has unexpected type (\(language.symbolName(for: startNode))) and/or count \(startNode.count)") }
     // Ensure the sole child of the start node either corresponds to a production of this type or is hidden (e.g. corresponds to an enum case).
     let rootNode = startNode[0]
-    guard Root.symbolIsHidden || language.symbolName(for: rootNode) == Root.typeName
+    guard isRuleHidden(for: Root.self) || language.symbolName(for: rootNode) == "\(Root.self)"
       else { throw TSError("root node has unexpected type (\(language.symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
     return translate(parseTree: rootNode, in: ParsingContext(language: language, inputSource: src))

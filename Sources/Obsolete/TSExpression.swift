@@ -5,6 +5,7 @@
 */
 
 
+#if false
 /// *TSExpression* represents a syntax expression within a tree-sitter grammar.
 public indirect enum TSExpression {
   /// A token matching a specific string.
@@ -82,3 +83,4 @@ extension TSExpression.Prec : ExpressibleByIntegerLiteral {
   public init(integerLiteral value: Int)
     { self = .none(value) }
 }
+#endif

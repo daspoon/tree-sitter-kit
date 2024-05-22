@@ -5,6 +5,7 @@
 */
 
 
+#if false
 public protocol ParsableAsSeparatedSequence<Element> : Parsable {
   associatedtype Element : Parsable
   static var separator : String { get }
@@ -17,3 +18,4 @@ extension ParsableAsSeparatedSequence {
   public static var brackets : (lhs: String, rhs: String)?
     { nil }
 }
+#endif
