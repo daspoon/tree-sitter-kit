@@ -43,13 +43,23 @@ public struct GrammarMacro : MemberMacro {
     // Get the symbol for the root type
     let rootSymbol = try symbolLookup(rootType.text)
 
+    // Get the word symbol name from the declaration of `static var word : String?`, defaulting to nil.
+    let word : (symbol: String, pattern: String)?
+    if let wordBinding = decl.variableBindingWith(name: "word", type: "String?", isStatic: true) {
+      guard let pattern = wordBinding.resultExpr?.as(StringLiteralExprSyntax.self)?.stringLiteral
+        else { throw Exception("word must return a string literal") }
+      word = ("Word", pattern)
+    }
+    else {
+      word = nil
+    }
+
     // Form the list of symbol names and syntax expression pairs from the defined rules, prepending
-    // an implicit start tule.
+    // an implicit start rule and optionally appending the Word rule.
     let symbolNamesAndRawExpressions
       = [("start", ProductionRuleImp.RawExpression.symbol(rootSymbol))]
       + (try rules.flatMap({try $0.getSymbolNamesAndRawExpressions(symbolLookup)}))
-
-    // TODO: Get the word symbol name from the declaration of `static var word : String?`, defaulting to nil.
+      + (word.map {[($0.symbol, ProductionRuleImp.RawExpression.pattern($0.pattern))]} ?? [])
 
     // Create a json representation of the grammar; this has the consequence of ensuring that production rules
     // exist for all referenced types.
@@ -64,6 +74,7 @@ public struct GrammarMacro : MemberMacro {
               .joined(separator: ",\n    ")
           )
         },
+        \(word.map {"\"word\": \"\($0.symbol)\","} ?? "")
         "extras": [\(ProductionRuleImp.RawExpression.whitespace.json)],
         "conflicts": [],
         "precedences": [],
