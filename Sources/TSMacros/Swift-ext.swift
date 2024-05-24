@@ -9,6 +9,15 @@
 import SwiftSyntax
 
 
+extension BinaryInteger {
+  public mutating func postincrement() -> Self {
+    defer { self += 1 }
+    return self
+  }
+}
+
+// MARK: -
+
 extension Collection {
   public var only : Element? {
     count == 1 ? first : nil

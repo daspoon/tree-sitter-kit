@@ -9,42 +9,19 @@ import XCTest
 import ExprLang2
 
 
-class TmpTest : XCTestCase {
-  func testBuild() throws { }
-}
-
 @Grammar
 struct ExprLang : Grammar {
   typealias Root = Expr
-
-  indirect enum Expr : Equatable {
-    case name(Name)
-    case value(Value)
-    case apply(Expr, [Expr])
-    static func op(_ name: String, _ args: [Expr]) -> Self {
-      .apply(.name(Name(text: name)), args)
-    }
-  }
-
-  typealias ExprList = Array<Expr>
-
-  struct Name : Equatable {
-    let text : String
-  }
-
-  struct Value : Equatable {
-    let int : Int
-  }
 
   static var productionRules : [ProductionRule] {
     return [
       .init(Expr.self, choicesByName: [
         "name": .init(.sym(Name.self)) { name in .name(name) },
         "value": .init(.sym(Value.self)) { value in .value(value) },
-        "add": .init(.prec(.left(1), .seq([.sym(Expr.self), .pat("(+|-)"), .sym(Expr.self)]))) { lhs, op, rhs in .op(op, [lhs, rhs]) },
-        "mul": .init(.prec(.left(2), .seq([.sym(Expr.self), .pat("(*|/)"), .sym(Expr.self)]))) { lhs, op, rhs in .op(op, [lhs, rhs]) },
-        "pow": .init(.prec(.right(3), .seq([.sym(Expr.self), .pat("(^)"), .sym(Expr.self)]))) { lhs, op, rhs in .op(op, [lhs, rhs]) },
-        "neg": .init(.prec(.left(4), .seq([.pat("-"), .sym(Expr.self)]))) { op, arg in .op(op, [arg]) },
+        "add": .init(.prec(.left(1), .seq([.sym(Expr.self), .alt(["+", "-"]), .sym(Expr.self)]))) { lhs, op, rhs in .op(op, [lhs, rhs]) },
+        "mul": .init(.prec(.left(2), .seq([.sym(Expr.self), .alt(["*", "/"]), .sym(Expr.self)]))) { lhs, op, rhs in .op(op, [lhs, rhs]) },
+        "pow": .init(.prec(.right(3), .seq([.sym(Expr.self), .alt(["^"]), .sym(Expr.self)]))) { lhs, op, rhs in .op(op, [lhs, rhs]) },
+        "neg": .init(.prec(.left(4), .seq([.alt(["-"]), .sym(Expr.self)]))) { op, arg in .op(op, [arg]) },
         "apply": .init(.prec(5, .seq([.sym(Expr.self), "(", .opt(.sym(ExprList.self)), ")"]))) { fun, args in .apply(fun, args ?? []) },
         "paren": .init(.seq(["(", .sym(Expr.self), ")"])) { expr in expr },
       ]),
@@ -60,4 +37,49 @@ struct ExprLang : Grammar {
   }
 
   static let language = TSLanguage(tree_sitter_ExprLang())
+}
+
+
+// MARK: -
+
+indirect enum Expr : Equatable {
+  case name(Name)
+  case value(Value)
+  case apply(Expr, [Expr])
+  static func op(_ name: String, _ args: [Expr]) -> Self {
+    .apply(.name(Name(text: name)), args)
+  }
+}
+
+extension Expr : ExpressibleByStringLiteral {
+  init(stringLiteral text: String) {
+    self = .name(Name(text: text))
+  }
+}
+
+typealias ExprList = Array<Expr>
+
+
+// MARK: -
+
+struct Name : Equatable {
+  let text : String
+}
+
+extension Name : ExpressibleByStringLiteral {
+  init(stringLiteral s: String) {
+    self.init(text: s)
+  }
+}
+
+// MARK: -
+
+struct Value : Equatable {
+  let int : Int
+}
+
+extension Value : ExpressibleByIntegerLiteral {
+  init(integerLiteral i: Int) {
+    self.init(int: i)
+  }
 }

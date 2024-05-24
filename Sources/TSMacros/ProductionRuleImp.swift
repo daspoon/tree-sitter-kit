@@ -9,27 +9,111 @@ import SwiftSyntaxMacros
 
 
 struct ProductionRuleImp {
-  enum Precedence { case none(Int), left(Int), right(Int) }
+  enum Precedence {
+    case none(Int), left(Int), right(Int)
+    var jsonType : String {
+      switch self {
+        case .none : "PREC"
+        case .left : "PREC_LEFT"
+        case .right : "PREC_RIGHT"
+      }
+    }
+    var jsonValue : Int {
+      switch self {
+        case .none(let v) : v
+        case .left(let v) : v
+        case .right(let v) : v
+      }
+    }
+  }
+
   enum Punctuation { case sep(String), del(String) }
+
+  indirect enum RawExpression {
+    case blank
+    case string(String)
+    case pattern(String)
+    case symbol(String)
+    case seq([RawExpression])
+    case choice([RawExpression])
+    case field(String, RawExpression)
+    case prec(Precedence, RawExpression)
+    case `repeat`(RawExpression)
+
+    static var whitespace : Self {
+      .pattern("\\\\s")
+    }
+
+    var json : String {
+      switch self {
+        case .blank : """
+          {"type": "BLANK"}
+          """
+        case .string(let value) : """
+          {"type": "STRING", "value": "\(value)"}
+          """
+        case .pattern(let value) : """
+          {"type": "PATTERN", "value": "\(value)"}
+          """
+        case .symbol(let name) : """
+          {"type": "SYMBOL", "name": "\(name)"}
+          """
+        case .choice(let members) : """
+          {"type": "CHOICE", "members": [\(members.map(\.json).joined(separator: ", "))]}
+          """
+        case .seq(let members) : """
+          {"type": "SEQ", "members": [\(members.map(\.json).joined(separator: ", "))]}
+          """
+        case .prec(let prec, let content) : """
+          {"type": "\(prec.jsonType)", "value": \(prec.jsonValue), "content": \(content.json)}
+          """
+        case .field(let name, let content) : """
+          {"type": "FIELD", "name": "\(name)", "content": \(content.json)}
+          """
+        case .repeat(let content) : """
+          {"type": "REPEAT", "content": \(content.json)}
+          """
+      }
+    }
+  }
 
   indirect enum Expression {
     case lit(String)
     case pat(String)
     case sym(String)
+    case alt([String])
     case opt(Expression)
     case rep(Expression, Punctuation?=nil)
     case seq([Expression])
     case prec(Precedence, Expression)
 
-    var referencedSymbolNames : Set<String> {
-      switch self {
-        case .lit, .pat : []
-        case .sym(let name) : [name]
-        case .opt(let expr) : expr.referencedSymbolNames
-        case .rep(let expr, _) : expr.referencedSymbolNames
-        case .seq(let exprs) : exprs.reduce(Set([])) { names, expr in names.union(expr.referencedSymbolNames) }
-        case .prec(_, let expr) : expr.referencedSymbolNames
+    func getRawExpression(_ lookup: (String) throws -> String) throws -> RawExpression {
+      var index : Int = 0
+      func walk(_ expr: Expression) throws -> RawExpression {
+        switch expr {
+          case .lit(let string) :
+            .string(string)
+          case .pat(let pattern) :
+            .field("\(index.postincrement())", .pattern(pattern))
+          case .sym(let typeName) :
+            .field("\(index.postincrement())", .symbol(try lookup(typeName)))
+          case .alt(let strings) :
+            .field("\(index.postincrement())", .choice(strings.map {.string($0)}))
+          case .opt(let expr) :
+            .choice([try walk(expr), .blank])
+          case .rep(let expr, .none) :
+            {.seq([$0, .repeat($0)])}(try walk(expr))
+          case .rep(let expr, .sep(let sep)) :
+            {.seq([$0, .repeat(.seq([.string(sep), $0]))])}(try walk(expr))
+          case .rep(let expr, .del(let del)) :
+            {.seq([$0, .repeat($0)])}(.seq([try walk(expr), .string(del)]))
+          case .seq(let exprs) :
+            .seq(try exprs.map({try walk($0)}))
+          case .prec(let prec, let expr) :
+            .prec(prec, try walk(expr))
+        }
       }
+      return try walk(self)
     }
   }
 
@@ -43,6 +127,7 @@ struct ProductionRuleImp {
         case .lit : self = .tuple([])
         case .pat : self = .symbol("String")
         case .sym(let name) : self = .symbol(name)
+        case .alt : self = .symbol("String")
         case .opt(let e1) :
           switch try Self(expression: e1) {
             case .symbol(let name) : self = .tuple([(name, true)])
@@ -146,6 +231,10 @@ struct ProductionRuleImp {
     if case .multiple = form { true } else { false }
   }
 
+  var symbolName : String {
+    isSymbolHidden ? "_" + typeName : typeName
+  }
+
   var extractionBodyText : String {
     switch form {
       case .single(let choice) :
@@ -166,12 +255,13 @@ struct ProductionRuleImp {
     }
   }
 
-  var referencedSymbolNames : Set<String> {
-    switch form {
+  func getSymbolNamesAndRawExpressions(_ lookup: (String) throws -> String) throws -> [(symbolName: String, rawExpression: RawExpression)] {
+    return switch form {
       case .single(let choice) :
-        choice.expression.referencedSymbolNames
+        [(symbolName, try choice.expression.getRawExpression(lookup))]
       case .multiple(let choicesByName) :
-        choicesByName.values.reduce(Set([])) { names, choice in names.union(choice.expression.referencedSymbolNames) }
+        [(symbolName, .choice(choicesByName.map({name, _ in .symbol(typeName + "_" + name)})))]
+          + (try choicesByName.map({ name, choice in (typeName + "_" + name, try choice.expression.getRawExpression(lookup)) }))
     }
   }
 }
@@ -237,6 +327,14 @@ extension ProductionRuleImp.Expression {
             guard let name = try args[0].expression.typeName
               else { throw Exception("expecting type reference") }
             self = .sym(name)
+          case ("alt", 1) :
+            guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
+              else { throw Exception("expecting array argument") }
+            self = .alt(try arrayExpr.elements.map {
+              guard let string = $0.expression.as(StringLiteralExprSyntax.self)?.stringLiteral
+                else { throw Exception("expecting string literal: \($0.kind); \($0)") }
+              return string
+            })
           case ("opt", 1) :
             self = .opt(try Self(exprSyntax: args[0].expression))
           case ("rep", let n) where 0 < n && n < 3 :

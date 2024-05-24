@@ -13,6 +13,7 @@ public struct ProductionRule {
     case lit(String)
     case pat(String)
     case sym(Any.Type)
+    case alt([String])
     case opt(Expression)
     case rep(Expression, Punctuation?=nil)
     case seq([Expression])

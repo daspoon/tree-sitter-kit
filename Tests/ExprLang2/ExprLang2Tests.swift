@@ -8,21 +8,6 @@ import XCTest
 import TSKit
 
 
-typealias Expr = ExprLang.Expr
-extension Expr : ExpressibleByStringLiteral {
-  init(stringLiteral text: String) {
-    self = .name(Name(text: text))
-  }
-}
-
-typealias Name = ExprLang.Name
-extension Name : ExpressibleByStringLiteral {
-  init(stringLiteral s: String) {
-    self.init(text: s)
-  }
-}
-
-
 class ExprLang2Tests : XCTestCase {
 
   /// Ensure the result of parsing is as expected for a variety of example terms...
@@ -65,7 +50,6 @@ class ExprLang2Tests : XCTestCase {
   /// Ensure that parsing fails for various malformed strings...
   func testParsingFailure() throws {
     let examples : [String] = [
-      "12",     // no numbers
       "x + ",   // missing rhs arg
       "x % y",  // unknown symbol '%'
       "()",     // no tuples
