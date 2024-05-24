@@ -13,11 +13,11 @@ struct GrammarRep {
   // The name of the 'Root' typealias, indicating the top-level language element.
   let rootType : String
   // The defined production rules.
-  let definedRules : [ProductionRuleImp]
+  let definedRules : [ProductionRule]
   // The symbol name and patter for the `word` attribute, if any.
   let word : (symbol: String, pattern: String)?
   // Return the complete list of production rules as pairs of symbols and syntax expressions.
-  let allRules : [(symbol: String, expression: ProductionRuleImp.RawExpression)]
+  let allRules : [(symbol: String, expression: RawExpression)]
 
   // Initialize an instance from a struct declaration which conforms to the Grammar protocol.
   init(structDecl decl: StructDeclSyntax) throws {
@@ -43,7 +43,7 @@ struct GrammarRep {
       else { throw Exception("`productionRules` is required") }
     guard let arrayExpr = rulesBinding.resultExpr?.as(ArrayExprSyntax.self)
       else { throw Exception("`productionRules` must return an array literal") }
-    definedRules = try arrayExpr.elements.map({try ProductionRuleImp($0.expression)})
+    definedRules = try arrayExpr.elements.map({try ProductionRule($0.expression)})
 
     // Define a mapping of type names to symbol names for those production rules, along with
     // a translation method which throws for undefined types.
@@ -52,9 +52,9 @@ struct GrammarRep {
       try symbolsByType[typeName] ?? { throw Exception("no rule for type '\(typeName)'") }()
     }
 
-    allRules = [("start", ProductionRuleImp.RawExpression.symbol(try symbolLookup(rootType)))]
+    allRules = [("start", RawExpression.symbol(try symbolLookup(rootType)))]
       + (try definedRules.flatMap({try $0.getSymbolNamesAndRawExpressions(symbolLookup(_:))}))
-      + (word.map {[($0.symbol, ProductionRuleImp.RawExpression.pattern($0.pattern))]} ?? [])
+      + (word.map {[($0.symbol, RawExpression.pattern($0.pattern))]} ?? [])
   }
 
 
@@ -72,7 +72,7 @@ struct GrammarRep {
         )
       },
       \(word.map {"\"word\": \"\($0.symbol)\","} ?? "")
-      "extras": [\(ProductionRuleImp.RawExpression.whitespace.json)],
+      "extras": [\(RawExpression.whitespace.json)],
       "conflicts": [],
       "precedences": [],
       "externals": [],

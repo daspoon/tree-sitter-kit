@@ -23,34 +23,6 @@ extension ClosureSignatureSyntax {
 }
 
 
-extension DeclSyntax {
-  public var typeName : String? {
-    switch kind {
-      case .classDecl :
-        return self.cast(ClassDeclSyntax.self).name.text
-      case .enumDecl :
-        return self.cast(EnumDeclSyntax.self).name.text
-      case .structDecl :
-        return self.cast(StructDeclSyntax.self).name.text
-      default :
-        return nil
-    }
-  }
-
-  public var inheritanceClause : InheritanceClauseSyntax? {
-    switch kind {
-      case .classDecl :
-        return self.as(ClassDeclSyntax.self)?.inheritanceClause
-      case .enumDecl :
-        return self.as(EnumDeclSyntax.self)?.inheritanceClause
-      case .structDecl :
-        return self.as(StructDeclSyntax.self)?.inheritanceClause
-      default :
-        return nil
-    }
-  }
-}
-
 // MARK: -
 
 extension DeclGroupSyntax {
@@ -59,10 +31,6 @@ extension DeclGroupSyntax {
     return modifiers.map({$0.name.text})
       .filter({options.contains($0)})
       .joined(separator: " ")
-  }
-
-  public var typeName : String? {
-    self.as(DeclSyntax.self)?.typeName
   }
 
   public func aliasType(for name: String) -> TypeSyntax? {
@@ -87,38 +55,7 @@ extension DeclGroupSyntax {
       })
       .first
   }
-
-  public var initMethods : [InitializerDeclSyntax] {
-    return memberBlock.members
-      .compactMap({$0.decl.as(InitializerDeclSyntax.self)})
-  }
-
-  public var staticFunctionsReturningSelf : [FunctionDeclSyntax] {
-    return memberBlock.members
-      .compactMap({$0.decl.as(FunctionDeclSyntax.self)})
-      .filter({$0.isStatic})
-      .filter({
-        guard let rtype = $0.signature.returnClause?.type else { return false }
-        return rtype == "Self" || (typeName.map {rtype == $0} ?? false)
-      })
-  }
-
-  public var storedProperties : [StoredPropertyInfo] {
-    memberBlock.members.compactMap({StoredPropertyInfo($0.decl)})
-  }
 }
-
-// MARK: -
-
-extension EnumDeclSyntax {
-  var enumCaseElements : [EnumCaseElementSyntax] {
-    return memberBlock.members
-      .compactMap({$0.decl.as(EnumCaseDeclSyntax.self)})
-      .reduce([]) { $0 + $1.elements }
-  }
-}
-
-// MARK: -
 
 extension ExprSyntax {
   var caseComponents : (name: String, args: LabeledExprListSyntax)? {
@@ -180,10 +117,6 @@ extension StringLiteralExprSyntax {
     guard let stringSegment = segments.first?.as(StringSegmentSyntax.self), segments.count == 1
       else { return nil }
     return stringSegment.trimmedDescription
-  }
-
-  var text : String {
-    "\(segments)"
   }
 }
 

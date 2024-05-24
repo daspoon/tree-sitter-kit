@@ -5,7 +5,6 @@
 */
 
 import TSKit
-import XCTest
 import ExprLang2
 
 
