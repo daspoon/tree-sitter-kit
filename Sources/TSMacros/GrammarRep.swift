@@ -25,7 +25,7 @@ struct GrammarRep {
 
     // Get the name of the Root typealias.
     rootType = try decl.aliasType(for: "Root")?.text
-      ?? { throw Exception("\(decl.typeName ?? "?") requires a typealias for `Root`") }()
+      ?? { throw Exception("\(decl.name) requires a typealias for `Root`") }()
 
     // Get the pattern for the 'word' symbol, if any.
     if let wordBinding = decl.variableBindingWith(name: "word", type: "String?", isStatic: true) {
