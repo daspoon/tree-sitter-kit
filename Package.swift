@@ -5,7 +5,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "TreeSitterKit",
-    platforms: [.macOS(.v14), .iOS(.v17), .macCatalyst(.v14)],
+    platforms: [.macOS(.v10_15), .iOS(.v13), .macCatalyst(.v13)],
     products: [
         .library(name: "TSKit", targets: ["TSKit"]),
         .plugin(name: "TSGen", targets: ["TSGen"]),
