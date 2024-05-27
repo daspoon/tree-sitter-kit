@@ -8,7 +8,7 @@ import XCTest
 import TSKit
 
 
-class ExprLang2Tests : XCTestCase {
+class ExprLangTests : XCTestCase {
 
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {

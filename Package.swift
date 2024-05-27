@@ -37,47 +37,30 @@ let package = Package(
                 .writeToPackageDirectory(reason: "To generate parser source files"),
               ])
         ),
-        // Some example language targets for testing purposes...
-        .target(name: "ExprLang1",
+        // Some examples which pair language and parser targets for testing purposes...
+        .target(name: "ExprLang",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
             ],
-            path: "Sources/Xamples/ExprLang1",
+            path: "Sources/Examples/ExprLang",
             cSettings: [.headerSearchPath("src")],
             swiftSettings: [.interoperabilityMode(.C)]
         ),
-        .target(name: "ExprLang2",
+        .testTarget(name: "ExprLangTests",
             dependencies: [
-              .product(name: "TreeSitter", package: "tree-sitter"),
+                "TSKit",
+                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                "ExprLang",
             ],
-            path: "Sources/Xamples/ExprLang2",
-            cSettings: [.headerSearchPath("src")],
-            swiftSettings: [.interoperabilityMode(.C)]
+            path: "Tests/ExprLang"
         ),
         .target(name: "TypedLang",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
             ],
-            path: "Sources/Xamples/TypedLang",
+            path: "Sources/Examples/TypedLang",
             cSettings: [.headerSearchPath("src")],
             swiftSettings: [.interoperabilityMode(.C)]
-        ),
-        // Test targets for the sample language targets...
-        .testTarget(name: "ExprLang1Tests",
-            dependencies: [
-                "TSKit",
-                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-                "ExprLang1",
-            ],
-            path: "Tests/ExprLang1"
-        ),
-        .testTarget(name: "ExprLang2Tests",
-            dependencies: [
-                "TSKit",
-                .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-                "ExprLang2",
-            ],
-            path: "Tests/ExprLang2"
         ),
         .testTarget(name: "TypedLangTests",
             dependencies: [

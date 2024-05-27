@@ -5,7 +5,7 @@
 */
 
 import TSKit
-import ExprLang2
+import ExprLang
 
 
 @Grammar
