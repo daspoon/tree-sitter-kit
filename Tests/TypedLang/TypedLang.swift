@@ -119,10 +119,10 @@ struct TypedLang : Grammar {
         Block(decls: defs ?? [], expr: expr)
       },
       .init(Def.self, choicesByName: [
-        "typedef": .init(.sym(Typedef.self)) { x in Def.typedef(x) },
-        "enum": .init(.sym(Enum.self)) { x in Def.enum(x) },
-        "let": .init(.sym(Let.self)) { x in Def.let(x) },
-        "fun": .init(.sym(Fun.self)) { x in Def.fun(x) },
+        "typedef": .init(.seq([.sym(Typedef.self)])) { x in Def.typedef(x) },
+        "enum": .init(.seq([.sym(Enum.self)])) { x in Def.enum(x) },
+        "let": .init(.seq([.sym(Let.self)])) { x in Def.let(x) },
+        "fun": .init(.seq([.sym(Fun.self)])) { x in Def.fun(x) },
       ]),
       .init(DefList.self, .rep(.sym(Def.self), .del(";"))) { defs in
         defs
@@ -146,11 +146,11 @@ struct TypedLang : Grammar {
         "call" : .init(.prec(.left(9), .seq([.sym(Expr.self), "(", .opt(.sym(ExprList.self)), ")"]))) { fun, args in
           .apply(fun, .paren(args))
         },
-        "lambda" : .init(.seq(["!", .sym(ParamList.self), "->", .sym(TypeExpr.self), ".", .sym(Expr.self)])) { plist, rtype, expr in
-          .lambda(plist, rtype, expr)
+        "lambda" : .init(.seq(["!", "(", .opt(.sym(ParamList.self)), ")", "->", .sym(TypeExpr.self), ".", .sym(Expr.self)])) { plist, rtype, expr in
+          .lambda(plist ?? [], rtype, expr)
         },
-        "mu" : .init(.seq(["!", .sym(Name.self), .sym(ParamList.self), "->", .sym(TypeExpr.self), ".", .sym(Expr.self)])) { name, plist, rtype, expr in
-          .mu(name, plist, rtype, expr)
+        "mu" : .init(.seq(["!", .sym(Name.self), "(", .opt(.sym(ParamList.self)), ")", "->", .sym(TypeExpr.self), ".", .sym(Expr.self)])) { name, plist, rtype, expr in
+          .mu(name, plist ?? [], rtype, expr)
         },
         "paren" : .init(.seq(["(", .opt(.sym(ExprList.self)), ")"])) { elist in
           .paren(elist)
@@ -158,39 +158,40 @@ struct TypedLang : Grammar {
         "project" : .init(.prec(.left(8), .seq([.sym(Expr.self), ".", .sym(Int.self)]))) { expr, index in
           .project(expr, index)
         },
+        // match f(x) { nil() => 1, cons(h,t) => 2 }
         "match" : .init(.seq(["match", .sym(Expr.self), "{", .sym(MatchCaseList.self), "}"])) { expr, caselist in
           .match(expr, caselist)
         },
         "block" : .init(.seq(["{", .sym(Block.self), "}"])) { block in
           .block(block)
         },
-        "eql" : .init(.prec(.left(1), .seq([.sym(Expr.self), .pat("(==|<|>|<=|>=)"), .sym(Expr.self)]))) { lhs, op, rhs in
+        "eql" : .init(.prec(.left(1), .seq([.sym(Expr.self), .alt(["==", "<", ">", "<=", ">="]), .sym(Expr.self)]))) { lhs, op, rhs in
           .infix(lhs, op, rhs)
         },
-        "or"  : .init(.prec(.left(2), .seq([.sym(Expr.self), .pat("||"), .sym(Expr.self)]))) { lhs, op, rhs in
+        "or"  : .init(.prec(.left(2), .seq([.sym(Expr.self), .alt(["|", "|"]), .sym(Expr.self)]))) { lhs, op, rhs in
           .infix(lhs, op, rhs)
         },
-        "and" : .init(.prec(.left(3), .seq([.sym(Expr.self), .pat("&&"), .sym(Expr.self)]))) { lhs, op, rhs in
+        "and" : .init(.prec(.left(3), .seq([.sym(Expr.self), .alt(["&&"]), .sym(Expr.self)]))) { lhs, op, rhs in
           .infix(lhs, op, rhs)
         },
-        "add" : .init(.prec(.left(4), .seq([.sym(Expr.self), .pat("(+|-)"), .sym(Expr.self)]))) { lhs, op, rhs in
+        "add" : .init(.prec(.left(4), .seq([.sym(Expr.self), .alt(["+", "-"]), .sym(Expr.self)]))) { lhs, op, rhs in
           .infix(lhs, op, rhs)
         },
-        "mul" : .init(.prec(.left(5), .seq([.sym(Expr.self), .pat("(*|/|%)"), .sym(Expr.self)]))) { lhs, op, rhs in
+        "mul" : .init(.prec(.left(5), .seq([.sym(Expr.self), .alt(["*", "/", "%"]), .sym(Expr.self)]))) { lhs, op, rhs in
           .infix(lhs, op, rhs)
         },
-        "pow" : .init(.prec(.right(6), .seq([.sym(Expr.self), .pat("^"), .sym(Expr.self)]))) { lhs, op, rhs in
+        "pow" : .init(.prec(.right(6), .seq([.sym(Expr.self), .alt(["^"]), .sym(Expr.self)]))) { lhs, op, rhs in
           .infix(lhs, op, rhs)
         },
-        "neg" : .init(.prec(7, .seq([.pat("-"), .sym(Expr.self)]))) { op, arg in
+        "neg" : .init(.prec(7, .seq([.alt(["-"]), .sym(Expr.self)]))) { op, arg in
           .prefix(op, arg)
         },
       ]),
       .init(ExprList.self, .rep(.sym(Expr.self), .sep(","))) { exprs in
         exprs
       },
-      .init(Fun.self, .seq(["fun", .sym(Name.self), "(", .sym(ParamList.self), ")", "->", .sym(TypeExpr.self), "{", .sym(Expr.self), "}"])) { name, params, rtype, body in
-        Fun(name: name, params: params, type: rtype, expr: body)
+      .init(Fun.self, .seq(["fun", .sym(Name.self), "(", .opt(.sym(ParamList.self)), ")", "->", .sym(TypeExpr.self), "{", .sym(Expr.self), "}"])) { name, params, rtype, body in
+        Fun(name: name, params: params ?? [], type: rtype, expr: body)
       },
       .init(Int.self, .pat("[0-9]+")) { string in
         Int(string)!
@@ -198,7 +199,7 @@ struct TypedLang : Grammar {
       .init(Let.self, .seq(["let", .sym(Param.self), "=", .sym(Expr.self)])) { param, expr in
         Let(param: param, expr: expr)
       },
-      .init(MatchCase.self, .seq([.sym(Name.self), .opt(.sym(NameList.self)), "=>", .sym(Expr.self)])) { name, params, expr in
+      .init(MatchCase.self, .seq([.sym(Name.self), "(", .opt(.sym(NameList.self)), ")", "=>", .sym(Expr.self)])) { name, params, expr in
         MatchCase(name: name, params: params ?? [], expr: expr)
       },
       .init(MatchCaseList.self, .rep(.sym(MatchCase.self), .sep(","))) { cases in

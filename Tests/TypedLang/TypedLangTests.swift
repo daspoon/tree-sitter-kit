@@ -10,11 +10,6 @@ import TSKit
 
 class TypedLangTests : XCTestCase
   {
-    /// Use this to generate the text of Sources/Xamples/TypedLang/grammar.js
-    func testGenerateGrammar() throws {
-//      print(Grammar(name: "TypedLang", rootType: Block.self, wordType: Word.self).javascript)
-    }
-
     /// Test the translation of various parse trees into *Expr* instances.
     func testExpr() throws {
       let examples : [(text: String, expr: Expr)] = [
