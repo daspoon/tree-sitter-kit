@@ -32,7 +32,7 @@ let package = Package(
         // A command plugin to generate parsers for 'language' targets.
         .plugin(name: "TSGen",
             capability: .command(
-              intent: .custom(verb: "generate-parser", description: "Invoke tree-sitter to generate parser source files from grammar.js"),
+              intent: .custom(verb: "generate-parser", description: "Invoke tree-sitter to generate parser source files from grammar.json"),
               permissions: [
                 .writeToPackageDirectory(reason: "To generate parser source files"),
               ])

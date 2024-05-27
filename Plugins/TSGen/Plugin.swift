@@ -19,7 +19,7 @@ struct TreeSitterGen : CommandPlugin
     let treeSitterPath = "/usr/local/bin/tree-sitter"
 
     /// Names and locations of generated files.
-    let grammarFileName = "grammar.js"
+    let grammarFileName = "grammar.json"
     func parserCDir(in directory: Path) -> Path
       { directory.appending(["src"]) }
     func parserCPath(in directory: Path) -> Path
@@ -47,9 +47,6 @@ struct TreeSitterGen : CommandPlugin
 
         let fileManager = FileManager.default
 
-        // Regex to extract the grammar name from the content of each grammar.js
-        let grammarNameRegex = try Regex("module\\.exports\\s*=\\s*grammar\\s*\\(\\s*{\\s*name\\s*:\\s*'([a-zA-Z_]+)'")
-
         // Iterate over the target names specified as options
         for target in try context.package.targets(named: args.extractOption(named: "target")) {
           guard let target = target as? SourceModuleTarget
@@ -64,11 +61,8 @@ struct TreeSitterGen : CommandPlugin
           guard fileManager.fileExists(atPath: grammarPath)
             else { print("target \(target.name) does not contain '\(grammarFileName)'"); continue }
 
-          // Read grammar.js and extract the specified name
-          let grammarText = try String(contentsOfFile: grammarPath)
-          guard let match = grammarText.firstMatch(of: grammarNameRegex), let nameRange = match[1].range
-            else { throw Exception("failed to extract name from grammar file") }
-          let grammarName = grammarText[nameRange]
+          // Take the grammar name to be the target name.
+          let grammarName = target.name
 
           // Invoke 'tree-sitter generate' with the specified grammar and working directory.
           print("processing '\(grammarName)' in \(workingDir)")
