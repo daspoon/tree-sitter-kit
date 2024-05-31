@@ -8,9 +8,6 @@ Specifically, *GrammarMacro* must generate a property `static var langage : TSLa
 Since Swift macros can't launch processes or access the file system, we can't use the 'tree-sitter generate' command directly. Instead, the tree-sitter CLI library must expose a method which takes a json grammar specification and returns the configuration data required to initialize the TSLanguage struct. The exposed method must conform to C calling conventions.
 
 
-## The TypedLang example is not working. (dave)
-
-
 ## Write a compelling overview/introduction. (dave)
 
 Contrast the standard usage of tree-sitter with the use of this library.
