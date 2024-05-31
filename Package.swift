@@ -11,7 +11,8 @@ let package = Package(
         .plugin(name: "TSGen", targets: ["TSGen"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tree-sitter/tree-sitter", from: "0.21.0"),
+        //.package(url: "https://github.com/tree-sitter/tree-sitter", from: "0.21.0"),
+        .package(path: "../tree-sitter"),
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
