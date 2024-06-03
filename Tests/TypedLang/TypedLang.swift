@@ -5,6 +5,7 @@
 */
 
 import TSKit
+import TSLanguage
 import XCTest
 import TypedLang
 
@@ -244,7 +245,8 @@ struct TypedLang : Grammar {
     "([a-zA-Z_][0-9a-zA-Z_]* | [!#%&*+-/<=>^|~]+)"
   }
 
-  static let language = TSLanguage(tree_sitter_TypedLang())
+  static var language : UnsafePointer<TSLanguage>
+    { fatalError() }
 }
 
 

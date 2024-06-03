@@ -4,7 +4,8 @@
 
 */
 
-
+import TreeSitter
+import TSLanguage
 import Foundation
 
 
@@ -23,7 +24,7 @@ public protocol Grammar<Root> {
   static var word : String? { get }
 
   /// The shared instance of the language structure. Implementation provided.
-  static var language : TSLanguage { get }
+  static var language : UnsafePointer<TSLanguage> { get }
 
   /// Produce an instance of the root type from the the root node of a parse tree. Implementation provided.
   static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
@@ -47,6 +48,14 @@ extension Grammar {
   public static func extractString(from node: TSNode, in context: ParsingContext) -> String {
     context.inputSource.text(for: node)
   }
+
+  static func symbolName(for symbol: TSSymbol) -> String {
+    fatalError()
+  }
+
+  public static func symbolName(for node: TSNode) -> String {
+    symbolName(for: ts_node_grammar_symbol(node))
+  }
 }
 
 
@@ -63,12 +72,12 @@ extension Grammar {
       else { throw TSError("error in parse tree: \(tree.rootNode.description)") }
     // Ensure the root node corresponds to the start rule and has a single child.
     let startNode = tree.rootNode
-    guard language.symbolName(for: startNode) == "start", startNode.count == 1
-      else { throw TSError("start node has unexpected type (\(language.symbolName(for: startNode))) and/or count \(startNode.count)") }
+    guard symbolName(for: startNode) == "start", startNode.count == 1
+      else { throw TSError("start node has unexpected type (\(symbolName(for: startNode))) and/or count \(startNode.count)") }
     // Ensure the sole child of the start node either corresponds to a production of this type or is hidden (e.g. corresponds to an enum case).
     let rootNode = startNode[0]
-    guard isRuleHidden(for: Root.self) || language.symbolName(for: rootNode) == "\(Root.self)"
-      else { throw TSError("root node has unexpected type (\(language.symbolName(for: rootNode)))") }
+    guard isRuleHidden(for: Root.self) || symbolName(for: rootNode) == "\(Root.self)"
+      else { throw TSError("root node has unexpected type (\(symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
     return translate(parseTree: rootNode, in: ParsingContext(language: language, inputSource: src))
   }

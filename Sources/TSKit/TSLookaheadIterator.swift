@@ -5,14 +5,15 @@
 */
 
 import TreeSitter
+import TSLanguage
 
 
 /// A wrapper for tree-sitter's *TSLookaheadIterator* type.
 public class TSLookaheadIterator {
   let ptr : OpaquePointer
 
-  public init(language: TSLanguage, state: TSStateId) {
-    guard let iterator = ts_lookahead_iterator_new(language.ptr, state)
+  public init(language: UnsafePointer<TSLanguage>, state: TSStateId) {
+    guard let iterator = ts_lookahead_iterator_new(language, state)
       else { fatalError("failed to create iterator") }
     assert(ts_lookahead_iterator_current_symbol(iterator) == TSLanguage.errorSymbol)
     ptr = iterator

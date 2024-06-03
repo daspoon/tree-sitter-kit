@@ -10,6 +10,9 @@ import TSKit
 
 class ExprLangTests : XCTestCase {
 
+  func testBuild() throws {
+  }
+
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {
     let examples : [(text: String, term: Expr)] = [
