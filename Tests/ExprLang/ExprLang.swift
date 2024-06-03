@@ -83,69 +83,39 @@ struct ExprLang : Grammar {
   fileprivate static let field_1 : TSFieldId = 2
   fileprivate static let field_2 : TSFieldId = 3
 
-  fileprivate static let symbol_names_buffer : ContiguousArray<CChar> = [
-    101, 110, 100, 0, // end
-    87, 111, 114, 100, 0, // Word
-    42, 0, // *
-    47, 0, // /
-    94, 0, // ^
-    45, 0, // -
-    40, 0, // (
-    41, 0, // )
-    43, 0, // +
-    44, 0, // ,
-    78, 97, 109, 101, 95, 116, 111, 107, 101, 110, 49, 0, // Name_token1
-    73, 110, 116, 95, 116, 111, 107, 101, 110, 49, 0, // Int_token1
-    115, 116, 97, 114, 116, 0, // start
-    95, 69, 120, 112, 114, 0, // _Expr
-    69, 120, 112, 114, 95, 109, 117, 108, 0, // Expr_mul
-    69, 120, 112, 114, 95, 112, 111, 119, 0, // Expr_pow
-    69, 120, 112, 114, 95, 110, 97, 109, 101, 0, // Expr_name
-    69, 120, 112, 114, 95, 110, 101, 103, 0, // Expr_neg
-    69, 120, 112, 114, 95, 97, 112, 112, 108, 121, 0, // Expr_apply
-    69, 120, 112, 114, 95, 118, 97, 108, 117, 101, 0, // Expr_value
-    69, 120, 112, 114, 95, 97, 100, 100, 0, // Expr_add
-    69, 120, 112, 114, 95, 112, 97, 114, 101, 110, 0, // Expr_paren
-    69, 120, 112, 114, 76, 105, 115, 116, 0, // ExprList
-    78, 97, 109, 101, 0, // Name
-    86, 97, 108, 117, 101, 0, // Value
-    73, 110, 116, 0, // Int
-    69, 120, 112, 114, 76, 105, 115, 116, 95, 114, 101, 112, 101, 97, 116, 49, 0, // ExprList_repeat1
+  static let symbolNames : [StaticString] = [
+    "end",
+    "Word",
+    "*",
+    "/",
+    "^",
+    "-",
+    "(",
+    ")",
+    "+",
+    ",",
+    "Name_token1",
+    "Int_token1",
+    "start",
+    "_Expr",
+    "Expr_mul",
+    "Expr_pow",
+    "Expr_name",
+    "Expr_neg",
+    "Expr_apply",
+    "Expr_value",
+    "Expr_add",
+    "Expr_paren",
+    "ExprList",
+    "Name",
+    "Value",
+    "Int",
+    "ExprList_repeat1",
   ]
 
-  fileprivate static let symbol_names_buffer_ptr : UnsafePointer<CChar> = symbol_names_buffer.withUnsafeBufferPointer {$0.baseAddress!}
+  fileprivate static let ts_symbol_names = UnsafeBufferPointer<UnsafePointer<CChar>?>.arrayOfAsciiCSrings(symbolNames)
 
-  fileprivate static let ts_symbol_names : ContiguousArray<UnsafePointer<CChar>?> = [
-    symbol_names_buffer_ptr + 0,
-    symbol_names_buffer_ptr + 4,
-    symbol_names_buffer_ptr + 9,
-    symbol_names_buffer_ptr + 11,
-    symbol_names_buffer_ptr + 13,
-    symbol_names_buffer_ptr + 15,
-    symbol_names_buffer_ptr + 17,
-    symbol_names_buffer_ptr + 19,
-    symbol_names_buffer_ptr + 21,
-    symbol_names_buffer_ptr + 23,
-    symbol_names_buffer_ptr + 25,
-    symbol_names_buffer_ptr + 37,
-    symbol_names_buffer_ptr + 48,
-    symbol_names_buffer_ptr + 54,
-    symbol_names_buffer_ptr + 60,
-    symbol_names_buffer_ptr + 69,
-    symbol_names_buffer_ptr + 78,
-    symbol_names_buffer_ptr + 88,
-    symbol_names_buffer_ptr + 97,
-    symbol_names_buffer_ptr + 108,
-    symbol_names_buffer_ptr + 119,
-    symbol_names_buffer_ptr + 128,
-    symbol_names_buffer_ptr + 139,
-    symbol_names_buffer_ptr + 148,
-    symbol_names_buffer_ptr + 153,
-    symbol_names_buffer_ptr + 159,
-    symbol_names_buffer_ptr + 163,
-  ]
-
-  fileprivate static let ts_symbol_map : ContiguousArray<TSSymbol> = [
+  fileprivate static let ts_symbol_map = UnsafeBufferPointer<TSSymbol>.initialized(with: [
     ts_builtin_sym_end,
     sym_Word,
     anon_sym_STAR,
@@ -173,9 +143,9 @@ struct ExprLang : Grammar {
     sym_Value,
     sym_Int,
     aux_sym_ExprList_repeat1,
-  ]
+  ])
 
-  fileprivate static let ts_symbol_metadata : ContiguousArray<TSSymbolMetadata> = [
+  fileprivate static let ts_symbol_metadata = UnsafeBufferPointer<TSSymbolMetadata>.initialized(with: [
     .init(visible: false, named: true), // ts_builtin_sym_end
     .init(visible: true, named: true), // sym_Word
     .init(visible: true, named: false), // anon_sym_STAR
@@ -203,24 +173,18 @@ struct ExprLang : Grammar {
     .init(visible: true, named: true), // sym_Value
     .init(visible: true, named: true), // sym_Int
     .init(visible: false, named: false), // aux_sym_ExprList_repeat1
-  ]
+  ])
 
-  fileprivate static let field_names_buffer : ContiguousArray<CChar> = [
-    48, 0, // 0
-    49, 0, // 1
-    50, 0, // 2
-  ]
-
-  fileprivate static let field_names_buffer_ptr : UnsafePointer<CChar> = field_names_buffer.withUnsafeBufferPointer {$0.baseAddress!}
-
-  fileprivate static let ts_field_names : ContiguousArray<UnsafePointer<CChar>?> = [
+  static let fieldNames : [StaticString?] = [
     nil,
-    symbol_names_buffer_ptr + 0,
-    symbol_names_buffer_ptr + 2,
-    symbol_names_buffer_ptr + 4,
+    "0",
+    "1",
+    "2",
   ]
 
-  fileprivate static let ts_field_map_slices : ContiguousArray<TSFieldMapSlice> = [
+  fileprivate static let ts_field_names = UnsafeBufferPointer<UnsafePointer<CChar>?>.arrayOfAsciiCSrings(fieldNames)
+
+  fileprivate static let ts_field_map_slices = UnsafeBufferPointer<TSFieldMapSlice>.initialized(with: [
     .init(),
     .init(index: 0, length: 1),
     .init(index: 1, length: 2),
@@ -229,9 +193,9 @@ struct ExprLang : Grammar {
     .init(index: 7, length: 2),
     .init(index: 9, length: 2),
     .init(index: 11, length: 2),
-  ]
+  ])
 
-  fileprivate static let ts_field_map_entries : ContiguousArray<TSFieldMapEntry> = [
+  fileprivate static let ts_field_map_entries = UnsafeBufferPointer<TSFieldMapEntry>.initialized(with: [
     .init(field_id: field_0, child_index: 0),
     .init(field_id: field_0, child_index: 0),
     .init(field_id: field_0, child_index: 0),
@@ -248,16 +212,15 @@ struct ExprLang : Grammar {
     .init(field_id: field_1, child_index: 2),
     .init(field_id: field_0, child_index: 0, inherited: true),
     .init(field_id: field_0, child_index: 1, inherited: true),
-  ]
+  ])
 
-  fileprivate static let ts_alias_sequences : ContiguousArray<TSSymbol>
-    = .init(repeating: 0, count: Int(ts_production_id_count) * Int(ts_max_alias_sequence_length))
+  fileprivate static let ts_alias_sequences = UnsafeBufferPointer<TSSymbol>.initialized(count: Int(ts_production_id_count) * Int(ts_max_alias_sequence_length)) { _ in 0 }
 
-  fileprivate static let ts_non_terminal_alias_map : ContiguousArray<UInt16> = [
+  fileprivate static let ts_non_terminal_alias_map = UnsafeBufferPointer<UInt16>.initialized(with: [
     0
-  ]
+  ])
 
-  fileprivate static let ts_primary_state_ids : ContiguousArray<TSStateId> = [
+  fileprivate static let ts_primary_state_ids = UnsafeBufferPointer<TSStateId>.initialized(with: [
     0,
     1,
     2,
@@ -287,7 +250,7 @@ struct ExprLang : Grammar {
     26,
     27,
     28,
-  ]
+  ])
 
   fileprivate static func ts_lex(_ lexer: UnsafeMutablePointer<TSLexer>?, _ state: TSStateId) -> Bool {
     let lexer = UnsafeMutableRawPointer(mutating: lexer!).bindMemory(to: TSLexer.self, capacity: 1)
@@ -566,7 +529,7 @@ struct ExprLang : Grammar {
     }
   }
 
-  fileprivate static let ts_lex_modes : ContiguousArray<TSLexMode> = [
+  fileprivate static let ts_lex_modes = UnsafeBufferPointer<TSLexMode>.initialized(with: [
     .init(lex_state: 0),
     .init(lex_state: 3),
     .init(lex_state: 3),
@@ -596,9 +559,9 @@ struct ExprLang : Grammar {
     .init(lex_state: 3),
     .init(lex_state: 0),
     .init(lex_state: 0),
-  ]
+  ])
 
-  fileprivate static let ts_parse_table : ContiguousArray<UInt16> = [
+  fileprivate static let ts_parse_table = UnsafeBufferPointer<UInt16>.initialized(with: [
     1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
     0,   0,   0,   0,   0,   3,   5,   0,   0,   0,   7,   9,  27,  24,  24,  24,  24,  24,  24,  24,  24,  24,   0,  14,  10,  11,   0, 
     0,   0,   0,   0,   0,   3,   5,  11,   0,   0,   7,   9,   0,  19,  19,  19,  19,  19,  19,  19,  19,  19,  28,  14,  10,  11,   0, 
@@ -608,9 +571,9 @@ struct ExprLang : Grammar {
     0,   0,   0,   0,   0,   3,   5,   0,   0,   0,   7,   9,   0,  22,  22,  22,  22,  22,  22,  22,  22,  22,   0,  14,  10,  11,   0, 
     0,   0,   0,   0,   0,   3,   5,   0,   0,   0,   7,   9,   0,  18,  18,  18,  18,  18,  18,  18,  18,  18,   0,  14,  10,  11,   0, 
     0,   0,   0,   0,   0,   3,   5,   0,   0,   0,   7,   9,   0,  17,  17,  17,  17,  17,  17,  17,  17,  17,   0,  14,  10,  11,   0, 
-  ]
+  ])
 
-  fileprivate static let ts_small_parse_table : ContiguousArray<UInt16> = [
+  fileprivate static let ts_small_parse_table = UnsafeBufferPointer<UInt16>.initialized(with:[
     1, // 0
     ACTIONS(13), 9,
       ts_builtin_sym_end,
@@ -827,9 +790,9 @@ struct ExprLang : Grammar {
     1, // 261
     ACTIONS(64), 1,
       anon_sym_RPAREN,
-  ]
+  ])
 
-  fileprivate static let ts_small_parse_table_map : ContiguousArray<UInt32> = [
+  fileprivate static let ts_small_parse_table_map = UnsafeBufferPointer<UInt32>.initialized(with: [
     0,
     12,
     24,
@@ -850,9 +813,9 @@ struct ExprLang : Grammar {
     247,
     257,
     261,
-  ]
+  ])
 
-  fileprivate static let ts_parse_actions : ContiguousArray<TSParseActionEntry> = [
+  fileprivate static let ts_parse_actions = UnsafeBufferPointer<TSParseActionEntry>.initialized(with: [
     .entry(count: 0, reusable: false),
     .entry(count: 1, reusable: false), .recover,
     .entry(count: 1, reusable: true), .shift(4),
@@ -886,42 +849,37 @@ struct ExprLang : Grammar {
     .entry(count: 2, reusable: true), .reduce(aux_sym_ExprList_repeat1, 2, production_id: 7), .shift(6, repeat: true),
     .entry(count: 1, reusable: true), .accept,
     .entry(count: 1, reusable: true), .shift(21),
-  ]
+  ])
 
-  static let language : UnsafePointer<TSLanguage> = {
-    let rp = UnsafeMutableRawPointer.allocate(byteCount: MemoryLayout<TSLanguage>.size, alignment: MemoryLayout<TSLanguage>.alignment)
-    // note: all fields are assigned except 'external_scanner', which has no type annotation...
-    _ = rp.initializeMemory(as: UInt8.self, repeating: 0, count: MemoryLayout<TSLanguage>.size)
-    let p = rp.bindMemory(to: TSLanguage.self, capacity: 1)
-    p.pointee.version = 14
-    p.pointee.symbol_count = 27
-    p.pointee.alias_count = 0
-    p.pointee.token_count = 12
-    p.pointee.external_token_count = 0
-    p.pointee.state_count = 29
-    p.pointee.large_state_count = 9
-    p.pointee.production_id_count = 8
-    p.pointee.field_count = 3
-    p.pointee.max_alias_sequence_length = 4
-    p.pointee.parse_table = ts_parse_table.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.small_parse_table = ts_small_parse_table.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.small_parse_table_map = ts_small_parse_table_map.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.parse_actions = ts_parse_actions.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.symbol_names = ts_symbol_names.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.field_names = ts_field_names.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.field_map_slices = ts_field_map_slices.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.field_map_entries = ts_field_map_entries.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.symbol_metadata = ts_symbol_metadata.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.public_symbol_map = ts_symbol_map.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.alias_map = ts_non_terminal_alias_map.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.alias_sequences = ts_alias_sequences.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.lex_modes = ts_lex_modes.withUnsafeBufferPointer {$0.baseAddress}
-    p.pointee.lex_fn = {ts_lex($0,$1)}
-    p.pointee.keyword_lex_fn = {ts_lex_keywords($0,$1)}
-    p.pointee.keyword_capture_token = sym_Word
-    p.pointee.primary_state_ids = ts_primary_state_ids.withUnsafeBufferPointer {$0.baseAddress}
-    return UnsafeRawPointer(p).bindMemory(to: TSLanguage.self, capacity: 1)
-  }()
+  static let language = UnsafePointer<TSLanguage>.initialized { lang in
+    lang.version = 14
+    lang.symbol_count = 27
+    lang.alias_count = 0
+    lang.token_count = 12
+    lang.external_token_count = 0
+    lang.state_count = 29
+    lang.large_state_count = 9
+    lang.production_id_count = 8
+    lang.field_count = 3
+    lang.max_alias_sequence_length = 4
+    lang.parse_table = ts_parse_table.baseAddress
+    lang.small_parse_table = ts_small_parse_table.baseAddress
+    lang.small_parse_table_map = ts_small_parse_table_map.baseAddress
+    lang.parse_actions = ts_parse_actions.baseAddress
+    lang.symbol_names = ts_symbol_names.baseAddress
+    lang.field_names = ts_field_names.baseAddress
+    lang.field_map_slices = ts_field_map_slices.baseAddress
+    lang.field_map_entries = ts_field_map_entries.baseAddress
+    lang.symbol_metadata = ts_symbol_metadata.baseAddress
+    lang.public_symbol_map = ts_symbol_map.baseAddress
+    lang.alias_map = ts_non_terminal_alias_map.baseAddress
+    lang.alias_sequences = ts_alias_sequences.baseAddress
+    lang.lex_modes = ts_lex_modes.baseAddress
+    lang.lex_fn = {ts_lex($0,$1)}
+    lang.keyword_lex_fn = {ts_lex_keywords($0,$1)}
+    lang.keyword_capture_token = sym_Word
+    lang.primary_state_ids = ts_primary_state_ids.baseAddress
+  }
 
   // MARK: -- END GENERATED --
 
