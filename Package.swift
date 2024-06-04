@@ -45,6 +45,13 @@ let package = Package(
                 .writeToPackageDirectory(reason: "To generate parser source files"),
               ])
         ),
+        // Tests for general TSKit functionality
+        .testTarget(name: "TSKitTests",
+            dependencies: [
+                "TSKit",
+            ],
+            path: "Tests/TSKit"
+        ),
         // Some examples which pair language and parser targets for testing purposes...
         .target(name: "ExprLang",
             dependencies: [
