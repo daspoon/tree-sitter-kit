@@ -247,6 +247,10 @@ struct TypedLang : Grammar {
 
   static var language : UnsafePointer<TSLanguage>
     { fatalError() }
+
+  static var symbolNames : [StaticString]
+    { fatalError() }
+
 }
 
 

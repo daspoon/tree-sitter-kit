@@ -10,9 +10,6 @@ import TSKit
 
 class ExprLangTests : XCTestCase {
 
-  func testBuild() throws {
-  }
-
   /// Ensure the result of parsing is as expected for a variety of example terms...
   func testParsingSuccess() throws {
     let examples : [(text: String, term: Expr)] = [
@@ -20,6 +17,8 @@ class ExprLangTests : XCTestCase {
         .name("a")),
       ("_aX2",
         .name("_aX2")),
+      ("42",
+        .value(42)),
       ("(a)",
         .name("a")),
       ("x + y",

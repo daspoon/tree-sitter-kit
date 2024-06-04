@@ -31,6 +31,9 @@ public protocol Grammar<Root> {
 
   /// Return *true* if the rule for the given type is hidden. Implementation provided.
   static func isRuleHidden(for type: Any.Type) -> Bool
+
+  /// Return the string representation of the given symbol identifier. Implementation provided.
+  static func symbolName(for symbol: TSSymbol) -> StaticString
 }
 
 
@@ -49,11 +52,7 @@ extension Grammar {
     context.inputSource.text(for: node)
   }
 
-  static func symbolName(for symbol: TSSymbol) -> String {
-    fatalError()
-  }
-
-  public static func symbolName(for node: TSNode) -> String {
+  public static func symbolName(for node: TSNode) -> StaticString {
     symbolName(for: ts_node_grammar_symbol(node))
   }
 }
@@ -79,7 +78,7 @@ extension Grammar {
     guard isRuleHidden(for: Root.self) || symbolName(for: rootNode) == "\(Root.self)"
       else { throw TSError("root node has unexpected type (\(symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
-    return translate(parseTree: rootNode, in: ParsingContext(language: language, inputSource: src))
+    return translate(parseTree: rootNode, in: ParsingContext(inputSource: src))
   }
 
   /// Create an instance of the root type from the given text.

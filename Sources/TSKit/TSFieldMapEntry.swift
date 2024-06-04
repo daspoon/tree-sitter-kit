@@ -8,7 +8,7 @@ import TSLanguage
 
 
 extension TSFieldMapEntry {
-  public init(field_id id: TSFieldId, child_index j: UInt8) {
-    self.init(field_id: id, child_index: j, inherited: false)
+  public init(_ field_id: TSFieldId, _ child_index: UInt8, inherited: Bool = false) {
+    self.init(field_id: field_id, child_index: child_index, inherited: inherited)
   }
 }

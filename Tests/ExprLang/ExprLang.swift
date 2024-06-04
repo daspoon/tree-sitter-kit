@@ -79,10 +79,6 @@ struct ExprLang : Grammar {
   fileprivate static let sym_Int : TSSymbol = 25
   fileprivate static let aux_sym_ExprList_repeat1 : TSSymbol = 26
 
-  fileprivate static let field_0 : TSFieldId = 1
-  fileprivate static let field_1 : TSFieldId = 2
-  fileprivate static let field_2 : TSFieldId = 3
-
   static let symbolNames : [StaticString] = [
     "end",
     "Word",
@@ -175,6 +171,10 @@ struct ExprLang : Grammar {
     .init(visible: false, named: false), // aux_sym_ExprList_repeat1
   ])
 
+  fileprivate static let field_0 : TSFieldId = 1
+  fileprivate static let field_1 : TSFieldId = 2
+  fileprivate static let field_2 : TSFieldId = 3
+
   static let fieldNames : [StaticString?] = [
     nil,
     "0",
@@ -196,22 +196,19 @@ struct ExprLang : Grammar {
   ])
 
   fileprivate static let ts_field_map_entries = UnsafeBufferPointer<TSFieldMapEntry>.initialized(with: [
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_1, child_index: 1),
-    .init(field_id: field_0, child_index: 1),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_1, child_index: 1),
-    .init(field_id: field_2, child_index: 2),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_0, child_index: 1, inherited: true),
-    .init(field_id: field_0, child_index: 0),
-    .init(field_id: field_1, child_index: 2),
-    .init(field_id: field_0, child_index: 0, inherited: true),
-    .init(field_id: field_0, child_index: 1, inherited: true),
+    .init(field_0, 0),
+    .init(field_0, 0),
+    .init(field_1, 1),
+    .init(field_0, 1),
+    .init(field_0, 0),
+    .init(field_1, 1),
+    .init(field_2, 2),
+    .init(field_0, 0),
+    .init(field_0, 1, inherited: true),
+    .init(field_0, 0),
+    .init(field_1, 2),
+    .init(field_0, 0, inherited: true),
+    .init(field_0, 1, inherited: true),
   ])
 
   fileprivate static let ts_alias_sequences = UnsafeBufferPointer<TSSymbol>.initialized(count: Int(ts_production_id_count) * Int(ts_max_alias_sequence_length)) { _ in 0 }
@@ -340,9 +337,9 @@ struct ExprLang : Grammar {
         if eof { ADVANCE(4); break }
         if (lookahead == 40) { ADVANCE(13); break }
         if (lookahead == 41) { ADVANCE(14); break }
-        if (lookahead == 41) { ADVANCE(5); break }
-        if (lookahead == 42) { ADVANCE(15); break }
-        if (lookahead == 43) { ADVANCE(17); break }
+        if (lookahead == 42) { ADVANCE(5); break }
+        if (lookahead == 43) { ADVANCE(15); break }
+        if (lookahead == 44) { ADVANCE(17); break }
         if (lookahead == 45) { ADVANCE(11); break }
         if (lookahead == 47) { ADVANCE(7); break }
         if (lookahead == 94) { ADVANCE(9); break }
@@ -456,7 +453,7 @@ struct ExprLang : Grammar {
         return result
       case 19:
         ACCEPT_TOKEN(aux_sym_Name_token1)
-        if (lookahead == 32) { state = 22; break }
+        if (lookahead == 32) { ADVANCE(22); break }
         if ((48 <= lookahead && lookahead <= 57) ||
             (65 <= lookahead && lookahead <= 90) ||
             lookahead == 95 ||
@@ -471,7 +468,7 @@ struct ExprLang : Grammar {
         return result
       case 21:
         ACCEPT_TOKEN(aux_sym_Int_token1)
-        if ((58 <= lookahead && lookahead <= 57)) { ADVANCE(21); break }
+        if ((48 <= lookahead && lookahead <= 57)) { ADVANCE(21); break }
         return result
       case 22:
         ACCEPT_TOKEN(sym_Word)
