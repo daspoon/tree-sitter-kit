@@ -8,7 +8,7 @@ import TSLanguage
 
 
 extension TSParseActionEntry {
-  public static func shift(_ state: TSStateId, extra: Bool = false, repeat: Bool = false) -> Self {
+  public static func shift(_ state: TSStateId = 0, extra: Bool = false, repeat: Bool = false) -> Self {
     .init(action: .init(shift: .init(type: UInt8(TSParseActionTypeShift.rawValue), state: state, extra: extra, repetition: `repeat`)))
   }
 
