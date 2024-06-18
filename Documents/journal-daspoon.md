@@ -855,3 +855,302 @@ question: has anyone successfully linked a rust library into a swift package?
 todo:
   - extend Grammar word spec to `static var word: (symbol: String, pattern: String)`
   - change pat case client-side Expression to take a Regex?
+
+
+### Mon-Tue May 27-28, 2024
+
+Update TSGen plugin to expect grammar.json rather than grammar.js
+
+bug fix: TypedLang tests fail
+  - the task of updating the grammar rules to the new format was incomplete
+
+On adding Rust library dependencies to Swift packages...
+  - see https://chinedufn.github.io/swift-bridge/building/swift-packages/index.html
+  - see https://github.com/tmarkovski/rust-to-swift
+  - Package.swift must specify a `binaryTarget` for the compiled rust lib
+      ```
+      products: [
+        .library(name: "SwiftWrapper", targets: "SwiftWrapper"),
+      ],
+      targets: [
+        .target(name: "SwiftWrapper", dependencies: ["RustLib"]),
+        .binaryTarget(name: "RustLib", url: "https://.../bundle.zip",
+        checksum: "..."),"
+      ]
+      ```
+      
+On extending tree-sitter CLI for use as a library...
+  - `tree-sitter generate` can take grammar.json rather than grammar.js
+  - following is the essesnce of the generate command:
+    ```
+    pub fn generate_parser_text_from_json(json: &str) -> String {
+        let input_grammar = parse_grammar(&json)?;
+        let (syntax_grammar, lexical_grammar, inlines, simple_aliases) = prepare_grammar(&input_grammar)?;
+        let variable_info = node_types::get_variable_info(&syntax_grammar, &lexical_grammar, &simple_aliases)?;
+        let tables = build_tables(
+            &syntax_grammar,
+            &lexical_grammar,
+            &simple_aliases,
+            &variable_info,
+            &inlines,
+            None,
+        )?;
+        render_c_code(grammar_name, tables, syntax_grammar, simple_aliases, inlines)
+    }
+    ```
+  - rendering is implemented by `struct Generator`, which serves both to extract the parameters of a TSLanguage instance and to support the incremental construction of the source (via text buffer and indentation state)
+  - note that supporting multiple rendering formats will require decoupling the parameter extraction and rendering functionality of Generator, which is complicated by the fact that parameter extraction is spread across init and the various rendering methods...
+      - `add_stats` calculates token_count, which would better be assigned to an ivar on init
+      - `add_symbol_enum` populates `symbol_order: HashMap<Symbol,usize>`, which would better be done by init
+      - `add_non_terminal_alias_map` calculates local var `alias_ids_by_symbol` from `alias_ids` (note the shadowing of the latter); ...
+      - `add_primary_state_id_list` calculates local var `first_state_for_each_core_id` ...
+      - `add_field_sequences` calculates local var `field_map_ids`
+      - `add_lex_function` calls `add_lex_state`; 
+
+
+### Thu May 30, 2024
+
+Factor the data used in code generation out of struct Generator (as GeneratorData), leaving only the code generation specifics.
+
+Factor construction of alias_ids_by_symbol out of add_non_terminal_alias_map as method get_symbol_and_alias_list_pairs.
+
+
+### Fri May 31, 2024
+
+The current plan is to 
+  - first enable a tree-sitter cli option to generate swift code 
+  - then expose a callable function to  
+  - need to fork tree-sitter; for now link to a local copy
+
+As a proof of concept, manually translate a parser.c into a swift equivalent
+  - the swift code will reside in each Grammar struct; in this trial case, ExprLang
+  - this code requires knowledge of the API declared by parser.h...
+      - 'ideally' that could be included in tree-sitter/api.h, but the naive approach doesn't work
+      - instead create a new package TSLanguage which simply contains parser.h; this file appears to be invariant across parsers
+
+
+### Mon Jun 3, 2024
+
+Complete first translation of parser.c into Swift...
+
+Summary of changes to TSKit to support generation of TSLanguage...
+  - added TSLanguage target to provide access to the API defined by parser.h; an empty TSLanguage.c is required to enable running tests...
+      ** in an Xcode project, this could be achieved with a bridging header **
+  - remove the TSLanguage wrapper class
+  - Grammar's language now has type UnsafePointer<TSLanguage>
+  - Grammar maintains symbol names as an array of StaticString
+      - extend StaticString to implement Comparable
+  - Grammar adopts method to translate symbols to strings
+  - ParsingContext no longer requires language member
+  - provide convenience initializers for various TreeSitter structs (such as TSFieldMapEntry)
+  - manually implement ExprLang.language (effectively parser.swift)
+
+
+### Tue Jun 4, 2024
+
+Debug manual implementation of ExprLang.language
+
+Plan for refactoring plan tree-sitter generate...
+  - complete separation of Generator and GeneratorData
+      - todo: add_lex_state needs unwinding
+      - todo: add_parse_table needs unwinding
+  - create a trait to specify Generator functionality
+  - add an cli argument to choose generated code format/language
+  - implement swift code gen
+
+Extract calculation of field_map_ids and flat_field_maps from add_field_sequences to function get_field_info on GeneratorData.
+
+Notes on the generation of lexing methods...
+  - `struct LexTable { states: Vec<LexState> }`
+  - `struct LexState { accept_action: Option<Symbol>, eof_action: Option<AdvanceAction>, advance_actions: Vec<(CharacterSet, AdvanceAction)> }`
+  - why does Generator.generate replace each of main_lex_table and keyword_lex_table with LexTable::default(); why initialize as tables.main_lex_table???
+  - add_lex_function affects data.large_character_sets, so is called prior to add_character_set; since C requires forward declarations, the text of the lex functions is then shifted ...
+  - data.large_character_set_info has an is_used property which gates the generation of `static TSCharacterRange xxx[] = {`
+
+
+### Wed Jun 5, 2024
+
+Notes on add_parse_table :
+  - this method generates both ts_parse_table and, conditionally, ts_small_parse_table and ts_small_parse_table_map
+  - regarding ts_parse_table
+      - the code iterates over the first `large_state_count` elements of the `states` array of `parse_table`
+      - each state has `terminal_entries` and `nonterminal_entries`, which have type IndexMap (a HashMap with predictable ordering)
+      - the entries are combined and ordered starting with non-terminals by symbol, followed by terminals by symbol_order
+  - ts_small_parse_table and ts_small_parse_table_map are generated if `large_state_count < parse_table.states.len()`
+
+Define `trait RenderTarget` with methods to build code for the configuration hierarchy
+  ```
+  fn begin_language(&mut self);
+
+  fn begin_symbol_types(&mut self);
+  fn add_symbol_types_item(&mut self, name: &str, text: &str);
+  fn end_symbol_types(&mut self);
+
+  ...
+
+  fn end_language(&mut self);
+  ```
+
+Create `struct RenderTargetC`, and implement `RenderTarget` by translating the existing `add_` methods of Generator
+
+  
+### Thu Jun 6, 2024
+
+Continue tweaking tree-sitter's Generator to enable alternate source code
+
+
+### Fri Jun 7, 2024
+
+Notes on add_lex_state :
+    ```struct LexState {
+           accept_action: Option<Symbol>,
+           eof_action: Option<AdvanceAction>,
+           advance_actions: Vec<(CharacterSet, AdvanceAction)>,
+       }```
+  - each such struct corresponds to a case of a lex function, rendered as a sequence of statements terminated by END_STATE
+  - accept_action and eof_action are rendered first
+  - the pairs (chars, action) of advance_actions are then rendered iteratively...
+  - these are sorted with singleton sets first, which will be grouped together as a single ADVANCE_MAP if there are sufficiently many (stated to reduce compile time)
+  - for each subsequent pair, the chars set is 'simplified' by removing characters which have already appeared in preceding elements (viz. ruled-out)
+  - if the simplified chars has sufficiently many ranges then it is approximated by a 'large' character set, which determines sets of additions and removals...
+  - ultimately a pair of sets 'asserted_chars' and 'negated_chars' is computed, which is additions and removals if a large set is chosen or simplified_chars and {} otherwise
+  - the condition on each action consists of positive and negative components, both optional; the positive condition is derived from large_set and asserted_chars, and the negative condition from negated_chars
+
+
+### Mon Jun 10, 2024
+
+Complete transition of add_lex_state method...
+  - except, the ordering of lex function and character set definitions...
+
+
+### Tue Jun 11, 2024
+
+Begin to implement rendering of swift code...
+  - create RenderBuffer as a means to text accumulation code between RenderTarget impls
+  - add extensions to Swift.UnsafeBufferPointer to simplify creating sparse 1 and 2-d arrays
+      `static func initialized(count: Int, zero: Element, indexValuePairs: [(index: Int, value: Element)]) -> Self`
+      `static func initialized(rowCount: Int, columnCount: Int, zero: Element, indexValuePairs: [(row: Int, column: Int, value: Element)]) -> Self`
+  - various changes to RenderTarget trait...
+      - add context parameter to leverage various features of Generator; particularly conversion of symbol and field indices to enum names
+      - drop the begin/end section methods w.r.t. external scanner states; instead, the add_item method must iterate over the given token set; a similar simplificatino should be applied to parse_table methods
+  
+todo: allow specifying an optional enclosing struct or extension name
+
+
+### Wed Jun 12, 2024
+
+Continue with rendering swift code
+  - implement ADVANCE_MAP as inline fn
+  - implement extension methods on UnsafeBufferPointer to support defining 'sparse' arrays (to mirror C syntax)
+  - generated swift code compiles, but is incomplete:
+    - todo: implement rendering of ADVANCE actions via RenderTarget trait default
+
+note: we might reuse C code generation through various changes to RenderTarget
+  - add default implementations for various methods
+  - add a property indicating whether if/else branches require braces
+
+
+### Thu Jun 13, 2024
+
+Note: For now I'm going to ignore the problem of generating a swift-code parser from the command-line...
+  - instead focus on the library interface
+
+Move method implementations from RenderTargetC to RenderTarget as defaults where appropriate...
+  - this requires rendering macros be applicable to RenderTarget, which requires it has a method to retrieve a mutable reference to a RenderBuffer...
+  - for RenderTargetSwift, references to named character sets must be suffixed with .baseAddress
+  - set_contains must be defined in parser.h, and must use const for range pointers...
+
+todo: link tree-sitter cli into TSLanguage target and call from TSMacro
+todo: clean-up interface by which RenderTarget obtains symbol names from Generator
+todo: rename GeneratorData to Generator
+todo: eliminate trailing whitespace in generated code by replacing add_line!(self, "\n") with add_newline!(self), which doesn't implicitly add_whitespace
+
+
+### Fri Jun 14, 2024
+
+Note: when running tree-sitter generate...
+  - if grammar.js does not exist in the working directory it is created to contain a simple 'hello' grammar; this is the case regardless of whether or not an existing file is specified as argument
+  - if no argument is given then the 'hello' grammar is used even if grammar.json exists, so grammar.json must be specified as an argument
+  - arguably grammar.js should not be created if an argument is provided
+
+Towards calling the grammar generation library function from our Swift macro...
+  - first enable calling from a c program ...
+  - requirements documented at https://docs.rust-embedded.org/book/interoperability/rust-with-c.html
+  - first configure Cargo.toml to produce a static library in addition the rlib format which is required by the binary target
+      [lib]
+      crate-type = ["rlib", ""staticlib"]
+  - this produces libtree_sitter_cli.a
+
+On adding Rust library dependencies to Swift packages...
+  - references...
+      - https://chinedufn.github.io/swift-bridge/building/swift-packages/index.html
+      - https://developer.apple.com/documentation/xcode/creating-a-multi-platform-binary-framework-bundle
+      - https://developer.apple.com/documentation/xcode/distributing-binary-frameworks-as-swift-packages
+  - ensure rust toolchains are installed for the desired platforms: aarch64-apple-darwin, x86_64-apple-darwin
+      $ rustup target add aarch64-apple-darwin
+  - build for the desired platforms, creating target/<platform>/libtree_sitter_cli.a for each
+      $ cargo build --target aarch64-apple-darwin
+  - within the target directory, create a universal library combining the binaries for each platform
+      $ mkdir -p macos-universal
+      $ lipo target/aarch64-apple-darwin/debug/libtree_sitter_cli.a ... \
+          -create \
+          -output universal-macos/libtree_sitter_cli.a
+  - create an XCFramework bundle combining the universal library and headers...
+      $ xcodebuild -create-xcframework \
+          -library macos-universal/libtree_sitter_cli.a \
+          -headers ../cli/include \
+          -output universal-macos/TreeSitterCLI.xcframework
+  - sign the bundle
+      $ codesign --timestamp -s "Apple Development: ..." universal-macos/TreeSitterCLI.xcframework
+  - Package.swift must specify a binary target for the xcframework, either directly within the package
+      .binaryTarget(name: "TreeSitterCLI", path: "XCFrameworks/TreeSitterCLI.xcframework"),
+    or as a remote bundle...
+      - todo
+  * note: the lipo step appears to be necessary; instead specifying all platform-specific libraries to xcodebuild fails with the following
+      - `Both 'macos-x86_64' and 'macos-arm64' represent two equivalent library definitions`
+
+
+TODO: add a constant TS_ABI_VERSION_CURRENT to TreeSitterCLI.h
+
+TODO: build xcframework as part of cargo build (opt-in)
+
+
+### Sat Jun 15, 2024
+
+After minor tweaks, the parser generation function is successfully invoked from Swift!
+    ```
+    import TreeSitterCLI
+    extension Grammar {
+      public static func parserSource(for jsonText: String, abi_version: UInt32 = 14) throws -> String {
+        // Invoke the parser generator with the bytes of the JSON grammar and a callback which
+        // returns (as an opaque pointer) a manually retained NSString containing the Swift text.
+        let optionalOptionalUnsafeRawPointer = try jsonText.utf8.withContiguousStorageIfAvailable { jsonBuf in
+          guard jsonBuf.count <= Int(UInt32.max)
+            else { throw TSError("grammar text is too long") }
+          return swift_parser_source_from_json_utf8(jsonBuf.baseAddress, UInt32(jsonBuf.count), abi_version) { srcBuf, srcLen in
+            guard let srcBuf = srcBuf
+              else { fatalError("parser genertion returned null?") }
+            guard let swiftCode = NSString(bytes: srcBuf, length: Int(srcLen), encoding: NSUTF8StringEncoding)
+              else { fatalError("failed to interpret result of parser generation") }
+            return UnsafeRawPointer(Unmanaged.passRetained(swiftCode).toOpaque())
+          }
+        }
+        guard let optionalUnsafeRawPointer = optionalOptionalUnsafeRawPointer
+          else { throw TSError("grammar text has no contiguous utf8 representation") }
+        guard let unsafeRawPointer = optionalUnsafeRawPointer
+          else { throw TSError("parser generation failed") }
+        return Unmanaged<NSString>.fromOpaque(unsafeRawPointer).takeRetainedValue() as String;
+      }
+    }
+    ```
+Unfortunately, invoking this function within the macro causes the macro to fail 
+  - perhaps due to a sandbox violation?
+  - after failure subsequent build fails linking with undefined symbol `_swift_parser_from_json_utf8`
+  - note that libtree_sitter_cli.a must be manually removed from the build products dir in order to be update!!!
+
+
+### Mon Jun 17, 2024
+
+Debug the macro...
+  - the link failure appears if TSKit does not have TreeSitterCLI as a dependency; I don't understand why, since TSMacro does not depend on TSKit (and has an explicit dependency on TreeSitterCLI)
+  - ultimately the macro crashed because the json text passed was invalid due to enclosing triple quotes...
