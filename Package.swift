@@ -20,6 +20,7 @@ let package = Package(
         .target(name: "TSKit",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
+              "TreeSitterCLI",
               "TSLanguage",
               "TSMacros",
             ]
@@ -34,7 +35,8 @@ let package = Package(
         .macro(name: "TSMacros",
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                "TreeSitterCLI",
             ]
         ),
         // A command plugin to generate parsers for 'language' targets.
@@ -44,6 +46,10 @@ let package = Package(
               permissions: [
                 .writeToPackageDirectory(reason: "To generate parser source files"),
               ])
+        ),
+        // Binary tree-sitter CLI library
+        .binaryTarget(name: "TreeSitterCLI",
+          path: "XCFrameworks/TreeSitterCLI.xcframework"
         ),
         // Tests for general TSKit functionality
         .testTarget(name: "TSKitTests",
