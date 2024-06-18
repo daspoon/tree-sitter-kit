@@ -244,13 +244,6 @@ struct TypedLang : Grammar {
   static var word : String? {
     "([a-zA-Z_][0-9a-zA-Z_]* | [!#%&*+-/<=>^|~]+)"
   }
-
-  static var language : UnsafePointer<TSLanguage>
-    { fatalError() }
-
-  static var symbolNames : [StaticString]
-    { fatalError() }
-
 }
 
 
