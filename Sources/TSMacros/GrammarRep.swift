@@ -61,7 +61,6 @@ struct GrammarRep {
   /// Return the text of grammar.json.
   var jsonText : String {
     """
-    \"\"\"
     {
       "name": "\(name)",
       "rules": {
@@ -79,7 +78,6 @@ struct GrammarRep {
       "inline": [],
       "supertypes": []
     }
-    \"\"\"
     """
   }
 }
