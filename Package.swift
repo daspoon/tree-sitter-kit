@@ -8,7 +8,6 @@ let package = Package(
     platforms: [.macOS(.v10_15), .iOS(.v13), .macCatalyst(.v13)],
     products: [
         .library(name: "TSKit", targets: ["TSKit"]),
-        .plugin(name: "TSGen", targets: ["TSGen"]),
     ],
     dependencies: [
         //.package(url: "https://github.com/tree-sitter/tree-sitter", from: "0.21.0"),
@@ -38,14 +37,6 @@ let package = Package(
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
                 "TreeSitterCLI",
             ]
-        ),
-        // A command plugin to generate parsers for 'language' targets.
-        .plugin(name: "TSGen",
-            capability: .command(
-              intent: .custom(verb: "generate-parser", description: "Invoke tree-sitter to generate parser source files from grammar.json"),
-              permissions: [
-                .writeToPackageDirectory(reason: "To generate parser source files"),
-              ])
         ),
         // Binary tree-sitter CLI library
         .binaryTarget(name: "TreeSitterCLI",
