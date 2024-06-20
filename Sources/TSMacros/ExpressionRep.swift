@@ -5,6 +5,7 @@
 */
 
 import SwiftSyntax
+import TSCommon
 
 
 /// The 'implementation' of the client-side type of the same name.

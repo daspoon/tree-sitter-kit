@@ -5,6 +5,7 @@
 */
 
 import SwiftSyntax
+import TSCommon
 
 
 struct GrammarRep {

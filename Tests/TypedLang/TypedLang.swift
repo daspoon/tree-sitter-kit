@@ -5,6 +5,7 @@
 */
 
 import TSKit
+import TSCommon
 import TSLanguage
 import XCTest
 import TypedLang
@@ -280,7 +281,7 @@ extension Def {
     // Parse a block with the declaration text followed by a trivial expression.
     let block = try Block(text + "; 1")
     guard block.decls.count == 1
-      else { throw TSError("requires a single declaration") }
+      else { throw Exception("requires a single declaration") }
     self = block.decls[0]
   }
 }

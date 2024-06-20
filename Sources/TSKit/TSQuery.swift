@@ -5,6 +5,7 @@
 */
 
 import TreeSitter
+import TSCommon
 import TSLanguage
 
 
@@ -21,7 +22,7 @@ public class TSQuery {
     guard let p = t.withCString({ cstr in
       ts_query_new(l, cstr, UInt32(strlen(cstr)), &errorOffset, &errorType)
     }) else {
-      throw TSError("failed to parse query: error_offset=\(errorOffset); error_type=\(errorType)")
+      throw Exception("failed to parse query: error_offset=\(errorOffset); error_type=\(errorType)")
     }
     language = l
     text = t

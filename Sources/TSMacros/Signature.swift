@@ -4,6 +4,8 @@
 
 */
 
+import TSCommon
+
 
 /// *Signature* represents the 'type signature' of a syntax expression as an array of
 /// type names with an indication of optionality.

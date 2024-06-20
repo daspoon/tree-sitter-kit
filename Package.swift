@@ -15,11 +15,17 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
+        // The library of code shared by TSKit and TSMacros
+        .target(name: "TSCommon",
+          dependencies: [
+              "TreeSitterCLI",
+          ]
+        ),
         // The exported library providing a Swift interface for tree-sitter.
         .target(name: "TSKit",
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
-              "TreeSitterCLI",
+              "TSCommon",
               "TSLanguage",
               "TSMacros",
             ]
@@ -35,7 +41,7 @@ let package = Package(
             dependencies: [
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
-                "TreeSitterCLI",
+                "TSCommon",
             ]
         ),
         // Binary tree-sitter CLI library

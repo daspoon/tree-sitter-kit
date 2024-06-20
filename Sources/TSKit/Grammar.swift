@@ -5,6 +5,7 @@
 */
 
 import TreeSitter
+import TSCommon
 import TSLanguage
 import Foundation
 
@@ -65,18 +66,18 @@ extension Grammar {
     let parser = TSParser(language)
     // Get the parse tree for the input source; this can return nil if parsing is cancelled.
     guard let tree = parser.parse(src)
-      else { throw TSError("parsing was cancelled") }
+      else { throw Exception("parsing was cancelled") }
     // Throw if the parse tree contains errors.
     guard tree.rootNode.hasError == false
-      else { throw TSError("error in parse tree: \(tree.rootNode.description)") }
+      else { throw Exception("error in parse tree: \(tree.rootNode.description)") }
     // Ensure the root node corresponds to the start rule and has a single child.
     let startNode = tree.rootNode
     guard symbolName(for: startNode) == "start", startNode.count == 1
-      else { throw TSError("start node has unexpected type (\(symbolName(for: startNode))) and/or count \(startNode.count)") }
+      else { throw Exception("start node has unexpected type (\(symbolName(for: startNode))) and/or count \(startNode.count)") }
     // Ensure the sole child of the start node either corresponds to a production of this type or is hidden (e.g. corresponds to an enum case).
     let rootNode = startNode[0]
     guard isRuleHidden(for: Root.self) || symbolName(for: rootNode) == "\(Root.self)"
-      else { throw TSError("root node has unexpected type (\(symbolName(for: rootNode)))") }
+      else { throw Exception("root node has unexpected type (\(symbolName(for: rootNode)))") }
     // Delegate to the ingestion method, providing the necessary context...
     return translate(parseTree: rootNode, in: ParsingContext(inputSource: src))
   }
@@ -84,7 +85,7 @@ extension Grammar {
   /// Create an instance of the root type from the given text.
   public static func parse(text: String, encoding: String.Encoding = .utf8) throws -> Root {
     guard let source = StringInputSource(string: text)
-      else { throw TSError("unsupported string encoding: \(encoding)") }
+      else { throw Exception("unsupported string encoding: \(encoding)") }
     return try parse(inputSource: source)
   }
 }

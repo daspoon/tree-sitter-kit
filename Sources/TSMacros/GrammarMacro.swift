@@ -6,8 +6,7 @@
 
 import SwiftSyntax
 import SwiftSyntaxMacros
-import TreeSitterCLI
-import Foundation
+import TSCommon
 
 
 public struct GrammarMacro : MemberMacro {
@@ -22,7 +21,7 @@ public struct GrammarMacro : MemberMacro {
     let grammarText = grammar.jsonText
 
     // Create the Swift source which defines the corresponding TSLanguage instance.
-    let languageDefinitionText = try parserSource(for: grammarText)
+    let languageDefinitionText = try generateParserSource(for: grammarText)
 
     // Get the visibility of the affected declaration.
     let visibility = decl.visibility
@@ -55,29 +54,5 @@ public struct GrammarMacro : MemberMacro {
     ] + grammar.definedRules.map { rule in
       DeclSyntax(stringLiteral: rule.extractionDeclText)
     }
-  }
-
-
-  static func parserSource(for jsonText: String, abi_version: UInt32 = 14) throws -> String {
-    // Invoke the parser generator with the bytes of the JSON grammar and a callback which
-    // returns (as an opaque pointer) a manually retained NSString containing the Swift text.
-    let optionalOptionalUnsafeRawPointer = try jsonText.utf8.withContiguousStorageIfAvailable { jsonBuf in
-      guard jsonBuf.count <= Int(UInt32.max)
-        else { throw Exception("grammar text is too long") }
-      return swift_parser_source_from_json_utf8(jsonBuf.baseAddress, UInt32(jsonBuf.count), abi_version) { srcBuf, srcLen in
-        guard let srcBuf = srcBuf
-          else { print("parser genertion returned null?"); return nil }
-        guard let swiftCode = NSString(bytes: srcBuf, length: Int(srcLen), encoding: NSUTF8StringEncoding)
-          else { print("failed to interpret result of parser generation"); return nil }
-        return UnsafeRawPointer(Unmanaged.passRetained(swiftCode).toOpaque())
-      }
-    }
-
-    guard let optionalUnsafeRawPointer = optionalOptionalUnsafeRawPointer
-      else { throw Exception("grammar text has no contiguous utf8 representation") }
-    guard let unsafeRawPointer = optionalUnsafeRawPointer
-      else { throw Exception("parser generation failed") }
-
-    return Unmanaged<NSString>.fromOpaque(unsafeRawPointer).takeRetainedValue() as String
   }
 }
