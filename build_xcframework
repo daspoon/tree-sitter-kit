@@ -1,8 +1,7 @@
 # Create and sign an xcframework bundle containing a version of libtree_sitter_cli.a  
 # for each macos supported architecture.
 
-# TODO: ${PWD}/.build/checkouts/tree-sitter
-TREE_SITTER=/Users/dave/Developer/Projects/tree-sitter
+TREE_SITTER=${PWD}/.build/checkouts/tree-sitter
 
 # TODO: param defaulting to release
 CONFIGURATION=debug

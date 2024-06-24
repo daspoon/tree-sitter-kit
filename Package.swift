@@ -10,8 +10,7 @@ let package = Package(
         .library(name: "TSKit", targets: ["TSKit"]),
     ],
     dependencies: [
-        //.package(url: "https://github.com/tree-sitter/tree-sitter", from: "0.21.0"),
-        .package(path: "../tree-sitter"),
+        .package(url: "https://github.com/daspoon/tree-sitter", from: "0.1.0"),
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
