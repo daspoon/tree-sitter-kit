@@ -1,16 +1,12 @@
 # Tasks
 
 
-## Streamline the build process. (dave)
-
-Specifically, *GrammarMacro* must generate a property `static var langage : TSLangage {...}` which eliminates the need for `parser.c`. This will have the effect of updating the parser directly in response to changing the Swift expression of the grammar rules, which will in turn eliminate the need for separate parser targets.
-
-Since Swift macros can't launch processes or access the file system, we can't use the 'tree-sitter generate' command directly. Instead, the tree-sitter CLI library must expose a method which takes a json grammar specification and returns the configuration data required to initialize the TSLanguage struct. The exposed method must conform to C calling conventions.
-
-
 ## Write a compelling overview/introduction. (dave)
 
 Contrast the standard usage of tree-sitter with the use of this library.
+
+
+## Submit a pull request for our tree-sitter fork
 
 
 ## Exercise the API by creating example parsers.
@@ -21,6 +17,24 @@ Note that adding a language test target currently requires creating a separate p
 
 
 ## Make use of SwiftSyntaxBuilder in GrammarMacro.
+
+
+## Eliminate the addition of crate-type staticlib in tree-sitter/cli/Cargo.toml
+
+i.e. don't burden that project with an additional build target
+instead, specify staticlib as an override to cargo in the script to build the xcframework
+
+
+## Eliminate the use of clone in tree-sitter/cli/generate/render_buffer.rs
+
+i.e. RenderBuffer.get_text
+
+
+## Eliminate the TSLanguage target
+
+This target merely exports the symbols of parser.h and would be unnecessary if those symbols were exported by TreeSitterCLI.xcframework.
+I attempted this by having making parser.h a sibling of tree_sitter_cli.h and #including it in the latter,
+but the result was to hang the swift frontend...
 
 
 ## Improve the treatment of precedence.

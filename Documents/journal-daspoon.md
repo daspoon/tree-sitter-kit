@@ -1154,3 +1154,83 @@ Unfortunately, invoking this function within the macro causes the macro to fail
 Debug the macro...
   - the link failure appears if TSKit does not have TreeSitterCLI as a dependency; I don't understand why, since TSMacro does not depend on TSKit (and has an explicit dependency on TreeSitterCLI)
   - ultimately the macro crashed because the json text passed was invalid due to enclosing triple quotes...
+
+
+### Tue Jun 18, 2024
+
+TreeSitterCLI.xcframework should be generated rather than being either in the repo or hosted remotely
+  - however, being a binary target, we can't run any product of our package until it exists
+  - we could require a script be run to produce the xcframework to make the package functional
+  - ideally that script would build the framework from our tree-sitter fork, but that would require a clone independent of tht made by SPM to build our package
+  - instead, add a script which creates a skeletal xcframework to enable building the package;
+    and then add a command plugin to update the xcframework from the tree-sitter dependency...
+
+
+### Wed Jun 19, 2024
+
+Notes on cargo build
+  - specify the location of Cargo.toml via --manifest-path
+  - specify --lib to build the package's library
+  - the directory for generated artifacts and intermediate files can be specified via the --target-dir option or the CARGO_TARGET_DIR environment variable
+  - the --config option should allow override of crate-type; e.g. --config 'lib.crate-type=["staticlib"]'
+
+Notes on Swift command plugins...
+  - the plugin has a parameter of type PluginContext, which gives access to the package
+  - a package has a list of dependencies, each with an associated package
+  - a package has a directory, which in the case of a remote dependency is the location of the working copy
+  
+Adapt the script for building the cli xcframework to run from TreeSitterKit
+  - there is no benefit to having a SPM command plugin 
+
+
+### Thu Jun 20, 2024
+
+How to implement error handling for the parser generation function...
+  - the complication is that a swift function/closure passed to C can't capture context, so the means to interpret success or failure must be encapsulated in the return value of the completion callback, which in turn must be returned by the generation function
+  - the simplest approach is for the completion callback to take a status code (zero for success) along with the existing parameters of text bytes and length, which can serve to describe the problem in the case of failure 
+  - there are various sources of failure:
+      - the given byte sequence might not be utf8
+      - the abi_version might lie outside ABI_VERSION_MIN .. ABI_VERSION_MAX
+      - internal methods parse_grammar, prepare_grammar and build_tables might return a Result::Err
+  - without refactoring internal methods, we can only provide codes to distinguish these three sources
+
+Add TSCommon sub-package for code shared by TSKit and macros
+  - contains Swift interface to parser generation to enable testing
+  - contains Exception type, extended with status code
+  
+Add tests for the parser generation interface
+
+Removed obsolete command plugin for generating parser.c/h
+
+Note: We can likely eliminate the TSLanguage package by including the content of parser.h in tree_sitter_cli.h...
+
+
+### Fri Jun 21, 2024
+
+Towards tree-sitter pull-request..
+  - clean-up interface by which RenderTarget uses functionality of Generator
+  - tweak RenderTarget method naming to better match existing code
+  - rearrange contents of render.cs to minimize differences
+  - fork tree-sitter and create a feature branch
+  - tweak RenderTargetC to place character sets definitions prior to lex functions
+
+
+### Mon Jun 24, 2024
+
+Upload changes to tree-sitter fork (tag 0.1.0)
+
+Update Package.swift to reference github
+
+Note: the script for building TreeSitterCLI.xcframework needs to know the path to the working copy of tree-sitter
+  - swift package build uses ./build/checkouts/tree-sitter
+  - but Xcode uses ~/Library/Developer/Xcode/DerivedData/<MyProject>-<uid>/SourcePackages/checkouts/tree-sitter, where <uid> is a 'random' sequence of chars
+  - apparently this can be overridden by adding an .xcconfig file to your project (https://stackoverflow.com/a/33192207),
+    but Xcode provides no interface for specifying such a file in a swift package
+  - rely on the copy made by SPM, which can be created or updated via `swift package update`,
+    which must be performed immediately after cloning the project ...
+
+Add unit tests for buffer pointer utilities
+
+
+### Tue Jun 25, 2024
+
