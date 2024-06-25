@@ -8,7 +8,6 @@ import TSKit
 import TSCommon
 import TSLanguage
 import XCTest
-import TypedLang
 
 
 // MARK: - language types -

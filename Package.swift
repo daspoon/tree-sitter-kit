@@ -54,38 +54,20 @@ let package = Package(
             ],
             path: "Tests/TSKit"
         ),
-        // Some examples which pair language and parser targets for testing purposes...
-        .target(name: "ExprLang",
-            dependencies: [
-              .product(name: "TreeSitter", package: "tree-sitter"),
-            ],
-            path: "Sources/Examples/ExprLang",
-            cSettings: [.headerSearchPath("src")],
-            swiftSettings: [.interoperabilityMode(.C)]
-        ),
+        // Example languages for testing purposes...
         .testTarget(name: "ExprLangTests",
             dependencies: [
                 "TSKit",
                 "TSLanguage",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-                "ExprLang",
             ],
             path: "Tests/ExprLang"
-        ),
-        .target(name: "TypedLang",
-            dependencies: [
-              .product(name: "TreeSitter", package: "tree-sitter"),
-            ],
-            path: "Sources/Examples/TypedLang",
-            cSettings: [.headerSearchPath("src")],
-            swiftSettings: [.interoperabilityMode(.C)]
         ),
         .testTarget(name: "TypedLangTests",
             dependencies: [
                 "TSKit",
                 "TSLanguage",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
-                "TypedLang",
             ],
             path: "Tests/TypedLang"
         ),
