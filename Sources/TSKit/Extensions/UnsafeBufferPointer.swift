@@ -78,7 +78,7 @@ extension UnsafeBufferPointer where Element : ExpressibleByIntegerLiteral {
   }
 
   public static func initialized(rowCount n: Int, columnCount m: Int, rowColumnValueTriples v: [(row: Int, column: Int, value: Element)]) -> Self {
-    .initialized(rowCount: n, columnCount: n, zero: 0, rowColumnValueTriples: v)
+    .initialized(rowCount: n, columnCount: m, zero: 0, rowColumnValueTriples: v)
   }
 
   public static func initialized<R: BinaryInteger, C: BinaryInteger>(rowCount n: Int, columnCount m: Int, columnValuesByRow v: [(row: R, [(column: C, value: Element)])]) -> Self {
