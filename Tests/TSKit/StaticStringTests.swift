@@ -8,6 +8,7 @@ import XCTest
 import TSKit
 
 
+/// Test Comparable extension of StaticString.
 class StaticStringTests : XCTestCase {
   func testEqual() throws {
     let examples : [(lhs: StaticString, rhs: StaticString)] = [
