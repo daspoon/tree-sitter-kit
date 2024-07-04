@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/daspoon/tree-sitter",
       "state" : {
-        "revision" : "d99acd8b74e54085f197783c82401d2d182a8c8d",
-        "version" : "0.1.0"
+        "revision" : "6ec9a2abffa55f4510be7ea85ad44868a7ee66da",
+        "version" : "0.1.2"
       }
     }
   ],
