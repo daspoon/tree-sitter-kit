@@ -10,7 +10,8 @@ import TSLanguage
 import Foundation
 
 
-/// A *Grammar* generates the javascript source for a tree-sitter grammar with a specified name.
+/// The *Grammar* protocol, in conjunction with the same-named macro, enables synthesis of a
+/// tree-sitter parser from a list of production rules.
 
 public protocol Grammar<Root> {
   associatedtype Root
@@ -18,25 +19,42 @@ public protocol Grammar<Root> {
   /// The grammar/language name. The default implementation returns the receiver's type name.
   static var name : String { get }
 
-  /// The set of production rules...
+  /// The set of production rules. Implementation required.
   static var productionRules : [ProductionRule] { get }
 
   /// Optionally specifies the pattern for the word rule. The default implementation returns nil.
   static var word : String? { get }
 
-  /// The shared instance of the language structure. Implementation provided.
+  /// The shared instance of the language structure. Implementation provided by @Grammar.
   static var language : UnsafePointer<TSLanguage> { get }
 
-  /// Produce an instance of the root type from the the root node of a parse tree. Implementation provided.
+  /// Produce an instance of the root type from the the root node of a parse tree. Implementation provided by @Grammar.
   static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
 
-  /// Return *true* if the rule for the given type is hidden. Implementation provided.
+  /// Return *true* if the rule for the given type is hidden. Implementation provided by @Grammar.
   static func isRuleHidden(for type: Any.Type) -> Bool
 
-  /// Return the string representation of the given symbol identifier. Implementation provided.
+  /// Return the string representation of the given symbol identifier. Implementation provided by @Grammar.
   static func symbolName(for symbol: TSSymbol) -> StaticString
 }
 
+
+/// The Grammar macro is intended to be applied to structures conforming to the Grammar protocol.
+/// It implements the named protocol requirements, along with an extraction method of the following
+/// form for each symbol type `T` reachable from the production rule of the `Root` type:
+///   `private static func extractT(from: TSNode, in: ParsingContext) -> T
+
+@attached(member, names:
+  named(language),
+  named(isRuleHidden(for:)),
+  named(translate(parseTree:context:)),
+  named(symbolName(for:)),
+  arbitrary
+)
+public macro Grammar() = #externalMacro(module: "TSMacros", type: "GrammarMacro")
+
+
+/// Default implementations.
 
 extension Grammar {
   public static var name : String
@@ -47,19 +65,19 @@ extension Grammar {
 }
 
 
+/// Utility methods.
+
 extension Grammar {
   /// Extract the text for the given node. This enables String to be treated as a parsable types within with respect to production rule captures.
   public static func extractString(from node: TSNode, in context: ParsingContext) -> String {
     context.inputSource.text(for: node)
   }
 
+  /// Return the symbol name for the given node.
   public static func symbolName(for node: TSNode) -> StaticString {
     symbolName(for: ts_node_grammar_symbol(node))
   }
-}
 
-
-extension Grammar {
   /// Create an instance of the root type from the given input source.
   public static func parse(inputSource src: InputSource) throws -> Root {
     // Create a parser for the given language
