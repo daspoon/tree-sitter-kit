@@ -1,7 +1,5 @@
 /*
 
-  Created by David Spooner
-
 */
 
 /// A type used to in syntax expressions as a convenience for specifying separated

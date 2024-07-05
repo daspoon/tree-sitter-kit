@@ -1,7 +1,5 @@
 /*
 
-  Created by David Spooner
-
   Notes:
     - ts_tree_cursor_current_field_name is not exposed (say as currentFieldName); instead use currentFieldId and TSLanguage.fieldName(for:).
     - an earlier implementation existed as TSCursor

@@ -1,7 +1,5 @@
 /*
 
-  Created by David Spooner
-
 */
 
 extension StaticString {

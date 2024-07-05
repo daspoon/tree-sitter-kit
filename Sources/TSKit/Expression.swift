@@ -1,7 +1,5 @@
 /*
 
-  Created by David Spooner
-
 */
 
 /// An analogue of tree-sitter syntax expressions.
