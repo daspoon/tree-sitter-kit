@@ -110,7 +110,7 @@ Note that macros can neither invoke subprocesses nor interact with the file syst
 
 ## Future
 
-This is a work in progress: there are a number of loose ends (...) and likely many undiscovered issues.
+This is a work in progress: there are a number of known [issues](https://github.com/daspoon/tree-sitter-kit/issues) and likely many more to be discovered through experimentation.
 
 One obvious drawback is that all production rules must be defined within the top-level grammar struct, making that struct definition rather large.
 I had wanted each symbol type to specify its own production rules and for the grammar to derive the set of all rules reachable from its root type,
