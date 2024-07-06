@@ -108,6 +108,13 @@ The *Grammar* protocol provides a convenience method for translating text to its
 Note that macros can neither invoke subprocesses nor interact with the file system, so the *Grammar* macro relies on a fork of tree-sitter extended with a callable interface to generate the Swift equivalent of *parser.c*.
 
 
+## Installation
+
+This project runs only on macOS due to the use of binary targets.
+After cloning the project you must run the shell script `build_xcframework` from the package directory in order to create the binary target TreeSitterCLI.xcframework.
+That script must be run again if the tree-sitter working copy is updated via `swift package update`.
+
+
 ## Future
 
 This is a work in progress: there are a number of known [issues](https://github.com/daspoon/tree-sitter-kit/issues) and likely many more to be discovered through experimentation.
