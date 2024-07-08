@@ -95,7 +95,7 @@ For example, the grammar shown above is implemented by applying an attached macr
   }
   ```
 
-The parameter packs feature of Swift enables syntax expression of each production rule to be generic in a sequence of symbol types matching the parameters of its constructor.
+The parameter packs feature of Swift enables the syntax expression of each production rule to be generic in a sequence of symbol types matching the parameters of its constructor.
 The macro generates a static *TSLanguage* instance together with a method for translating parse trees into the specified *Root* type.
   ```
   static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
