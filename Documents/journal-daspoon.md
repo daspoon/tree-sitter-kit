@@ -1234,3 +1234,83 @@ Add unit tests for buffer pointer utilities
 
 ### Tue Jun 25, 2024
 
+Delete Source/Examples, which are now obsolete 
+
+Draft project overview
+
+
+### Wed Jun 26, 2024
+
+TSKit Issues ...
+  - why does Expression not have an explicit choice?
+  - constructor closures must have explicit param names
+  - 0-ary constructors must declare params as `()`
+  - macro-generated errors do not appear in written source; investigate use of 'diagnostics'
+  - can't refer to nested types; must add type aliases
+  - can be difficult to debug production rules since errors appear in the macro expansion which is unwieldy; helpful to generate a stub language to minimize macro expansion size
+  - macro expansion is not well formatted; may help to adopt syntax builder
+
+
+### Fri Jun 28, 2024
+
+Recreate tree-sitter changes incrementally to ensure proper function:
+  - Introduce RenderBuffer
+  - Restrict mutation of Generator to its init method and move its rendering methods to new struct RenderTargetC.
+
+
+### Tue Jul 2, 2024
+
+bug fix: ADVANCE_MAP must accommodate two-character ranges
+
+bug fix: avoid clone of render buffer text 
+
+
+### Wed Jul 3, 2024
+
+debugging tree-sitter tests
+  - fix missing indentation
+  - fix translation error in use of `ADVANCE_MAP`
+
+
+### Thu Jul 4, 2024
+
+Revert the addition of crate-type staticlib to cli/Cargo.toml
+  - instead, specify staticlib as an override to cargo in the script to build the xcframework
+  - cargo rustc --crate-type=staticlib ...
+
+Upload changes to tree-sitter fork
+
+Update build_xcframework script to remove .build/cargo prior to running cargo rustc
+  - to avoid permission violation during build
+
+
+### Fri Jul 5, 2024
+
+Finish replaying tree-sitter fork commits to improve presentation...
+  - push feature branch `swiftgen` and tag 0.1.4
+
+Move todo items to github issues.
+
+Added license file and removed per-file attribution.
+
+
+### Sat Jul 6, 2024
+
+Verified that the authentic tree-sitter periodically log panic backtaces to stderr for java and python corpus tests
+  - these don't appear as test failures, so presumably they're expected behavior
+
+Sync tree-sitter-fork with original repo (https://dev.to/untilyou58/keep-your-fork-in-sync-understanding-git-remote-upstream-366l)
+  - create upstream remote
+    ```
+    $ git remote add upstream https://github.com/tree-sitter/tree-sitter
+    $ git remote set-url --push upstream DISABLE
+    ```
+  - merge upstream changes 
+    ```
+    $ git fetch upstream
+    $ git checkout master
+    $ git merge upstream/master
+    ```
+
+Submit a pull request for tree-sitter fork
+  - #3453 Extend CLI with a method to generate the Swift equivalent of parser.c
