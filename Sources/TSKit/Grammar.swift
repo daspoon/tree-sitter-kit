@@ -100,7 +100,7 @@ extension Grammar {
 
   /// Create an instance of the root type from the given text.
   public static func parse(text: String, encoding: String.Encoding = .utf8) throws -> Root {
-    guard let source = StringInputSource(string: text)
+    guard let source = StringInputSource(string: text, encoding: encoding)
       else { throw Exception("unsupported string encoding: \(encoding)") }
     return try parse(inputSource: source)
   }

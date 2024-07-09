@@ -111,17 +111,17 @@ class UnsafePointerTests : XCTestCase {
     }
   }
 
-  /// Test UnsafeBufferPointer.arrayOfAsciiCSrings(_:), which is used to implement *symbolNames* and *fieldNames*.
-  func testArrayOfAsciiCStrings() throws {
+  /// Test UnsafeBufferPointer.arrayOfCSrings(_:), which is used to implement *symbolNames* and *fieldNames*.
+  func testArrayOfCStrings() throws {
     let examples : [[StaticString?]] = [
-      ["hey", "you", "getoffa", "icloud", nil],
+      ["hey", "μ", "getoffa", "icloud", nil],
       [],
     ]
     for sstrings in examples {
-      let cstrings = UnsafeBufferPointer<UnsafePointer<CChar>?>.arrayOfAsciiCSrings(sstrings)
+      let cstrings = UnsafeBufferPointer.arrayOfCSrings(sstrings)
       XCTAssert(cstrings.count == sstrings.count)
       for i in 0 ..< cstrings.count {
-        XCTAssert(sstrings[i].map {$0.hasPointerRepresentation && $0.isASCII} ?? true)
+        XCTAssert(sstrings[i].map {$0.hasPointerRepresentation} ?? true)
         switch (sstrings[i], cstrings[i]) {
           case (.some(let sstring), .some(let cstring)) :
             let length = sstring.utf8CodeUnitCount + 1 // +1 to include null terminator

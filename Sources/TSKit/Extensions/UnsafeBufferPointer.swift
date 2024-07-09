@@ -88,18 +88,18 @@ extension UnsafeBufferPointer where Element : ExpressibleByIntegerLiteral {
 extension UnsafeBufferPointer where Element == UnsafePointer<CChar>? {
   typealias CString = UnsafePointer<CChar>?
 
-  /// Allocate and initialize a buffer containing the C string pointers for the given array of strings.
-  /// A runtime error will occur unless all given strings satisfy both `hasPointerRepresentation` and `isASCII`.
-  public static func arrayOfAsciiCSrings(_ strings: [StaticString?]) -> Self {
+  /// Allocate and initialize a buffer containing the C string pointers for the given array of static strings.
+  /// A runtime error will occur unless all given strings satisfy `hasPointerRepresentation`.
+  public static func arrayOfCSrings(_ strings: [StaticString?]) -> Self {
     let ptrbuf = UnsafeMutableRawBufferPointer.allocate(byteCount: strings.count * MemoryLayout<CString>.stride, alignment: MemoryLayout<CString>.alignment)
       .bindMemory(to: CString.self)
     for (i, string) in strings.enumerated() {
-      ptrbuf[i] = string?.asciiStart
+      ptrbuf[i] = string?.cStringStart
     }
     return Self(ptrbuf)
   }
 
-  public static func arrayOfAsciiCSrings(_ strings: [StaticString]) -> Self {
-    arrayOfAsciiCSrings(strings.map {$0 as StaticString?})
+  public static func arrayOfCSrings(_ strings: [StaticString]) -> Self {
+    arrayOfCSrings(strings.map {$0 as StaticString?})
   }
 }
