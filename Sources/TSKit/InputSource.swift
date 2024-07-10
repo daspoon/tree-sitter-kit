@@ -14,11 +14,3 @@ public protocol InputSource {
   /// Return the structure required by tree-sitter's parse method.
   var tsinput : TSInput { get }
 }
-
-
-extension InputSource {
-  /// Return the portion of source text for the given node.
-  public func text(for node: TSNode) -> String {
-    text(in: node.sourceByteRange)
-  }
-}

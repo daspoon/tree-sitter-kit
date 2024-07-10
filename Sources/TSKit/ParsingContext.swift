@@ -13,4 +13,9 @@ public struct ParsingContext {
   public init(inputSource s: InputSource) {
     inputSource = s
   }
+
+  /// Return the portion of source text for the given node.
+  public func text(for node: TSNode) -> String {
+    inputSource.text(in: node.sourceByteRange)
+  }
 }

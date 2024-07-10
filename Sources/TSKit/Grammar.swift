@@ -68,7 +68,7 @@ extension Grammar {
 extension Grammar {
   /// Extract the text for the given node. This enables String to be treated as a parsable types within with respect to production rule captures.
   public static func extractString(from node: TSNode, in context: ParsingContext) -> String {
-    context.inputSource.text(for: node)
+    context.text(for: node)
   }
 
   /// Return the symbol name for the given node.
