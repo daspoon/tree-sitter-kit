@@ -25,11 +25,9 @@ public struct GrammarMacro : MemberMacro {
     let visibility = decl.visibility
 
     // Return the declarations for the generated methods...
-    return [
-      DeclSyntax(stringLiteral:
-        languageDefinitionText
-      ),
-
+    return grammar.definedRules.map {
+      DeclSyntax(stringLiteral: $0.extractionDeclText)
+    } + [
       DeclSyntax(stringLiteral: """
         \(visibility) static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root {
           extract\(grammar.rootType)(from: node, in: context)
@@ -49,8 +47,9 @@ public struct GrammarMacro : MemberMacro {
           symbolNames[Int(symbol)]
         }
         """),
-    ] + grammar.definedRules.map { rule in
-      DeclSyntax(stringLiteral: rule.extractionDeclText)
-    }
+      DeclSyntax(stringLiteral:
+        languageDefinitionText
+      ),
+    ]
   }
 }
