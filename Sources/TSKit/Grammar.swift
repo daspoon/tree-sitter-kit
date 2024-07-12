@@ -26,14 +26,14 @@ public protocol Grammar<Root> {
   /// The shared instance of the language structure. Implementation provided by @Grammar.
   static var language : UnsafePointer<TSLanguage> { get }
 
+  /// The array of symbol names, excluding the built-in errorSymbol and errorRepeatSymbol. Implementation provided by @Grammar.
+  static var symbolNames : [StaticString] { get }
+
   /// Produce an instance of the root type from the the root node of a parse tree. Implementation provided by @Grammar.
   static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
 
   /// Return *true* if the rule for the given type is hidden. Implementation provided by @Grammar.
   static func isRuleHidden(for type: Any.Type) -> Bool
-
-  /// Return the string representation of the given symbol identifier. Implementation provided by @Grammar.
-  static func symbolName(for symbol: TSSymbol) -> StaticString
 }
 
 
@@ -74,6 +74,16 @@ extension Grammar {
   /// Return the symbol name for the given node.
   public static func symbolName(for node: TSNode) -> StaticString {
     symbolName(for: ts_node_grammar_symbol(node))
+  }
+
+  /// Return the string representation of the given symbol identifier.
+  public static func symbolName(for symbol: TSSymbol) -> StaticString {
+    switch symbol {
+      case TSLanguage.errorSymbol : "error"
+      case TSLanguage.errorRepeatSymbol : "errorRepeat"
+      default :
+        symbolNames[Int(symbol)]
+    }
   }
 
   /// Create an instance of the root type from the given input source.

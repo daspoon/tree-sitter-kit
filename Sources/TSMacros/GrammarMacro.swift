@@ -42,11 +42,6 @@ public struct GrammarMacro : MemberMacro {
           return hiddenTypes.contains(ObjectIdentifier(type))
         }
         """),
-      DeclSyntax(stringLiteral: """
-        \(visibility) static func symbolName(for symbol: TSSymbol) -> StaticString {
-          symbolNames[Int(symbol)]
-        }
-        """),
       DeclSyntax(stringLiteral:
         languageDefinitionText
       ),
