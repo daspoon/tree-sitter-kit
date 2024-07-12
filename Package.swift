@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "TSKit", targets: ["TSKit"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/daspoon/tree-sitter", from: "0.1.5"),
+        .package(url: "https://github.com/daspoon/tree-sitter", from: "0.1.6"),
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
     ],
     targets: [
@@ -25,14 +25,7 @@ let package = Package(
             dependencies: [
               .product(name: "TreeSitter", package: "tree-sitter"),
               "TSCommon",
-              "TSLanguage",
               "TSMacros",
-            ]
-        ),
-        // The C library required to create a TSLanguage struct
-        .target(name: "TSLanguage",
-            dependencies: [
-                .product(name: "TreeSitter", package: "tree-sitter"),
             ]
         ),
         // The definitions of macros exported by TSKit.
@@ -58,7 +51,6 @@ let package = Package(
         .testTarget(name: "ExprLangTests",
             dependencies: [
                 "TSKit",
-                "TSLanguage",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
             path: "Tests/ExprLang"
@@ -66,7 +58,6 @@ let package = Package(
         .testTarget(name: "TypedLangTests",
             dependencies: [
                 "TSKit",
-                "TSLanguage",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ],
             path: "Tests/TypedLang"

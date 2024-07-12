@@ -3,7 +3,7 @@
 */
 
 import TreeSitter
-import TSLanguage
+@_exported import TreeSitterCLI
 
 
 extension TSLanguage {

@@ -4,7 +4,6 @@
 
 import XCTest
 import TSKit
-import TSLanguage
 
 
 enum JSONValue : Equatable {

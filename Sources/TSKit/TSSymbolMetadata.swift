@@ -2,7 +2,7 @@
 
 */
 
-import TSLanguage
+import TreeSitterCLI
 
 
 extension TSSymbolMetadata {

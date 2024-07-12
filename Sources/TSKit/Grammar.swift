@@ -3,8 +3,8 @@
 */
 
 import TreeSitter
+import TreeSitterCLI
 import TSCommon
-import TSLanguage
 import Foundation
 
 

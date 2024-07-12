@@ -2,8 +2,6 @@
 
 */
 
-import TSLanguage
-
 
 /// Aggregate the data required to translate parse trees into instances of *Parsable* types.
 

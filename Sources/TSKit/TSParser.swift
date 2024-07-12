@@ -3,7 +3,7 @@
 */
 
 import TreeSitter
-import TSLanguage
+import TreeSitterCLI
 
 
 /// A wrapper for the tree-sitter's *TSParser* struct.
