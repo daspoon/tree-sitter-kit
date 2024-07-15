@@ -26,6 +26,11 @@ extension TSNode
       ts_node_start_byte(self) ..< ts_node_end_byte(self)
     }
 
+    /// Return the parent node, which may be 'null'.
+    public var parent : TSNode {
+      ts_node_parent(self)
+    }
+
     /// Return the number of child nodes.
     public var count : Int {
       Int(ts_node_child_count(self))
