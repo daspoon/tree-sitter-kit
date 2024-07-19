@@ -40,7 +40,7 @@ extension Precedence {
           case ("left", 1) :
             self = .left(try Int(exprSyntax: args[0].expression))
           case ("right", 1) :
-            self = .left(try Int(exprSyntax: args[0].expression))
+            self = .right(try Int(exprSyntax: args[0].expression))
           default :
             throw Exception("invalid Precedence syntax")
         }
