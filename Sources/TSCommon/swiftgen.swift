@@ -27,39 +27,42 @@ fileprivate class Result {
 }
 
 
-/// Return the Swift parser source for a grammar expressed as JSON text.
-public func generateParserSource(for jsonText: String, abi_version v: UInt32 = 0) throws -> String {
-  let optionalSwiftText = try jsonText.utf8.withContiguousStorageIfAvailable {
-    try generateParserSource(for: $0, abi_version: v)
+/// Return the Swift parser source for a grammar expressed as JSON and the access modifier applied to enclosing struct.
+package func generateParserSource(for jsonText: String, accessModifier modText: String = "", abi_version v: UInt32 = 0) throws -> String {
+  // We must call tree-sitter in a context where the contiguous utf8 representations of the grammar and visibility strings are available...
+  let optionalOptionalSwiftText = try jsonText.utf8.withContiguousStorageIfAvailable { jsonBuf in
+    try modText.utf8.withContiguousStorageIfAvailable { modBuf in
+      try generateParserSource(for: jsonBuf, accessModifier: modBuf, abi_version: v)
+    }
   }
 
-  // `optionalSwiftText` will be nil iff withContiguousStorageIfAvailable returned nil.
-  guard let swiftText = optionalSwiftText
+  // The generated source will be nil if either of the grammar or visibility text have no contiguous UTF8 representation.
+  guard let optionalSwiftText = optionalOptionalSwiftText, let swiftText = optionalSwiftText
     else { throw Exception("given text lacks a contiguous UTF8 representation") }
 
   return swiftText
 }
 
 /// Return the Swift parser source for a grammar expressed as a UTF8-encoding JSON text.
-public func generateParserSource(for jsonBuf: UnsafeBufferPointer<UInt8>, abi_version: UInt32 = 0) throws -> String {
-  // Invoke the parser generator with the bytes of the JSON grammar and a callback which returns a retained instance of Result as an opaque pointer.
+package func generateParserSource(for jsonBuf: UnsafeBufferPointer<UInt8>, accessModifier modBuf: UnsafeBufferPointer<UInt8>, abi_version v: UInt32 = 0) throws -> String {
   guard jsonBuf.count <= Int(UInt32.max)
     else { throw Exception("grammar text is too long") }
+  guard modBuf.count <= Int(UInt32.max)
+    else { throw Exception("visibility text is too long") }
 
-  let optionalUnsafeRawPointer = swiftgen(jsonBuf.baseAddress, UInt32(jsonBuf.count), abi_version) {
+  // Invoke tree-sitter with a completion callback that returns a retained instance of Result as an opaque pointer.
+  let optionalUnsafeRawPointer = swiftgen(jsonBuf.baseAddress, UInt32(jsonBuf.count), modBuf.baseAddress, UInt32(modBuf.count), v) {
     let result = Result(status: $0, textBytes: $1, textLen: $2)
     return UnsafeRawPointer(Unmanaged.passRetained(result).toOpaque())
   }
 
-  // `optionalUnsafeRawPointer` is the result of the completion argument to swiftgen, so should not be nil.
+  // The call to 'swiftgen' returns the result of the completion callback, so that value must be non-nil.
   guard let unsafeRawPointer = optionalUnsafeRawPointer
     else { throw Exception("unexpected null pointer") }
 
-  // Extract and 'autorelease' the Result object.
+  // Extract and take ownership of the Result object: throw if the call was unsuccessful, or return the generated text otherwise.
   let result = Unmanaged<Result>.fromOpaque(unsafeRawPointer).takeRetainedValue()
   guard result.status == 0
     else { throw Exception(code: result.status, failureReason: result.text as String) }
-
-  // If successful, return the generated text.
   return result.text as String
 }

@@ -18,11 +18,11 @@ public struct GrammarMacro : MemberMacro {
     // Get a JSON (string) representation of the grammar.
     let grammarText = grammar.jsonText
 
-    // Create the Swift source which defines the corresponding TSLanguage instance.
-    let languageDefinitionText = try generateParserSource(for: grammarText)
-
     // Get the visibility of the affected declaration.
     let visibility = decl.visibility
+
+    // Create the Swift source which defines the corresponding TSLanguage instance.
+    let languageDefinitionText = try generateParserSource(for: grammarText, accessModifier: visibility)
 
     // Return the declarations for the generated methods...
     return grammar.definedRules.map {
