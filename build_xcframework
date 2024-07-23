@@ -1,7 +1,44 @@
-# Create and sign an xcframework bundle containing a version of libtree_sitter_cli.a  
+#!/bin/bash
+
+# Create and sign an xcframework bundle containing a version of libtree_sitter_cli.a
 # for each macos supported architecture.
 
-TREE_SITTER=${PWD}/.build/checkouts/tree-sitter
+# Set default option values
+TREE_SITTER=
+
+# Get specified option values
+while [[ $# -gt 0 ]]; do
+    case $1 in
+      -l|--tree-sitter)
+          # the location of the tree-sitter working copy
+          TREE_SITTER="$2"; shift; shift
+          if [[ ! -d $TREE_SITTER ]]; then
+              echo "no such directory: $TREE_SITTER"
+              exit 1
+          fi;;
+      -*)
+          echo "invalid option: $1"
+          exit 1;;
+      *)
+          echo "invalid argument: $1"
+          exit 1;;
+    esac
+done
+
+# Attempt to find the tree-sitter checkout if unspecified.
+if [[ $TREE_SITTER == "" ]]; then
+    DEFAULT_DIRS=(.. $PWD/.build/checkouts)
+    for DIR in $DEFAULT_DIRS; do
+        if [[ -d $DIR/tree-sitter ]]; then
+            TREE_SITTER=$DIR/tree-sitter
+            break
+        fi
+    done
+    if [ $TREE_SITTER == "" ]; then
+        echo "can't infer location of tree-sitter checkout"
+        exit 1
+    fi
+fi
 
 # TODO: param defaulting to release
 CONFIGURATION=debug
