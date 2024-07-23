@@ -41,7 +41,7 @@ if [[ $TREE_SITTER == "" ]]; then
 fi
 
 # TODO: param defaulting to release
-CONFIGURATION=debug
+CONFIGURATION=release
 
 MANIFEST_PATH=${TREE_SITTER}/cli/Cargo.toml
 LIB_NAME=libtree_sitter_cli.a
@@ -54,8 +54,8 @@ set -x
 
 # Build for each platform
 rm -rf ${TARGET_DIR}
-cargo rustc --manifest-path ${MANIFEST_PATH} --lib --crate-type=staticlib --target-dir ${TARGET_DIR} --target aarch64-apple-darwin
-cargo rustc --manifest-path ${MANIFEST_PATH} --lib --crate-type=staticlib --target-dir ${TARGET_DIR} --target  x86_64-apple-darwin
+cargo rustc --release --manifest-path ${MANIFEST_PATH} --lib --crate-type=staticlib --target-dir ${TARGET_DIR} --target aarch64-apple-darwin
+cargo rustc --release --manifest-path ${MANIFEST_PATH} --lib --crate-type=staticlib --target-dir ${TARGET_DIR} --target  x86_64-apple-darwin
 
 # Combine as a universal binary
 lipo ${TARGET_DIR}/aarch64-apple-darwin/${CONFIGURATION}/${LIB_NAME} ${TARGET_DIR}/x86_64-apple-darwin/${CONFIGURATION}/${LIB_NAME} -create -output ${UNIVERSAL_LIB}
