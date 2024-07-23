@@ -47,9 +47,9 @@ So producing instances of our *Expr* type requires implementing a translation fr
         case "Num" :
           self = .num(Int(ctx.text(for: child))!)
         case "Add" :
-          self = .add(Self(node: child[0], context: ctx), Self(node: child[2]))
+          self = .add(Self(node: child[0], context: ctx), Self(node: child[2], context: ctx))
         case "Mult" :
-          self = .mult(Self(node: child[0], context: ctx), Self(node: child[2]))
+          self = .mult(Self(node: child[0], context: ctx), Self(node: child[2], context: ctx))
         case "Paren" :
           self = Self(node: child[1], context: ctx)
         default :
@@ -73,7 +73,7 @@ For example, the grammar shown above is implemented by applying an attached macr
 
     static var productionRules : [ProductionRule] {
       return [
-        .init(Expr.self, choicesByName: [
+        ProductionRule(Expr.self, choicesByName: [
           "num": .init(.sym(Int.self)) { value in
             .num(value)
           },
@@ -87,7 +87,7 @@ For example, the grammar shown above is implemented by applying an attached macr
             expr
           }
         ]),
-        .init(Int.self, .pat("[0-9]+")) { text in
+        ProductionRule(Int.self, .pat("[0-9]+")) { text in
           Int(text)!
         },
       ]
@@ -98,11 +98,11 @@ For example, the grammar shown above is implemented by applying an attached macr
 The parameter packs feature of Swift enables the syntax expression of each production rule to be generic in a sequence of symbol types matching the parameters of its constructor.
 The macro generates a static *TSLanguage* instance together with a method for translating parse trees into the specified *Root* type.
   ```
-  static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
+  static func translate(_ node: TSNode, with source: InputSource, in context: Context) -> Root
   ```
 The *Grammar* protocol provides a convenience method for translating text to its *Root* type.
   ```
-  static func parse(text: String, encoding: String.Encoding = .utf8) throws -> Root
+  static func parse(text: String, encoding: String.Encoding = .utf8, in context: Context) throws -> Root
   ```
 
 Note that macros can neither invoke subprocesses nor interact with the file system, so the *Grammar* macro relies on a fork of tree-sitter extended with a callable interface to generate the Swift equivalent of *parser.c*.
