@@ -28,13 +28,13 @@ done
 # Attempt to find the tree-sitter checkout if unspecified.
 if [[ $TREE_SITTER == "" ]]; then
     DEFAULT_DIRS=(.. $PWD/.build/checkouts)
-    for DIR in $DEFAULT_DIRS; do
+    for DIR in ${DEFAULT_DIRS[@]}; do
         if [[ -d $DIR/tree-sitter ]]; then
             TREE_SITTER=$DIR/tree-sitter
             break
         fi
     done
-    if [ $TREE_SITTER == "" ]; then
+    if [[ $TREE_SITTER == "" ]]; then
         echo "can't infer location of tree-sitter checkout"
         exit 1
     fi
