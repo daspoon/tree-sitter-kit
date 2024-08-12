@@ -6,17 +6,15 @@ import Foundation
 import TreeSitter
 
 
-/// A wrapper for the tree-sitter's opaque *TSTree* type which maintains an association to the parsed text.
+/// A wrapper for the tree-sitter's opaque *TSTree*.
 public class TSTree
   {
     let opaqueTree : OpaquePointer
-    public let inputSource : InputSource
 
-    /// Intended for use by *TSParser* to initialize a new instance given the opaque parse tree and the text input source.
-    internal init?(opaqueTree ptr: OpaquePointer?, inputSource src: InputSource) {
+    /// Intended for use by *TSParser* to initialize a new instance given the opaque parse tree.
+    internal init?(opaqueTree ptr: OpaquePointer?) {
       guard let ptr else { return nil }
       opaqueTree = ptr
-      inputSource = src
     }
 
     deinit {
