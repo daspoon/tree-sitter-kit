@@ -20,7 +20,7 @@ public protocol Grammar<Root> {
   /// The set of production rules. Implementation required.
   static var productionRules : [ProductionRule] { get }
 
-  /// Optionally specifies the pattern for the word rule. The default implementation returns nil.
+  /// Specifies the pattern for the word rule. The default implementation returns nil, indicating there is no special treatment of words.
   static var word : String? { get }
 
   /// The shared instance of the language structure. Implementation provided by @Grammar.
