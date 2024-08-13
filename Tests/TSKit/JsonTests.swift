@@ -45,6 +45,15 @@ struct JSONGrammar : Grammar {
       .init(JSONString.self, .pat("\"([^\"\\\\\\n]|[\\\\]([\\\\/bfnrt]|u[0-9a-fA-F]{4,4}))*\"")) { str in removingFirstAndLastCharacter(of: str) },
     ]
   }
+
+  static var extras : [Token] {
+    return [
+      .pat(#/\s/#),
+      .seq(["//", .pat(#/.*/#)]),
+//      // NOTE: if block comments are enabled then Xcode fails to show macro expansion
+//      .seq(["/*", .pat(#/[^*]*\*+(?:[^\/*][^*]*\*+)*/#), "/"]),
+    ]
+  }
 }
 
 
@@ -77,6 +86,11 @@ class JSONTests : XCTestCase {
       ("{\"a\": 1}", ["a": 1]),
       ("{\"a\": 1, \"b\": 2, \"c\": 3}", ["a": 1, "b": 2, "c": 3]),
       ("{\"\": {\"x\": null}}", ["": ["x": nil]]),
+
+      ("""
+       // heynow
+       42
+       """, 42),
     ]
     for eg in examples {
       XCTAssertEqual(try JSONGrammar.parse(text: eg.text), eg.value, eg.text)
