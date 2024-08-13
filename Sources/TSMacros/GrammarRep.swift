@@ -15,6 +15,8 @@ struct GrammarRep {
   let definedRules : [ProductionRule]
   // The symbol name and patter for the `word` attribute, if any.
   let word : (symbol: String, pattern: String)?
+  // The list of 'extra' tokens
+  let extras : [RawExpression]?
   // Return the complete list of production rules as pairs of symbols and syntax expressions.
   let allRules : [(symbol: String, expression: RawExpression)]
 
@@ -34,6 +36,19 @@ struct GrammarRep {
     }
     else {
       word = nil
+    }
+
+    // Get the list of tokens for the 'extras' property, if any.
+    if let extrasBinding = decl.variableBindingWith(name: "extras", type: "[Token]", isStatic: true) {
+      guard let array = extrasBinding.resultExpr?.as(ArrayExprSyntax.self)
+        else { throw Exception("`extras` must return an array literal") }
+      extras = try array.elements.map { element in
+        let token = try Token(expr: element.expression)
+        return token.rawExpression
+      }
+    }
+    else {
+      extras = nil
     }
 
     // Get the list of production rules from `static var productionRules : [ProductionRule]`,
@@ -70,7 +85,7 @@ struct GrammarRep {
         )
       },
       \(word.map {"\"word\": \"\($0.symbol)\","} ?? "")
-      "extras": [\(RawExpression.whitespace.json)],
+      "extras": [\(extras.map {$0.map(\.json).joined(separator: ", ")} ?? RawExpression.whitespace.json)],
       "conflicts": [],
       "precedences": [],
       "externals": [],

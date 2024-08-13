@@ -23,6 +23,9 @@ public protocol Grammar<Root> {
   /// Specifies the pattern for the word rule. The default implementation returns nil, indicating there is no special treatment of words.
   static var word : String? { get }
 
+  /// Specifies the tokens which are ignored. The default implementation returns nil, indicating the tree-sitter default (whitespace is ignored).
+  static var extras : [Token]? { get }
+
   /// The shared instance of the language structure. Implementation provided by @Grammar.
   static var language : UnsafePointer<TSLanguage> { get }
 
@@ -59,6 +62,9 @@ extension Grammar {
     { "\(Self.self)" }
 
   public static var word : String?
+    { nil }
+
+  public static var extras : [Token]?
     { nil }
 }
 
