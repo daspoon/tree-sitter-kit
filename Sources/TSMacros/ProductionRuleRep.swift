@@ -18,7 +18,6 @@ struct ProductionRule {
   /// *Choice* pairs a syntax expression and a constructor with shared type signature.
   struct Choice {
     let expression : Expression
-    let signature : Signature
     let constructor : ClosureExprSyntax
 
     /// Attempt to create an instance from the given expression and closure; throw if
@@ -29,17 +28,16 @@ struct ProductionRule {
     init(expression e: Expression, constructor c: ClosureExprSyntax) throws {
       guard let parameterCount = c.signature?.parameterCount
         else { throw ExpansionError(node: c, message: "closures must have explicit parameter names") }
+      guard e.signature.captureCount == parameterCount
+        else { throw ExpansionError(node: c, message: "constructor parameter count (\(parameterCount)) does not match expression capture count (\(e.signature.captureCount))") }
       expression = e
-      signature = try Signature(expression: e)
       constructor = c
-      guard signature.captureCount == parameterCount
-        else { throw ExpansionError(node: c, message: "constructor parameter count (\(parameterCount)) does not match expression capture count (\(signature.captureCount))") }
     }
 
     /// Return the text for an invocation of the constructor with argument values extracted
     /// from an implicit parse tree 'node' and 'context'...
     var invocationText : String {
-      let invocationArgumentsText = switch signature {
+      let invocationArgumentsText = switch expression.signature {
         case .symbol(let type) :
           extractionText(for: type)
         case .array(let eltType, .sep(let sep)) :
