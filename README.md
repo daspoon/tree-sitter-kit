@@ -1,6 +1,6 @@
 # TreeSitterKit
 
-This project aims to simplify use of the [tree-sitter](https://tree-sitter.github.io/tree-sitter/) parser generator for implementing custom programming languages in [Swift](https://swift.org).
+This project aims to simplify use of [tree-sitter](https://tree-sitter.github.io/tree-sitter/) for implementing custom programming languages in [Swift](https://swift.org).
 Specifically, it enables writing grammar rules as Swift code and automates the translation of parse trees into the Swift data structures which implement the abstract syntax of a custom language.
 
 As a simple example, consider an abstract syntax for a language of arithmetic expressions involving integers, addition and multiplication:
@@ -13,7 +13,7 @@ As a simple example, consider an abstract syntax for a language of arithmetic ex
   }
   ```
 
-Tree-sitter enables writing a grammar for this language as a javascript object:
+Using tree-sitter directly, one can write a grammar for this language as a javascript object:
 
   ```
   {
@@ -63,8 +63,8 @@ The above method assumes the existence of a *Context* type which is used to iden
 Although this translation code is straight-forward, it can be complicated for grammars which have many abstract syntax types or have productions with optional elements.
 More importantly, the type safety of the translation method cannot be guaranteed by the compiler because there is no explict relationship between the grammar and the abstract syntax.
 
-This package enables grammars to be written in Swift as a collection of production rules, each pairing a syntax expression with a constructor for an associated implementation type.
-For example, the grammar shown above is implemented by applying an attached macro (viz. *@Grammar*) to a structure conforming to the *Grammar* protocol:
+Using this package we can reduce the task of parser construction to the application of a macro to a structure defining a root symbol type and a list of production rules, with each rule pairing a syntax expression with a constructor for the associated symbol type.
+For example, the grammar shown above is created as follows:
 
   ```
   @Grammar
@@ -95,17 +95,16 @@ For example, the grammar shown above is implemented by applying an attached macr
   }
   ```
 
-The parameter packs feature of Swift enables the syntax expression of each production rule to be generic in a sequence of symbol types matching the parameters of its constructor.
-The macro generates a static *TSLanguage* instance together with a method for translating parse trees into the specified *Root* type.
+Swift's parameter packs feature enables each production rule to be generic in a sequence of symbol types, and the Grammar macro ensures that the number and type of syntax expression captures matches the number and type of constructor parameters. The macro generates a static *TSLanguage* instance together with a method for translating parse trees into the specified *Root* type,
   ```
   static func translate(_ node: TSNode, with source: InputSource, in context: Context) -> Root
   ```
-The *Grammar* protocol provides a convenience method for translating text to its *Root* type.
+and the *Grammar* protocol provides a convenience method for translating text to its *Root* type.
   ```
   static func parse(text: String, encoding: String.Encoding = .utf8, in context: Context) throws -> Root
   ```
 
-Note that macros can neither invoke subprocesses nor interact with the file system, so the *Grammar* macro relies on a fork of tree-sitter extended with a callable interface to generate the Swift equivalent of *parser.c*.
+Since Swift macros can neither invoke subprocesses nor interact with the file system, the *Grammar* macro relies on a [fork](https://github.com/daspoon/tree-sitter) of tree-sitter extended with a callable interface to generate the Swift equivalent of *parser.c*.
 
 
 ## Installation
@@ -113,6 +112,19 @@ Note that macros can neither invoke subprocesses nor interact with the file syst
 This project runs only on macOS due to the use of binary targets.
 After cloning the project you must run the shell script `build_xcframework` from the package directory in order to create the binary target TreeSitterCLI.xcframework.
 That script must be run again if the tree-sitter working copy is updated via `swift package update`.
+
+
+## Examples
+
+Some example parsers are provided as test cases:
+
+  [ExprLang](https://github.com/daspoon/tree-sitter-kit/tree/main/Tests/ExprLang) shows arithmetic expressions involving function calls and various operators.
+  
+  [LambdaTests](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TSKit/LambdaTests.swift) shows a simple untyped lambda calculus.
+  
+  [JSONTests](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TSKit/JsonTests.swift) shows a JSON.
+  
+  [TypedLang](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TypedLang/TypedLang.swift) shows a minimal typed functional language with blocks, closures and declarations.
 
 
 ## Future
