@@ -4,7 +4,6 @@
 
 import SwiftSyntax
 import SwiftSyntaxMacros
-import TSCommon
 
 
 /// *ProductionRule* is the 'implementation' of the client-side type of the same name.

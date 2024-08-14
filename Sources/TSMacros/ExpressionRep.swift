@@ -3,7 +3,6 @@
 */
 
 import SwiftSyntax
-import TSCommon
 
 
 /// Implements a syntax expression as a pairing of a tree structure and a signature indicating the sequence of captured symbols types.

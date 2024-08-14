@@ -3,7 +3,6 @@
 */
 
 import SwiftSyntax
-import TSCommon
 
 
 indirect enum Token {

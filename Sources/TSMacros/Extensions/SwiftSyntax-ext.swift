@@ -5,7 +5,6 @@
 */
 
 import SwiftSyntax
-import TSCommon
 
 
 extension ClosureSignatureSyntax {
