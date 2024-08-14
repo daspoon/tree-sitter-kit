@@ -56,27 +56,26 @@ extension Expression {
   init(exprSyntax: ExprSyntax) throws {
     switch exprSyntax.kind {
       case .functionCallExpr :
-        guard let (name, args) = try exprSyntax.caseComponents
-          else { throw Exception("expecting baseless member access") }
+        let (name, args) = try exprSyntax.caseComponents
         switch (name, args.count) {
           case ("lit", 1) :
             guard let string = args[0].expression.as(StringLiteralExprSyntax.self)?.stringLiteral
-              else { throw Exception("expecting string literal") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting string literal") }
             self = .lit(string)
           case ("pat", 1) :
             guard let string = args[0].expression.as(StringLiteralExprSyntax.self)?.stringLiteral
-              else { throw Exception("expecting string literal") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting string literal") }
             self = .pat(string)
           case ("sym", 1) :
             guard let name = try args[0].expression.typeName
-              else { throw Exception("expecting type reference") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting type reference") }
             self = .sym(name)
           case ("alt", 1) :
             guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
-              else { throw Exception("expecting array argument") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting array literal") }
             self = .alt(try arrayExpr.elements.map {
               guard let string = $0.expression.as(StringLiteralExprSyntax.self)?.stringLiteral
-                else { throw Exception("expecting string literal: \($0.kind); \($0)") }
+                else { throw ExpansionError(node: $0.expression, message: "expecting string literal") }
               return string
             })
           case ("opt", 1) :
@@ -85,19 +84,19 @@ extension Expression {
             self = .rep(try Self(exprSyntax: args[0].expression), n == 2 ? try Punctuation(exprSyntax: args[1].expression) : nil)
           case ("seq", 1) :
             guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
-              else { throw Exception("expecting array argument") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting array literal") }
             self = .seq(try arrayExpr.elements.map { try Self(exprSyntax: $0.expression) })
           case ("prec", 2) :
             self = .prec(try Precedence(exprSyntax: args[0].expression), try Self(exprSyntax: args[1].expression))
           case let other :
-            throw Exception("unsupported case: \(other)")
+            throw ExpansionError(node: args[0].expression, message: "unsupported case: \(other)")
         }
       case .stringLiteralExpr :
         guard let string = exprSyntax.cast(StringLiteralExprSyntax.self).stringLiteral
-          else { throw Exception("expecting string literal") }
+          else { throw ExpansionError(node: exprSyntax, message: "expecting string literal") }
         self = .lit(string)
-      default :
-        throw Exception("invalid expression syntax")
+      case let unsupported :
+        throw ExpansionError(node: exprSyntax, message: "unsupported expression syntax: \(unsupported)")
     }
   }
 }

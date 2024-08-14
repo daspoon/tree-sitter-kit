@@ -34,20 +34,19 @@ extension Precedence {
   init(exprSyntax: ExprSyntax) throws {
     switch exprSyntax.kind {
       case .functionCallExpr :
-        guard let (name, args) = try exprSyntax.caseComponents
-          else { throw Exception("expecting Precedence syntax") }
+        let (name, args) = try exprSyntax.caseComponents
         switch (name, args.count) {
           case ("left", 1) :
             self = .left(try Int(exprSyntax: args[0].expression))
           case ("right", 1) :
             self = .right(try Int(exprSyntax: args[0].expression))
           default :
-            throw Exception("invalid Precedence syntax")
+            throw ExpansionError(node: exprSyntax, message: "unsupported Precedence syntax")
         }
       case .integerLiteralExpr :
         self = .none(try Int(exprSyntax: exprSyntax))
       default :
-        throw Exception("invalid Precedence syntax")
+        throw ExpansionError(node: exprSyntax, message: "unsupported Precedence syntax")
     }
   }
 }

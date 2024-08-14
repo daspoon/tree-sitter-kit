@@ -57,14 +57,14 @@ extension DeclGroupSyntax {
 }
 
 extension ExprSyntax {
-  var caseComponents : (name: String, args: LabeledExprListSyntax)? {
+  var caseComponents : (name: String, args: LabeledExprListSyntax) {
     get throws {
       guard let call = self.as(FunctionCallExprSyntax.self)
-        else { throw Exception("expecting FunctionCallExprSyntax: \(self.kind); \(self)") }
+        else { throw ExpansionError(node: self, message: "expecting function call") }
       guard let memberAccess = call.calledExpression.as(MemberAccessExprSyntax.self)
-        else { throw Exception("expecting MemberAccessExprSyntax") }
+        else { throw ExpansionError(node: call, message: "expecting member access") }
       guard memberAccess.base == nil
-        else { throw Exception("expecting nil for base") }
+        else { throw ExpansionError(node: memberAccess, message: "expecting baseless member access") }
       return (memberAccess.declName.baseName.text, call.arguments)
     }
   }
@@ -73,13 +73,13 @@ extension ExprSyntax {
   var typeName : String? {
     get throws {
       guard let memberAccess = self.as(MemberAccessExprSyntax.self)
-        else { throw Exception("type argument must be a MemberAccessExpr") }
+        else { throw ExpansionError(node: self, message: "expecting member access") }
       guard let baseRef = memberAccess.base
-        else { throw Exception("type argument must have a base for member access") }
+        else { throw ExpansionError(node: memberAccess, message: "expecting type base for member access") }
       guard memberAccess.declName.baseName.text == "self"
-        else { throw Exception("production argument must access member 'self'") }
+        else { throw ExpansionError(node: memberAccess.declName.baseName, message: "accessed member must be 'self'") }
       guard let declRef = baseRef.as(DeclReferenceExprSyntax.self)
-        else { throw Exception("type argument must be a declaration reference") }
+        else { throw ExpansionError(node: baseRef, message: "type argument must be a declaration reference") }
       return declRef.baseName.text
     }
   }

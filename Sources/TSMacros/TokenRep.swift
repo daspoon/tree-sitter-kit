@@ -34,40 +34,39 @@ extension Token {
   init(expr: ExprSyntax) throws {
     switch expr.kind {
       case .functionCallExpr :
-        guard let (name, args) = try expr.caseComponents
-          else { throw Exception("expecting baseless member access") }
+        let (name, args) = try expr.caseComponents
         switch (name, args.count) {
           case ("lit", 1) :
             guard let argExpr = args[0].expression.as(StringLiteralExprSyntax.self)
-              else { throw Exception("expecting string literal") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting string literal") }
             self = try .init(stringLiteralExpr: argExpr)
           case ("pat", 1) :
             guard let argExpr = args[0].expression.as(RegexLiteralExprSyntax.self)
-              else { throw Exception("expecting regex literal") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting regex literal") }
             self = .init(regexLiteralExpr: argExpr)
           case ("seq", 1) :
             guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
-              else { throw Exception("expecting array argument") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting array argument") }
             self = .seq(try arrayExpr.elements.map { try Self(expr: $0.expression) })
           case ("choice", 1) :
             guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
-              else { throw Exception("expecting array argument") }
+              else { throw ExpansionError(node: args[0].expression, message: "expecting array argument") }
             self = .choice(try arrayExpr.elements.map { try Self(expr: $0.expression) })
           case let other :
-            throw Exception("unsupported case: \(other)")
+            throw ExpansionError(node: expr, message: "unsupported case: \(other)")
         }
       case .stringLiteralExpr :
         self = try .init(stringLiteralExpr: expr.cast(StringLiteralExprSyntax.self))
       case .regexLiteralExpr :
         self = .init(regexLiteralExpr: expr.cast(RegexLiteralExprSyntax.self))
       default :
-        throw Exception("unexpected expression syntax")
+        throw ExpansionError(node: expr, message: "unexpected expression syntax")
     }
   }
 
   init(stringLiteralExpr expr: StringLiteralExprSyntax) throws {
     guard let content = expr.stringLiteral
-      else { throw Exception("failed to extract content of string literal expression") }
+      else { throw ExpansionError(node: expr, message: "unsupported string literal expression") }
     self = .lit(content)
   }
 

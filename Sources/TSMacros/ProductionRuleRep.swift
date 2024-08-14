@@ -28,12 +28,12 @@ struct ProductionRule {
     ///   - the expression capture count does not match the constructor parameter count.
     init(expression e: Expression, constructor c: ClosureExprSyntax) throws {
       guard let parameterCount = c.signature?.parameterCount
-        else { throw Exception("trailing closure must have explicit parameter names") }
+        else { throw ExpansionError(node: c, message: "closures must have explicit parameter names") }
       expression = e
       signature = try Signature(expression: e)
       constructor = c
       guard signature.captureCount == parameterCount
-        else { throw Exception("expression capture count (\(signature.captureCount)) does not match constructor parameter count (\(parameterCount))") }
+        else { throw ExpansionError(node: c, message: "constructor parameter count (\(parameterCount)) does not match expression capture count (\(signature.captureCount))") }
     }
 
     /// Return the text for an invocation of the constructor with argument values extracted
@@ -132,11 +132,11 @@ extension ProductionRule {
   /// Attempt to create an instance from a Swift syntax expression.
   init(_ expr: ExprSyntax) throws {
     guard let funcall = expr.as(FunctionCallExprSyntax.self), funcall.arguments.count == 2
-      else { throw Exception("expecting function call with two arguments") }
+      else { throw ExpansionError(node: expr, message: "expecting function call with two arguments") }
 
     // Get the produced type from the first argument, which must be of the form `T.self`
     guard let name = try funcall.arguments[0].expression.typeName
-      else { throw Exception("expecting type reference") }
+      else { throw ExpansionError(node: funcall.arguments[0].expression, message: "expecting type reference") }
     typeName = name
 
     // Distinguish single and multiple clause initializers
@@ -144,25 +144,25 @@ extension ProductionRule {
     switch arg2.label?.text {
       case .none : // init<T, each A>(_ type: T.Type, _ expression: Expression, constructor f: (repeat each A) throws -> T)
         guard let closure = funcall.trailingClosure
-          else { throw Exception("expecting trailing closure") }
+          else { throw ExpansionError(node: funcall, message: "expecting trailing closure") }
         form = .single(try Choice(expression: try Expression(exprSyntax: arg2.expression), constructor: closure))
       case "choicesByName" : // init<T>(_ type: T.Type, choicesByName: [String: Choice<T>])
         guard let dict = arg2.expression.as(DictionaryExprSyntax.self), case .elements(let elements) = dict.content
-          else { throw Exception("'syntaxExpressionsByCaseName' must return a non-empty dictionary") }
+          else { throw ExpansionError(node: arg2.expression, message: "'syntaxExpressionsByCaseName' must return a non-empty dictionary") }
         let namesWithClauses = try elements
           .map({ element in
             guard let name = element.key.as(StringLiteralExprSyntax.self)?.stringLiteral
-              else { throw Exception("dictionary keys must be string literals") }
+              else { throw ExpansionError(node: element.key, message: "dictionary keys must be string literals") }
             guard let funcall = element.value.as(FunctionCallExprSyntax.self), funcall.arguments.count == 1
-              else { throw Exception("expecting a single FunctionCallExpr argument") }
+              else { throw ExpansionError(node: element.value, message: "expecting a single-argument function call") }
             guard let closure = funcall.trailingClosure
-              else { throw Exception("expecting a trailing closure") }
+              else { throw ExpansionError(node: funcall, message: "expecting a trailing closure") }
             let expr = try Expression(exprSyntax: funcall.arguments[0].expression)
             return (name, try Choice(expression: expr, constructor: closure))
           })
         form = .multiple(Dictionary(uniqueKeysWithValues: namesWithClauses))
       case .some(let other) :
-        throw Exception("invalid argument label: \(other)")
+        throw ExpansionError(node: arg2, message: "invalid argument label: \(other)")
     }
   }
 }
