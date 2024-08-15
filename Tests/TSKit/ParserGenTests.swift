@@ -8,6 +8,7 @@ import TSCommon
 import TreeSitterCLI
 
 
+/// Test the callable interface to tree-sitter CLI.
 class ParserGenTests : XCTestCase {
   let validJsonText = """
     {
