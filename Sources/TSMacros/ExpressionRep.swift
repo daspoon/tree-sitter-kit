@@ -57,8 +57,14 @@ struct Expression {
 
 
 extension Expression {
+  struct Options : OptionSet {
+    let rawValue : Int
+    // Note: explicitly hidden symbols cannot appear within seq or rep expressions because because their tree structure is not maintained by a child node.
+    static let disallowHiddenSymbols = Self(rawValue: 1 << 0)
+  }
+
   /// Attempt to create an instance from a Swift syntax expression.
-  init(exprSyntax: ExprSyntax) throws {
+  init(exprSyntax: ExprSyntax, options: Options = []) throws {
     switch exprSyntax.kind {
       case .functionCallExpr :
         let (name, args) = try exprSyntax.caseComponents
@@ -74,6 +80,8 @@ extension Expression {
           case ("sym", 1) :
             guard let name = try args[0].expression.typeName
               else { throw ExpansionError(node: args[0].expression, message: "expecting type reference") }
+            guard !options.contains(.disallowHiddenSymbols) || name.hasPrefix("_") == false
+              else { throw ExpansionError(node: args[0].expression, message: "hidden symbols cannot appear in this context") }
             self = .init(rootNode: .sym(name), signature: .symbol(name))
           case ("alt", 1) :
             guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
@@ -85,7 +93,7 @@ extension Expression {
             }
             self = .init(rootNode: .alt(literals), signature: .string)
           case ("opt", 1) :
-            let subexpr = try Self(exprSyntax: args[0].expression)
+            let subexpr = try Self(exprSyntax: args[0].expression, options: options)
             let sig = switch subexpr.signature {
               case .symbol(let name) : Signature.tuple([(name, true)])
               case .tuple(let captures) : Signature.tuple(captures.map {($0.symbol, true)})
@@ -94,7 +102,7 @@ extension Expression {
             }
             self = .init(rootNode: .opt(subexpr.rootNode), signature: sig)
           case ("rep", let n) where 0 < n && n < 3 :
-            let subexpr = try Self(exprSyntax: args[0].expression)
+            let subexpr = try Self(exprSyntax: args[0].expression, options: options.union(.disallowHiddenSymbols))
             guard case .symbol(let symbolName) = subexpr.signature
               else { throw ExpansionError(node: args[0].expression, message: "unsupported expression") }
             let punc = n == 2 ? try Punctuation(exprSyntax: args[1].expression) : nil
@@ -103,7 +111,7 @@ extension Expression {
             guard let arrayExpr = args[0].expression.as(ArrayExprSyntax.self)
               else { throw ExpansionError(node: args[0].expression, message: "expecting array literal") }
             let (subtrees, captures) : ([Node], [Signature.Capture]) = try arrayExpr.elements.enumerated().reduce(into: ([],[])) { accum, elt in
-              let eltexp = try Self(exprSyntax: elt.1.expression)
+              let eltexp = try Self(exprSyntax: elt.1.expression, options: options.union(.disallowHiddenSymbols))
               switch eltexp.signature {
                 case .symbol(let name) : accum.1 += [(name, false)]
                 case .tuple(let elts) : accum.1 += elts
@@ -115,7 +123,7 @@ extension Expression {
             self = .init(rootNode: .seq(subtrees), signature: .tuple(captures))
           case ("prec", 2) :
             let prec = try Precedence(exprSyntax: args[0].expression)
-            let subexpr = try Self(exprSyntax: args[1].expression)
+            let subexpr = try Self(exprSyntax: args[1].expression, options: options)
             self = .init(rootNode: .prec(prec, subexpr.rootNode), signature: subexpr.signature)
           case let other :
             throw ExpansionError(node: args[0].expression, message: "unsupported case: \(other)")
