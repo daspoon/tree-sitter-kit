@@ -1,9 +1,12 @@
 # TreeSitterKit
 
-This project aims to simplify use of [tree-sitter](https://tree-sitter.github.io/tree-sitter/) for implementing custom programming languages in [Swift](https://swift.org).
-Specifically, it enables writing grammar rules as Swift code and automates the translation of parse trees into the Swift data structures which implement the abstract syntax of a custom language.
+This project aims to simplify the use of [tree-sitter](https://tree-sitter.github.io/tree-sitter/) for parsing  programming languages and data formats in [Swift](https://swift.org).
+Specifically, it enables writing grammar rules as Swift code and automates the translation of parse trees into the Swift data structures which implement an abstract syntax.
 
-As a simple example, consider an abstract syntax for a language of arithmetic expressions involving integers, addition and multiplication:
+
+## Motivation
+
+Consider an abstract syntax for a simple language of arithmetic expressions.
 
   ```
   indirect enum Expr {
@@ -13,10 +16,15 @@ As a simple example, consider an abstract syntax for a language of arithmetic ex
   }
   ```
 
-Using tree-sitter directly, one can write a grammar for this language as a javascript object:
+We'll first show the steps necessary to parse this language using tree sitter directly, and then see how the process is simplified through use of this package.
+
+
+### Tree-sitter Basics
+
+A tree-sitter grammar is typically written as a javascript object.
 
   ```
-  {
+  module.exports = grammar({
     name: 'ExprLang',
     rules: {
       Expr: $ => choice(
@@ -30,13 +38,26 @@ Using tree-sitter directly, one can write a grammar for this language as a javas
       Mult: $ => prec(left(2, seq($.Expr, '*', $.Expr))),
       Paren: $ => seq('(', $.Expr, ')'),
     }
-  }
+  })
   ```
 
-The tree-sitter CLI transforms this notation into a pair of C source files (parser.c and parser.h) which must be added to your project;
-if your project is a Swift package, these files must be placed in a separate c-compatibility target.
-In short, the generated C code defines an instance of the *TSLanguage* type and the tree-sitter library provides a *TSParser* type which, when configured with a *TSLanguage* instance, translates text into parse trees comprised of *TSNode* structures.
-So producing instances of our *Expr* type requires implementing a translation from compatible *TSNode* instances:
+The tree-sitter program is used to generate a parser configuration as a pair of C source files, *parser.c* and *parser.h*.
+
+  ```
+  % tree-sitter generate grammar.js
+  ```
+
+The generated files, along with a header file declaring the generated *TSLanguage* structure, must be included in your project.
+
+  ```
+  #include <tree_sitter/api.h>
+  TSLanguage *tree_sitter_ExprLang();
+  ```
+
+An instance of the *TSParser* type, configured with the generated language, enables translating strings into *TSTree* instances which act as containers for a hierarchy of *TSNode* structures.
+Each node maintains the identity of its grammar symbol and the byte range of the text which it represents.
+
+Finally we need a method to translate nodes to instances of our abstract syntax; below we use a context parameter to distinguish node symbols and to extract ranges of source text.
 
   ```
   extension Expr {
@@ -59,18 +80,19 @@ So producing instances of our *Expr* type requires implementing a translation fr
   }
   ```
 
-The above method assumes the existence of a *Context* type which is used to identify node symbols by name and to extract the range of source text to which a node corresponds.
-Although this translation code is straight-forward, it can be complicated for grammars which have many abstract syntax types or have productions with optional elements.
-More importantly, the type safety of the translation method cannot be guaranteed by the compiler because there is no explict relationship between the grammar and the abstract syntax.
+Although the translation code is straight-forward, it is tedious for grammars which have many symbol types or have productions with optional elements.
+More importantly, its type safety cannot be guaranteed by the compiler because there is no explict relationship between the grammar and the abstract syntax.
 
-Using this package we can reduce the task of parser construction to the application of a macro to a structure defining a root symbol type and a list of production rules, with each rule pairing a syntax expression with a constructor for the associated symbol type.
-For example, the grammar shown above is created as follows:
+### Streamlined Interface
+
+Using this package, the construction of a parser for the *Expr* type is reduced to the following code:
 
   ```
+  import TSKit
+
   @Grammar
   struct ExprLang : Grammar {
     typealias Root = Expr
-
     static var productionRules : [ProductionRule] {
       return [
         ProductionRule(Expr.self, choicesByName: [
@@ -95,42 +117,55 @@ For example, the grammar shown above is created as follows:
   }
   ```
 
-Swift's parameter packs feature enables each production rule to be generic in a sequence of symbol types, and the Grammar macro ensures that the number and type of syntax expression captures matches the number and type of constructor parameters. The macro generates a static *TSLanguage* instance together with a method for translating parse trees into the specified *Root* type,
+Here the *Grammar* macro is applied to a structure conforming to the *Grammar* protocol.
+The protocol requires specifying the symbol type which appears at the root of each parse tree, together with a list of production rules associating each symbol type with a syntax expression and a constructor for that type.
+Swift's parameter packs feature enables each production rule to refer to a distinct sequence of symbol types, and the macro ensures the number and type of syntax expression captures matches the number and type of constructor parameters. 
+
+The macro generates the *TSLanguage* instance which serves as parser configuration and a method for translating parse tree nodes into instances of the root type.
+
   ```
-  static func translate(_ node: TSNode, with source: InputSource, in context: Context) -> Root
+  static var language : UnsafePointer<TSLanguage>
+  static func translate(parseTree node: TSNode, in context: ParsingContext) -> Root
   ```
-and the *Grammar* protocol provides a convenience method for translating text to its *Root* type.
+  
+The *Grammar* protocol provides a convenience method for translating text to its *Root* type -- throwing when the parse tree contains errors.
+
   ```
-  static func parse(text: String, encoding: String.Encoding = .utf8, in context: Context) throws -> Root
+  static func parse(inputSource src: InputSource) throws -> Root
   ```
 
-Since Swift macros can neither invoke subprocesses nor interact with the file system, the *Grammar* macro relies on a [fork](https://github.com/daspoon/tree-sitter) of tree-sitter extended with a callable interface to generate the Swift equivalent of *parser.c*.
+Since Swift macros can neither invoke subprocesses nor interact with the file system, the macro relies on a [fork](https://github.com/daspoon/tree-sitter) of tree-sitter extended with a callable interface to generate the Swift equivalent of *parser.c*.
 
 
 ## Installation
 
-This project runs only on macOS due to the use of binary targets.
-After cloning the project you must run the shell script `build_xcframework` from the package directory in order to create the binary target TreeSitterCLI.xcframework.
+Building this project requires an Apple platform (due to the use of binary targets) and for Rust to be installed (in order to build the tree-sitter fork).
+After cloning the project you must run the shell script `build_xcframework.rb` from the checkout directory in order to create the binary target TreeSitterCLI.xcframework.
 That script must be run again if the tree-sitter working copy is updated via `swift package update`.
 
 
-## Examples
+## Other Examples
 
 Some example parsers are provided as test cases:
 
-  [ExprLang](https://github.com/daspoon/tree-sitter-kit/tree/main/Tests/ExprLang) shows arithmetic expressions involving function calls and various operators.
+  [ExprLang](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/ExprLang/ExprLang.swift) shows arithmetic expressions involving function calls and various operators.
   
-  [LambdaTests](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TSKit/LambdaTests.swift) shows a simple untyped lambda calculus.
+  [LambdaTests](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TSKit/LambdaTests.swift) shows an untyped lambda calculus.
   
   [JSONTests](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TSKit/JsonTests.swift) shows a JSON.
   
   [TypedLang](https://github.com/daspoon/tree-sitter-kit/blob/main/Tests/TypedLang/TypedLang.swift) shows a minimal typed functional language with blocks, closures and declarations.
 
 
-## Future
+## Future Plans
 
-This is a work in progress: there are a number of known [issues](https://github.com/daspoon/tree-sitter-kit/issues) and likely many more to be discovered through experimentation.
+This is a work in progress, so there are a number of known [issues](https://github.com/daspoon/tree-sitter-kit/issues) and likely many more to be discovered through experimentation.
+Among the most obvious:
 
-One obvious drawback is that all production rules must be defined within the top-level grammar struct, making that struct definition rather large.
-I had wanted each symbol type to specify its own production rules and for the grammar to derive the set of all rules reachable from its root type,
-but I don't see how a macro can access components outside the declaration to which it is attached.
+  - there is no streamlined support for editing or error reporting
+  - TreeSitterCLI.xcframework must be built separately
+  - all production rules must be defined within the top-level grammar struct
+
+The last point means that non-trivial grammar definitions are lengthy.
+Ideally each symbol type would specify its own production rules and the set of all rules would be calculated from the grammar's root type;
+unfortunately Swift member macros have no apparent means to access components outside the declaration to which they're attached.
