@@ -160,8 +160,8 @@ Some example parsers are provided as test cases:
 ## Related Work
 
 A Swift binding for tree-sitter already exists at https://github.com/ChimeHQ/SwiftTreeSitter.
-That work exposes nearly the full tree-sitter runtime API to Swift, but relies on tree-sitter's standard tree-sitter tech for mapping javascript grammar specifications to separately compiled C code.
-This work exposes a minimual subset of tree-sitter functionality, but enables defining parsers entirely in Swift -- eliminating the need for javascript and mixed-language targets, and streamlining the build process.
+That work exposes nearly the full tree-sitter runtime API to Swift, but relies on tree-sitter's standard tech for mapping javascript grammar specifications to separately compiled C code.
+This work exposes a minimal subset of tree-sitter functionality, but enables defining parsers entirely in Swift -- eliminating the need for javascript and mixed-language targets, and streamlining the build process.
 
 
 ## Future Plans
