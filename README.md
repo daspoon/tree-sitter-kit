@@ -139,7 +139,7 @@ Since Swift macros can neither invoke subprocesses nor interact with the file sy
 
 ## Installation
 
-Building this project requires an Apple platform (due to the use of binary targets) and for Rust to be installed (in order to build the tree-sitter fork).
+Building this project requires an Apple platform (due to the use of binary targets) with both tree-sitter and Rust (in order to build the tree-sitter fork) installed.
 After cloning the project you must run the shell script `build_xcframework.rb` from the checkout directory in order to create the binary target TreeSitterCLI.xcframework.
 That script must be run again if the tree-sitter working copy is updated via `swift package update`.
 
