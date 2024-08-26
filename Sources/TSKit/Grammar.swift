@@ -92,6 +92,11 @@ extension Grammar {
     }
   }
 
+  /// Return the 'type' of the given symbol.
+  public static func symbolType(for symbol: TSSymbol) -> TSSymbolType {
+    ts_language_symbol_type(language, symbol)
+  }
+
   /// Create an instance of the root type from the given input source.
   public static func parse(inputSource src: InputSource) throws -> Root {
     // Create a parser for the given language
