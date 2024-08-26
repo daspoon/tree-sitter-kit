@@ -22,8 +22,8 @@ extension TSNode
     }
 
     /// Return the range of the parsed text represented by the receiver.
-    public var sourceByteRange : Range<UInt32> {
-      ts_node_start_byte(self) ..< ts_node_end_byte(self)
+    public var sourceByteRange : Range<Int> {
+      Int(ts_node_start_byte(self)) ..< Int(ts_node_end_byte(self))
     }
 
     /// Return the parent node, which may be 'null'.

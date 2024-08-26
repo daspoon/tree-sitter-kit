@@ -9,7 +9,7 @@ import TreeSitter
 
 public protocol InputSource {
   /// Return the portion of the source text for the given byte range, or the empty string if that range is invalid.
-  func text(in range: Range<UInt32>) -> String
+  func text(in range: Range<Int>) -> String
 
   /// Return the structure required by tree-sitter's parse method.
   var tsinput : TSInput { get }

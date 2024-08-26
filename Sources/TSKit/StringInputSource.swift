@@ -23,7 +23,7 @@ public class StringInputSource : InputSource {
     cstring.buffer.deallocate()
   }
 
-  public func text(in range: Range<UInt32>) -> String {
+  public func text(in range: Range<Int>) -> String {
     guard range.upperBound <= cstring.length else { return "" }
     let ptr = cstring.buffer + Int(range.lowerBound)
     let len = Int(range.upperBound - range.lowerBound)
