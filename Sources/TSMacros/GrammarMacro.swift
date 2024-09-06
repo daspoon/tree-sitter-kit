@@ -34,6 +34,16 @@ public struct GrammarMacro : MemberMacro {
             return hiddenTypes.contains(ObjectIdentifier(type))
           }
           """),
+        DeclSyntax(stringLiteral: """
+          \(grammar.visibility) static func representative(for symbol: TSSymbol) -> TSSymbol {
+            let mapped : [TSSymbol: TSSymbol] = [
+              \(grammar.mappedSymbolPairs.map { "sym_\($0): sym_\($1)" }
+                  .joined(separator: ",\n")
+              )
+            ]
+            return mapped[symbol] ?? symbol
+          }
+          """),
         DeclSyntax(stringLiteral:
           grammar.languageSource
         ),

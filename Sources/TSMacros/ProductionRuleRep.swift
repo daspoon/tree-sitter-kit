@@ -112,14 +112,19 @@ struct ProductionRule {
     }
   }
 
+  /// Assuming the receiver has multiple choices, return the symbol name for the given choice name.
+  func alternateSymbolName(for choiceName: String) -> String {
+    typeName + "_" + choiceName
+  }
+
   /// Return the implied grammar rules as a list of pairs of symbol names and raw syntax expressions.
   func getSymbolNamesAndRawExpressions(_ lookup: (String) throws -> String) throws -> [(symbolName: String, rawExpression: RawExpression)] {
     return switch form {
       case .single(let choice) :
         [(symbolName, try choice.expression.getRawExpression(lookup))]
       case .multiple(let choicesByName) :
-        [(symbolName, .choice(choicesByName.map({name, _ in .symbol(typeName + "_" + name)})))]
-          + (try choicesByName.map({ name, choice in (typeName + "_" + name, try choice.expression.getRawExpression(lookup)) }))
+        [(symbolName, .choice(choicesByName.map({name, _ in .symbol(alternateSymbolName(for: name))})))]
+          + (try choicesByName.map({ name, choice in (alternateSymbolName(for: name), try choice.expression.getRawExpression(lookup)) }))
     }
   }
 }

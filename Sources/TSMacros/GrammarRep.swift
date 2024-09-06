@@ -109,4 +109,17 @@ struct GrammarRep {
       languageSource: languageSource
     )
   }
+
+  /// The mapping of each 'case' symbol name to its generalization.
+  var mappedSymbolPairs : some Sequence<(String, String)> {
+    var pairs : [(String, String)] = []
+    for rule in definedRules {
+      guard case .multiple(let choicesByName) = rule.form
+        else { continue }
+      for name in choicesByName.keys {
+        pairs.append((rule.alternateSymbolName(for: name), rule.symbolName))
+      }
+    }
+    return pairs
+  }
 }

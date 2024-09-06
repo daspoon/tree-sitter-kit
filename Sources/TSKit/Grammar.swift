@@ -37,6 +37,9 @@ public protocol Grammar<Root> {
 
   /// Return *true* if the rule for the given type is hidden. Implementation provided by @Grammar.
   static func isRuleHidden(for type: Any.Type) -> Bool
+
+  /// Translate alternate rule symbols to their corresponding production rule symbols, leaving other symbols intact. Implementation provided by @Grammar.
+  static func representative(for symbol: TSSymbol) -> TSSymbol
 }
 
 
