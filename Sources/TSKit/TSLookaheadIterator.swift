@@ -10,11 +10,17 @@ import TreeSitterCLI
 public class TSLookaheadIterator {
   let ptr : OpaquePointer
 
-  public init(language: UnsafePointer<TSLanguage>, state: TSStateId) {
-    guard let iterator = ts_lookahead_iterator_new(language, state)
-      else { fatalError("failed to create iterator") }
-    assert(ts_lookahead_iterator_current_symbol(iterator) == TSLanguage.errorSymbol)
-    ptr = iterator
+  /// Initialize an instance for the given language.
+  public init(language: UnsafePointer<TSLanguage>) {
+    // Note: state 0 indicates end-of-input and is always valid.
+    ptr = ts_lookahead_iterator_new(language, 0)
+  }
+
+  /// Initialize an instance for the given language and state. This will fail for invalid states, such as 65535 which is assigned to various nodes in the vicinity of ERROR nodes.
+  public init?(language: UnsafePointer<TSLanguage>, state: TSStateId) {
+    guard let ptr = ts_lookahead_iterator_new(language, state)
+      else { return nil }
+    self.ptr = ptr
   }
 
   deinit {
@@ -29,6 +35,7 @@ public class TSLookaheadIterator {
     ts_lookahead_iterator_next(ptr)
   }
 
+  /// Attempt to reset iteration to the given state. Return `true` iff successful.
   public func reset(state: TSStateId) -> Bool {
     ts_lookahead_iterator_reset_state(ptr, state)
   }
