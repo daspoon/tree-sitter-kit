@@ -98,10 +98,10 @@ struct ProductionRule {
         choice.invocationText
       case .multiple(let choicesByName) :
         """
-        switch symbolName(for: node) {
+        switch node.symbol {
           \(
             choicesByName.map({ key, choice in
-              "case \"\(typeName)_\(key)\" : \(choice.invocationText)"
+              "case sym_\(alternateSymbolName(for: key)) : \(choice.invocationText)"
             })
             .joined(separator: "\n")
           )

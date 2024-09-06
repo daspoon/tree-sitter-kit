@@ -48,6 +48,11 @@ extension TSNode
       }
     }
 
+    /// Return the receiver's symbol, ignoring aliases.
+    public var symbol : TSSymbol {
+      ts_node_grammar_symbol(self)
+    }
+
     /// Return *true* if the receiver represents a syntax error.
     public var isError : Bool {
       ts_node_is_error(self)
