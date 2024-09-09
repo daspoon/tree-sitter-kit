@@ -2,6 +2,8 @@
 
 */
 
+import Foundation
+
 
 extension String {
   /// Return the concatenation of a number of newline characters, defaulting to 1.
@@ -38,6 +40,18 @@ extension String {
       default :
         nil
     }
+  }
+
+  public func substring(forByteRange r: Range<Int>, encoding e: Encoding) -> Substring? {
+    guard let charRange = characterRange(forByteRange: r, encoding: e)
+      else { return nil }
+    let lb = index(startIndex, offsetBy: charRange.lowerBound)
+    let ub = index(startIndex, offsetBy: charRange.upperBound)
+    return self[lb ..< ub]
+  }
+
+  public func string(forByteRange r: Range<Int>, encoding e: Encoding) -> String? {
+    substring(forByteRange: r, encoding: e).map {String($0)}
   }
 
   /// Return a copy of the receiver with the given prefix and/or suffix removed.
