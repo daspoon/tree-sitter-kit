@@ -87,4 +87,12 @@ public class TSTreeCursor {
     }
     return moved
   }
+
+  public func gotoLastLeafDescendant() -> Bool {
+    var moved = false
+    while gotoLastChild() {
+      moved = true
+    }
+    return moved
+  }
 }

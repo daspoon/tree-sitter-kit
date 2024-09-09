@@ -72,6 +72,10 @@ extension TSNode
     public var state : TSStateId {
       ts_node_parse_state(self)
     }
+
+    public var nextState : TSStateId {
+      ts_node_next_parse_state(self)
+    }
   }
 
 

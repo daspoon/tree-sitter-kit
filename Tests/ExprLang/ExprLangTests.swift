@@ -4,6 +4,7 @@
 
 import XCTest
 import TSKit
+import TSCommon
 
 
 class ExprLangTests : XCTestCase {
@@ -69,6 +70,24 @@ class ExprLangTests : XCTestCase {
       catch {
         continue
       }
+    }
+  }
+
+  /// Ensure simple syntax errors are reported as expected...
+  func testSyntaxErrors() throws {
+    guard let sym_Expr = ExprLang.symbol(for: Expr.self)
+      else { throw Exception("No Expr symbol?") }
+
+    let examples : [(text: String, error: SyntaxError)] = [
+      ("x +", .init(range: 3 ..< 3, kind: .missing(sym_Expr))),
+      ("()", .init(range: 1 ..< 1, kind: .missing(sym_Expr))),
+      ("", .init(range: 0 ..< 0, kind: .eof)),
+    ]
+    let parser = TSParser(ExprLang.language)
+    for eg in examples {
+      let tree = parser.parse(eg.text)!
+      let errors = ExprLang.syntaxErrors(in: tree, for: eg.text)
+      XCTAssertEqual(errors, [eg.error])
     }
   }
 }

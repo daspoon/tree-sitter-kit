@@ -133,4 +133,45 @@ extension Grammar {
       else { throw Exception("unsupported string encoding: \(encoding)") }
     return try parse(inputSource: source)
   }
+
+  /// Return the list of syntax errors.
+  public static func syntaxErrors(in tree: TSTree, for text: String, encoding e: String.Encoding = .utf8) -> [SyntaxError] {
+    let iterator = TSLookaheadIterator(language: language)
+    let cursor = TSTreeCursor(node: tree.rootNode)
+    var errors : [SyntaxError] = []
+
+    func report(node: TSNode, kind k: SyntaxError.Kind) {
+      guard let r = text.characterRange(forByteRange: node.sourceByteRange, encoding: e)
+        else { fatalError("failed to translate byte range \(node.sourceByteRange) for encoding \(e)") }
+      errors.append(SyntaxError(range: r, kind: k))
+    }
+
+    func walk(_ node: TSNode) {
+      guard node.hasError else { return }
+
+      switch node {
+        case _ where node.isError && node.count == 0 :
+          report(node: node, kind: .eof)
+        case _ where node.isError :
+          cursor.reset(node)
+          guard cursor.gotoLastLeafDescendant()
+            else { report(node: node, kind: .bug("no descendants")); return }
+          guard iterator.reset(state: cursor.currentNode.nextState)
+            else { report(node: cursor.currentNode, kind: .bug("failed to reset iterator")); return }
+          let expected = iterator.validSymbols
+            .filter {symbolType(for: $0) != .auxiliary}
+            .map { representative(for: $0) }
+          report(node: node, kind: .expecting(Set(expected)))
+        case _ where node.isEmpty :
+          let missing = representative(for: node.symbol)
+          report(node: node, kind: .missing(missing))
+        default :
+          (0 ..< node.count).forEach { walk(node[$0]) }
+      }
+    }
+
+    walk(tree.rootNode)
+
+    return errors
+  }
 }
