@@ -53,6 +53,11 @@ extension TSNode
       ts_node_grammar_symbol(self)
     }
 
+    /// Return *true* iff the receiver's byte range is empty.
+    var isEmpty : Bool {
+      ts_node_start_byte(self) == ts_node_end_byte(self)
+    }
+
     /// Return *true* if the receiver represents a syntax error.
     public var isError : Bool {
       ts_node_is_error(self)
