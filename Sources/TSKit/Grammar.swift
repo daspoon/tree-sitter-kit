@@ -40,6 +40,9 @@ public protocol Grammar<Root> {
 
   /// Translate alternate rule symbols to their corresponding production rule symbols, leaving other symbols intact. Implementation provided by @Grammar.
   static func representative(for symbol: TSSymbol) -> TSSymbol
+
+  /// Return the symbol for the given type, if any.
+  static func symbol(for type: Any.Type) -> TSSymbol?
 }
 
 
@@ -53,6 +56,8 @@ public protocol Grammar<Root> {
   named(isRuleHidden(for:)),
   named(translate(parseTree:context:)),
   named(symbolName(for:)),
+  named(representative(for:)),
+  named(symbol(for:)),
   arbitrary
 )
 public macro Grammar() = #externalMacro(module: "TSMacros", type: "GrammarMacro")

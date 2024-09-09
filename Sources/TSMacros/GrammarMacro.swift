@@ -44,6 +44,16 @@ public struct GrammarMacro : MemberMacro {
             return mapped[symbol] ?? symbol
           }
           """),
+        DeclSyntax(stringLiteral: """
+          \(grammar.visibility) static func symbol(for type: Any.Type) -> TSSymbol? {
+            let mapped : [ObjectIdentifier: TSSymbol] = [
+              \(grammar.definedRules.map { ".init(\($0.typeName).self): sym_\($0.symbolName)," }
+                .joined(separator: "\n")
+              )
+            ]
+            return mapped[.init(type)]
+          }
+          """),
         DeclSyntax(stringLiteral:
           grammar.languageSource
         ),
