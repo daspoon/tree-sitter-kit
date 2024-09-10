@@ -8,6 +8,7 @@ let package = Package(
     platforms: [.macOS(.v13), .iOS(.v16), .macCatalyst(.v16)],
     products: [
         .library(name: "TSKit", targets: ["TSKit"]),
+        .executable(name: "TSPlayground", targets: ["TSPlayground"]),
     ],
     dependencies: [
         .package(url: "https://github.com/daspoon/tree-sitter", from: "0.1.7"),
@@ -36,6 +37,9 @@ let package = Package(
                 "TSCommon",
             ]
         ),
+        .executableTarget(name: "TSPlayground", dependencies: [
+          "TSKit",
+        ]),
         // Binary tree-sitter CLI library
         .binaryTarget(name: "TreeSitterCLI",
           path: "XCFrameworks/TreeSitterCLI.xcframework"
