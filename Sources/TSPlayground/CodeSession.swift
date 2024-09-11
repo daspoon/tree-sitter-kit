@@ -77,7 +77,7 @@ public class CodeSession : ObservableObject {
   public func attributedText(for node: TSNode, color: Color = .primary) -> AttributedString {
     //assert(node.tree == tree.opaqueTree)
     let string = node.isNamed ? grammar.symbolName(for: node).description : text.string(forByteRange: node.sourceByteRange, encoding: encoding)!
-    var attstr = AttributedString(string + (node.state == 65535 ? " ⚠︎" : ""))
+    var attstr = AttributedString(string + " " + (node.hasError ? "⚠︎" : "") + (node.state == .max ? "⁕" : ""))
     attstr.foregroundColor = color
     return attstr
   }
