@@ -19,23 +19,6 @@ extension Grammar {
 }
 
 
-extension SyntaxError {
-  // Describe a syntax error with respect to a given grammar.
-  public func describe<G: Grammar>(using _: G) -> AttributedString {
-    switch kind {
-      case .bug(let description) :
-        return .init("bug: \(description)")
-      case .eof :
-        return "unexpected end of input"
-      case .expecting(let symbols) :
-        return .init("expecting \(symbols.sorted().map({G.symbolName(for: $0).description}).joined(separator: " "))")
-      case .missing(let symbol) :
-        return .init("missing \(G.symbolName(for: symbol).description)")
-    }
-  }
-}
-
-
 // Extend tree-sitter's TSNode to enable use in SwiftUI's OutlineGroup.
 extension TSNode {
   // SwiftUI views which present collections require collection elements to have a stable identity...

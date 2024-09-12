@@ -136,8 +136,6 @@ extension Grammar {
 
   /// Return the list of syntax errors.
   public static func syntaxErrors(in tree: TSTree, for text: String, encoding e: String.Encoding = .utf8) -> [SyntaxError] {
-    let iterator = TSLookaheadIterator(language: language)
-    let cursor = TSTreeCursor(node: tree.rootNode)
     var errors : [SyntaxError] = []
 
     func report(node: TSNode, kind k: SyntaxError.Kind) {
@@ -146,31 +144,61 @@ extension Grammar {
       errors.append(SyntaxError(range: r, kind: k))
     }
 
-    func walk(_ node: TSNode) {
-      guard node.hasError else { return }
+    // Report errors in the given subtree; return true iff no error exists.
+    func walk(_ node: TSNode) -> Bool {
+      // Do nothing and return true if there is no embedded error.
+      guard node.hasError || node.isError
+        else { return true }
 
-      switch node {
-        case _ where node.isError && node.count == 0 :
-          report(node: node, kind: .eof)
-        case _ where node.isError :
-          cursor.reset(node)
-          guard cursor.gotoLastLeafDescendant()
-            else { report(node: node, kind: .bug("no descendants")); return }
-          guard iterator.reset(state: cursor.currentNode.nextState)
-            else { report(node: cursor.currentNode, kind: .bug("failed to reset iterator")); return }
-          let expected = iterator.validSymbols
-            .filter {symbolType(for: $0) != .auxiliary}
-            .map { representative(for: $0) }
-          report(node: node, kind: .expecting(Set(expected)))
-        case _ where node.isEmpty :
-          let missing = representative(for: node.symbol)
-          report(node: node, kind: .missing(missing))
-        default :
-          (0 ..< node.count).forEach { walk(node[$0]) }
+      // Nodes with no text range are deemed missing; process these before recursion to ensure reporting the highest-level symbol.
+      if node.isEmpty {
+        report(node: node, kind: .missing(representative(for: node.symbol)))
+        return false
       }
+
+      // Recurse over children, returning false if an error is found.
+      guard (0 ..< node.count).reduce(true, {ok, i in walk(node[i]) && ok})
+        else { return false }
+
+      // Terminal error nodes represent invaild character sequences.
+      if node.isError && node.count == 0 {
+        report(node: node, kind: .unacceptable)
+        return false
+      }
+
+      // Nodes whose state is .max appear to represent reductions which are potentially incomplete...
+      if node.isError || node.state == .max {
+        var pendingSymbols : [TSSymbol] = []
+        for i in 0 ..< node.count {
+          let child = node[i]
+          if child.isError {
+            for j in 0 ..< child.count {
+              let grandchild = child[j]
+              if grandchild.isError == false {
+                pendingSymbols.append(representative(for: grandchild.symbol))
+              }
+            }
+          }
+          else {
+            pendingSymbols.append(representative(for: child.symbol))
+          }
+        }
+        if pendingSymbols != [] {
+          report(node: node, kind: .incomplete(pendingSymbols))
+        }
+        return false
+      }
+
+      return true
     }
 
-    walk(tree.rootNode)
+    let root = tree.rootNode
+    if root.isError && root.count == 0 {
+      report(node: root, kind: .empty)
+    }
+    else {
+      _ = walk(root)
+    }
 
     return errors
   }
