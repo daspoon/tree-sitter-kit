@@ -169,10 +169,8 @@ This work exposes a minimal subset of tree-sitter functionality, but enables def
 This is a work in progress, so there are a number of known [issues](https://github.com/daspoon/tree-sitter-kit/issues) and likely many more to be discovered through experimentation.
 Among the most obvious:
 
-  - there is no streamlined support for editing or error reporting
-  - TreeSitterCLI.xcframework must be built separately
-  - all production rules must be defined within the top-level grammar struct
+  - Support for error reporting is very limited. Although tree-sitter performs implicit error recovery, it does not provide support for [generating useful error messages](https://github.com/tree-sitter/tree-sitter/issues/255). I have added the application target TSPlayground in order to explore the space, but haven't made much progress.
 
-The last point means that non-trivial grammar definitions are lengthy.
-Ideally each symbol type would specify its own production rules and the set of all rules would be calculated from the grammar's root type;
-unfortunately Swift member macros have no apparent means to access components outside the declaration to which they're attached.
+  - TreeSitterCLI.xcframework must be built using a separate script. I don't see how to improve the situation without additional features in Swift Packge Manager.
+
+  - All production rules must be defined within the top-level grammar struct, which makes non-trivial grammar definitions lengthy. Ideally each symbol type would specify its own production rules and the set of all rules would be calculated from the grammar's root type. Unfortunately Swift member macros have no apparent means to access components outside the declaration to which they're attached.
