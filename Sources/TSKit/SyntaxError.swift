@@ -7,6 +7,7 @@ import Foundation
 
 public struct SyntaxError : Error, Equatable {
   public enum Kind : Equatable {
+    case empty
     case expecting(Set<TSSymbol>)
     case incomplete([TSSymbol])
     case missing(TSSymbol)

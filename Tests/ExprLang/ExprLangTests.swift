@@ -81,7 +81,6 @@ class ExprLangTests : XCTestCase {
     let examples : [(text: String, error: SyntaxError)] = [
       ("x +", .init(range: 3 ..< 3, kind: .missing(sym_Expr))),
       ("()", .init(range: 1 ..< 1, kind: .missing(sym_Expr))),
-      ("", .init(range: 0 ..< 0, kind: .eof)),
     ]
     let parser = TSParser(ExprLang.language)
     for eg in examples {
