@@ -42,9 +42,9 @@ extension TSNode
     }
 
     /// Return the child node with the given field name.
-    public subscript (_ name: String) -> TSNode {
-      name.withCString { cstr in
-        ts_node_child_by_field_name(self, cstr, UInt32(strlen(cstr)))
+    public subscript (_ name: StaticString) -> TSNode {
+      name.withUTF8Buffer { buf in
+        ts_node_child_by_field_name(self, buf.baseAddress, UInt32(buf.count))
       }
     }
 
